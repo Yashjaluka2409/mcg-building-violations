@@ -1,7 +1,9 @@
 # 08 - UAT test plan
 
-Automated: `cd backend && python manage.py test building_violations` (4 tests: full private-land
-flow, Corporation-land s.408A flow, interim stop-work/sealing, API round-trip incl. PDF and QR).
+Automated: `cd backend && python manage.py test building_violations` (10 tests: full private-land
+flow, Corporation-land s.408A flow, interim stop-work/sealing, API round-trip incl. PDF and QR, branch
+referral with hold, admin rule switch-off, AE-stage setting, permission override, jurisdiction change +
+bulk re-assignment, stay requiring uploaded order + clock resumption).
 
 ## Manual scenarios (with demo logins, OTP 123456)
 
@@ -29,3 +31,12 @@ flow, Corporation-land s.408A flow, interim stop-work/sealing, API round-trip in
 | 20 | Dashboards & reports | Dashboard filters by zone; Reports → case-register → Excel | Numbers reconcile with case list; file downloads |
 | 21 | Sanctioned plan bulk upload | Plans → template → fill 2 rows → upload | created/updated counts; auto-link on next inspection with that PID |
 | 22 | Offline (app) | Airplane mode → New inspection → Submit | "Saved offline"; sync from Home uploads media then case |
+| 23 | Refer to Revenue Branch | JC → case → Refer to branch → Revenue, hold final order | Badge "with Revenue Branch (holds order)"; Pass final order refused until answered |
+| 24 | Branch responds | Login 9000000012 (Revenue) → Branch inbox → case → full history visible → Respond as branch | Referral RESPONDED, JC notified, final order now allowed |
+| 25 | Planning officer isolation | Login 9000000011 → cases | Only cases referred to Planning are visible |
+| 26 | Admin switches off an action | Login 9000000009 → Administration → Workflow rules → DRAFT: untick JE "Submit for review" → save with order no. | JE can no longer submit; audit log shows RULES_UPDATE with the order no. |
+| 27 | Skip AE stage | Administration → Routing & guards → "AE review before JC" off | New submissions land with the JC directly |
+| 28 | Per-officer override | Officers → JE → Permissions → grant REPORTS_EXPORT | JE sees Reports menu and can export |
+| 29 | Jurisdiction change + re-assignment | Officers → AE → Jurisdiction → zones/wards; Administration → Re-assign cases → ward → new AE | Cases move; REASSIGNED events; audit log |
+| 30 | High Court stay | JC → Litigation → Record appeal → High Court, stay ticked without order | Refused; upload stay order → case APPEAL_STAY, header shows STAY badge, field app warns |
+| 31 | Stay expiry | Set stay till tomorrow → run deadline sweep | JC/JE reminded; update appeal "stay vacated" → compliance clock resumes |

@@ -5,6 +5,110 @@ info:
   description: REST API consumed by the MCG web portal module and the MCG HARYANA
     mobile app (building-violations module).
 paths:
+  /building-violations/api/admin/audit-log/:
+    get:
+      operationId: building_violations_api_admin_audit_log_retrieve
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /building-violations/api/admin/permissions/:
+    get:
+      operationId: building_violations_api_admin_permissions_retrieve
+      description: 'GET -> catalogue + role matrix; PUT {"grants": [{"role","permission","allowed"}],
+        "order_reference"}'
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    put:
+      operationId: building_violations_api_admin_permissions_update
+      description: 'GET -> catalogue + role matrix; PUT {"grants": [{"role","permission","allowed"}],
+        "order_reference"}'
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /building-violations/api/admin/reassign-cases/:
+    post:
+      operationId: building_violations_api_admin_reassign_cases_create
+      description: Re-assign many cases at once when jurisdictions change (by explicit
+        ids, or by zone / ward / current officer).
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /building-violations/api/admin/settings/:
+    get:
+      operationId: building_violations_api_admin_settings_retrieve
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    put:
+      operationId: building_violations_api_admin_settings_update
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /building-violations/api/admin/workflow-rules/:
+    get:
+      operationId: building_violations_api_admin_workflow_rules_retrieve
+      description: |-
+        GET -> {statuses, roles, actions, labels, matrix: {status: {role: [actions]}}}
+        PUT -> {"rules": [{"status","role","action","allowed"}...], "order_reference": "..."} (partial: only listed rules change)
+        POST reset -> reseed defaults
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    post:
+      operationId: building_violations_api_admin_workflow_rules_create
+      description: |-
+        GET -> {statuses, roles, actions, labels, matrix: {status: {role: [actions]}}}
+        PUT -> {"rules": [{"status","role","action","allowed"}...], "order_reference": "..."} (partial: only listed rules change)
+        POST reset -> reseed defaults
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    put:
+      operationId: building_violations_api_admin_workflow_rules_update
+      description: |-
+        GET -> {statuses, roles, actions, labels, matrix: {status: {role: [actions]}}}
+        PUT -> {"rules": [{"status","role","action","allowed"}...], "order_reference": "..."} (partial: only listed rules change)
+        POST reset -> reseed defaults
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
   /building-violations/api/auth/otp/request/:
     post:
       operationId: building_violations_api_auth_otp_request_create
@@ -52,6 +156,160 @@ paths:
               schema:
                 $ref: '#/components/schemas/TokenRefresh'
           description: ''
+  /building-violations/api/branches/:
+    get:
+      operationId: building_violations_api_branches_list
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Branch'
+          description: ''
+    post:
+      operationId: building_violations_api_branches_create
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Branch'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Branch'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Branch'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Branch'
+          description: ''
+  /building-violations/api/branches/{code}/:
+    get:
+      operationId: building_violations_api_branches_retrieve
+      parameters:
+      - in: path
+        name: code
+        schema:
+          type: string
+        description: A unique value identifying this branch.
+        required: true
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Branch'
+          description: ''
+    put:
+      operationId: building_violations_api_branches_update
+      parameters:
+      - in: path
+        name: code
+        schema:
+          type: string
+        description: A unique value identifying this branch.
+        required: true
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Branch'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Branch'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Branch'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Branch'
+          description: ''
+    patch:
+      operationId: building_violations_api_branches_partial_update
+      parameters:
+      - in: path
+        name: code
+        schema:
+          type: string
+        description: A unique value identifying this branch.
+        required: true
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedBranch'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedBranch'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedBranch'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Branch'
+          description: ''
+    delete:
+      operationId: building_violations_api_branches_destroy
+      parameters:
+      - in: path
+        name: code
+        schema:
+          type: string
+        description: A unique value identifying this branch.
+        required: true
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
   /building-violations/api/cases/:
     get:
       operationId: building_violations_api_cases_list
@@ -294,9 +552,43 @@ paths:
               schema:
                 $ref: '#/components/schemas/ViolationCaseDetail'
           description: ''
+  /building-violations/api/cases/{id}/close_referral/:
+    post:
+      operationId: building_violations_api_cases_close_referral_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ViolationCaseDetail'
+          description: ''
   /building-violations/api/cases/{id}/decide_appeal/:
     post:
       operationId: building_violations_api_cases_decide_appeal_create
+      description: 'Update the litigation flag: stay extended / vacated, hearing dates,
+        later orders, final decision.'
       parameters:
       - in: path
         name: id
@@ -403,6 +695,38 @@ paths:
         required: true
       tags:
       - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ViolationCaseDetail'
+          description: ''
+  /building-violations/api/cases/{id}/reassign/:
+    post:
+      operationId: building_violations_api_cases_reassign_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+        required: true
       security:
       - jwtAuth: []
       responses:
@@ -572,9 +896,73 @@ paths:
               schema:
                 $ref: '#/components/schemas/ViolationCaseDetail'
           description: ''
+  /building-violations/api/cases/{id}/refer_branch/:
+    post:
+      operationId: building_violations_api_cases_refer_branch_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ViolationCaseDetail'
+          description: ''
   /building-violations/api/cases/{id}/reopen/:
     post:
       operationId: building_violations_api_cases_reopen_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ViolationCaseDetail'
+          description: ''
+  /building-violations/api/cases/{id}/respond_branch/:
+    post:
+      operationId: building_violations_api_cases_respond_branch_create
       parameters:
       - in: path
         name: id
@@ -679,6 +1067,38 @@ paths:
         required: true
       tags:
       - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ViolationCaseDetail'
+          description: ''
+  /building-violations/api/cases/{id}/update_appeal/:
+    post:
+      operationId: building_violations_api_cases_update_appeal_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+        required: true
       security:
       - jwtAuth: []
       responses:
@@ -2399,7 +2819,10 @@ paths:
           type: string
           enum:
           - APPEAL
+          - BRANCH_REFERRAL
+          - BRANCH_RESPONSE
           - COMPLIANCE
+          - COURT_ORDER
           - EXECUTION
           - HEARING
           - INSPECTION
@@ -2408,6 +2831,7 @@ paths:
           - OTHER
           - RESPONSE
           - SANCTION_DOC
+          - STAY_ORDER
         description: |-
           * `INSPECTION` - Inspection evidence
           * `NOTICE_DELIVERY` - Proof of delivery of notice
@@ -2416,8 +2840,12 @@ paths:
           * `HEARING` - Hearing record
           * `EXECUTION` - Demolition / sealing evidence
           * `COMPLIANCE` - Self-compliance evidence
-          * `APPEAL` - Appeal / court order
+          * `APPEAL` - Appeal memo / pleadings
+          * `STAY_ORDER` - Stay / interim order of the appellate authority or court
+          * `COURT_ORDER` - Final order / judgment
           * `SANCTION_DOC` - Sanction / licence document
+          * `BRANCH_REFERRAL` - Document sent with a branch referral
+          * `BRANCH_RESPONSE` - Branch response / report
           * `OTHER` - Other
       - in: query
         name: notice
@@ -2831,6 +3259,10 @@ paths:
         name: active
         schema:
           type: boolean
+      - in: query
+        name: branch
+        schema:
+          type: string
       - name: ordering
         required: false
         in: query
@@ -2857,6 +3289,7 @@ paths:
           - ADDL_COMMISSIONER
           - ADMIN
           - AE
+          - BRANCH_OFFICER
           - COMMISSIONER
           - FIELD_STAFF
           - JC
@@ -2873,6 +3306,7 @@ paths:
           * `ADDL_COMMISSIONER` - Additional Commissioner
           * `COMMISSIONER` - Commissioner
           * `FIELD_STAFF` - Enforcement / demolition squad
+          * `BRANCH_OFFICER` - Branch officer (Planning / Revenue / Legal ...) - consulted on cases
           * `ADMIN` - Module administrator
           * `VIEWER` - Read-only (MIS)
       - name: search
@@ -3035,6 +3469,41 @@ paths:
       responses:
         '204':
           description: No response body
+  /building-violations/api/officers/{id}/permissions/:
+    get:
+      operationId: building_violations_api_officers_permissions_retrieve
+      description: 'GET/PUT per-officer permission overrides: PUT {"overrides": [{"permission","allowed","reason"}],
+        "order_reference"}'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    put:
+      operationId: building_violations_api_officers_permissions_update
+      description: 'GET/PUT per-officer permission overrides: PUT {"overrides": [{"permission","allowed","reason"}],
+        "order_reference"}'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
   /building-violations/api/officers/dropdown/:
     get:
       operationId: building_violations_api_officers_dropdown_retrieve
@@ -3077,6 +3546,79 @@ paths:
       responses:
         '200':
           description: No response body
+  /building-violations/api/referrals/:
+    get:
+      operationId: building_violations_api_referrals_list
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedBranchReferralList'
+          description: ''
+  /building-violations/api/referrals/{id}/:
+    get:
+      operationId: building_violations_api_referrals_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BranchReferral'
+          description: ''
+  /building-violations/api/referrals/counts/:
+    get:
+      operationId: building_violations_api_referrals_counts_retrieve
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BranchReferral'
+          description: ''
   /building-violations/api/reports/:
     get:
       operationId: building_violations_api_reports_retrieve
@@ -3444,6 +3986,26 @@ components:
           allOf:
           - $ref: '#/components/schemas/UserLite'
           readOnly: true
+        authority_display:
+          type: string
+          readOnly: true
+        status_display:
+          type: string
+          readOnly: true
+        stay_order:
+          allOf:
+          - $ref: '#/components/schemas/MediaAttachment'
+          readOnly: true
+        final_order:
+          allOf:
+          - $ref: '#/components/schemas/MediaAttachment'
+          readOnly: true
+        is_stay_active:
+          type: boolean
+          readOnly: true
+        order_no:
+          type: string
+          readOnly: true
         created_at:
           type: string
           format: date-time
@@ -3452,26 +4014,47 @@ components:
           type: string
           format: date-time
           readOnly: true
+        authority:
+          $ref: '#/components/schemas/AuthorityEnum'
+        authority_other:
+          type: string
+          maxLength: 200
         filed_on:
           type: string
           format: date
-        authority:
-          type: string
-          maxLength: 200
         appeal_no:
           type: string
-          maxLength: 80
-        status:
+          description: Appeal / CWP / SLP / OA number
+          maxLength: 120
+        appellant_name:
           type: string
-          maxLength: 16
+          maxLength: 200
+        counsel_for_mcg:
+          type: string
+          maxLength: 200
+        status:
+          $ref: '#/components/schemas/AppealStatusEnum'
         stay_granted:
           type: boolean
+        stay_order_date:
+          type: string
+          format: date
+          nullable: true
         stay_until:
           type: string
           format: date
           nullable: true
+          description: Blank = until further orders / next date
+        stay_scope:
+          oneOf:
+          - $ref: '#/components/schemas/StayScopeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
         conditions:
           type: string
+        next_hearing_on:
+          type: string
+          format: date
+          nullable: true
         decided_on:
           type: string
           format: date
@@ -3487,15 +4070,196 @@ components:
           nullable: true
       required:
       - authority
+      - authority_display
       - case
       - created_at
       - filed_on
+      - final_order
       - id
+      - is_stay_active
+      - order_no
       - recorded_by
+      - status_display
+      - stay_order
       - updated_at
+    AppealStatusEnum:
+      enum:
+      - PENDING
+      - STAYED
+      - STAY_VACATED
+      - DISMISSED
+      - ALLOWED
+      - MODIFIED
+      - WITHDRAWN
+      - DISPOSED
+      type: string
+      description: |-
+        * `PENDING` - Pending - no stay
+        * `STAYED` - Stay / status quo granted
+        * `STAY_VACATED` - Stay vacated
+        * `DISMISSED` - Dismissed
+        * `ALLOWED` - Allowed (order set aside)
+        * `MODIFIED` - Order modified
+        * `WITHDRAWN` - Withdrawn
+        * `DISPOSED` - Disposed with directions
+    AuthorityEnum:
+      enum:
+      - DIVISIONAL_COMMISSIONER
+      - COMMISSIONER_MCG
+      - CIVIL_COURT
+      - HIGH_COURT
+      - SUPREME_COURT
+      - NGT
+      - OTHER
+      type: string
+      description: |-
+        * `DIVISIONAL_COMMISSIONER` - Divisional Commissioner, Gurugram (s.261(2) / s.263A(4))
+        * `COMMISSIONER_MCG` - Commissioner, MCG (s.408B)
+        * `CIVIL_COURT` - Civil Court / District Court
+        * `HIGH_COURT` - Punjab & Haryana High Court
+        * `SUPREME_COURT` - Supreme Court of India
+        * `NGT` - National Green Tribunal
+        * `OTHER` - Other forum
     BlankEnum:
       enum:
       - ''
+    Branch:
+      type: object
+      properties:
+        code:
+          type: string
+          maxLength: 20
+        name_en:
+          type: string
+          maxLength: 120
+        name_hi:
+          type: string
+          maxLength: 120
+        description:
+          type: string
+        head_designation:
+          type: string
+          maxLength: 120
+        default_response_days:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        active:
+          type: boolean
+        officers:
+          type: string
+          readOnly: true
+      required:
+      - code
+      - name_en
+      - officers
+    BranchReferral:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        case:
+          type: string
+          format: uuid
+        case_no:
+          type: string
+          readOnly: true
+        case_status:
+          type: string
+          readOnly: true
+        case_address:
+          type: string
+          readOnly: true
+        ward_number:
+          type: integer
+          readOnly: true
+        branch:
+          allOf:
+          - $ref: '#/components/schemas/Branch'
+          readOnly: true
+        referred_by:
+          allOf:
+          - $ref: '#/components/schemas/UserLite'
+          readOnly: true
+        referred_at:
+          type: string
+          format: date-time
+        query:
+          type: string
+          description: What the branch is asked to examine / report on
+        due_at:
+          type: string
+          format: date-time
+          nullable: true
+        hold_case:
+          type: boolean
+          description: If true, final orders are blocked until the branch responds
+            (subject to workflow setting)
+        status:
+          $ref: '#/components/schemas/BranchReferralStatusEnum'
+        assigned_to:
+          allOf:
+          - $ref: '#/components/schemas/UserLite'
+          readOnly: true
+        response:
+          type: string
+        recommendation:
+          type: string
+          maxLength: 40
+        responded_by:
+          allOf:
+          - $ref: '#/components/schemas/UserLite'
+          readOnly: true
+        responded_at:
+          type: string
+          format: date-time
+          nullable: true
+        closed_by:
+          allOf:
+          - $ref: '#/components/schemas/UserLite'
+          readOnly: true
+        closed_at:
+          type: string
+          format: date-time
+          nullable: true
+        closing_remarks:
+          type: string
+        is_overdue:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - assigned_to
+      - branch
+      - case
+      - case_address
+      - case_no
+      - case_status
+      - closed_by
+      - created_at
+      - id
+      - is_overdue
+      - query
+      - referred_by
+      - responded_by
+      - ward_number
+    BranchReferralStatusEnum:
+      enum:
+      - PENDING
+      - RESPONDED
+      - CLOSED
+      - WITHDRAWN
+      type: string
+      description: |-
+        * `PENDING` - Awaiting branch response
+        * `RESPONDED` - Response received
+        * `CLOSED` - Closed by referring officer
+        * `WITHDRAWN` - Withdrawn
     CaseCreate:
       type: object
       properties:
@@ -3795,6 +4559,7 @@ components:
       - ADDL_COMMISSIONER
       - COMMISSIONER
       - FIELD_STAFF
+      - BRANCH_OFFICER
       - ADMIN
       - VIEWER
       type: string
@@ -3807,6 +4572,7 @@ components:
         * `ADDL_COMMISSIONER` - Additional Commissioner
         * `COMMISSIONER` - Commissioner
         * `FIELD_STAFF` - Enforcement / demolition squad
+        * `BRANCH_OFFICER` - Branch officer (Planning / Revenue / Legal ...) - consulted on cases
         * `ADMIN` - Module administrator
         * `VIEWER` - Read-only (MIS)
     Division:
@@ -4016,7 +4782,11 @@ components:
       - EXECUTION
       - COMPLIANCE
       - APPEAL
+      - STAY_ORDER
+      - COURT_ORDER
       - SANCTION_DOC
+      - BRANCH_REFERRAL
+      - BRANCH_RESPONSE
       - OTHER
       type: string
       description: |-
@@ -4027,8 +4797,12 @@ components:
         * `HEARING` - Hearing record
         * `EXECUTION` - Demolition / sealing evidence
         * `COMPLIANCE` - Self-compliance evidence
-        * `APPEAL` - Appeal / court order
+        * `APPEAL` - Appeal memo / pleadings
+        * `STAY_ORDER` - Stay / interim order of the appellate authority or court
+        * `COURT_ORDER` - Final order / judgment
         * `SANCTION_DOC` - Sanction / licence document
+        * `BRANCH_REFERRAL` - Document sent with a branch referral
+        * `BRANCH_RESPONSE` - Branch response / report
         * `OTHER` - Other
     LandLayerUpload:
       type: object
@@ -4480,6 +5254,9 @@ components:
         reports_to:
           type: integer
           nullable: true
+        reports_to_name:
+          type: string
+          readOnly: true
         delegation_order_no:
           type: string
           maxLength: 120
@@ -4491,17 +5268,37 @@ components:
           type: integer
           nullable: true
           description: 'For JC_CLERK: the JC whose office this clerk belongs to'
+        branch:
+          type: string
+          nullable: true
+          description: 'For BRANCH_OFFICER: the branch this officer answers for'
+        branch_name:
+          type: string
+          readOnly: true
         active:
           type: boolean
         created_at:
           type: string
           format: date-time
           readOnly: true
+        order_reference:
+          type: string
+          writeOnly: true
+        permission_overrides:
+          type: string
+          readOnly: true
+        effective_permissions:
+          type: string
+          readOnly: true
       required:
+      - branch_name
       - created_at
       - display_name
+      - effective_permissions
       - id
       - mobile
+      - permission_overrides
+      - reports_to_name
       - role
       - user
     OrderType:
@@ -4561,6 +5358,29 @@ components:
       - statute
       - template
       - title_en
+    PaginatedBranchReferralList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/BranchReferral'
     PaginatedGovtLandParcelList:
       type: object
       required:
@@ -4745,6 +5565,33 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ViolationCaseList'
+    PatchedBranch:
+      type: object
+      properties:
+        code:
+          type: string
+          maxLength: 20
+        name_en:
+          type: string
+          maxLength: 120
+        name_hi:
+          type: string
+          maxLength: 120
+        description:
+          type: string
+        head_designation:
+          type: string
+          maxLength: 120
+        default_response_days:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        active:
+          type: boolean
+        officers:
+          type: string
+          readOnly: true
     PatchedDivision:
       type: object
       properties:
@@ -4925,6 +5772,9 @@ components:
         reports_to:
           type: integer
           nullable: true
+        reports_to_name:
+          type: string
+          readOnly: true
         delegation_order_no:
           type: string
           maxLength: 120
@@ -4936,11 +5786,27 @@ components:
           type: integer
           nullable: true
           description: 'For JC_CLERK: the JC whose office this clerk belongs to'
+        branch:
+          type: string
+          nullable: true
+          description: 'For BRANCH_OFFICER: the branch this officer answers for'
+        branch_name:
+          type: string
+          readOnly: true
         active:
           type: boolean
         created_at:
           type: string
           format: date-time
+          readOnly: true
+        order_reference:
+          type: string
+          writeOnly: true
+        permission_overrides:
+          type: string
+          readOnly: true
+        effective_permissions:
+          type: string
           readOnly: true
     PatchedOrderType:
       type: object
@@ -5169,7 +6035,7 @@ components:
           type: string
           maxLength: 40
         status:
-          $ref: '#/components/schemas/StatusEnum'
+          $ref: '#/components/schemas/Status181Enum'
         status_display:
           type: string
           readOnly: true
@@ -5263,6 +6129,20 @@ components:
           type: boolean
         sealed:
           type: boolean
+        litigation_status:
+          type: string
+          maxLength: 20
+        litigation_authority:
+          type: string
+          maxLength: 30
+        stay_until:
+          type: string
+          format: date
+          nullable: true
+        next_hearing_on:
+          type: string
+          format: date
+          nullable: true
         violation_codes:
           type: string
           readOnly: true
@@ -5273,6 +6153,9 @@ components:
           type: string
           readOnly: true
         thumbnail:
+          type: string
+          readOnly: true
+        pending_referrals:
           type: string
           readOnly: true
         created_at:
@@ -5453,6 +6336,9 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CaseEvent'
+          readOnly: true
+        referrals:
+          type: string
           readOnly: true
         available_actions:
           type: string
@@ -5821,7 +6707,7 @@ components:
         * `MANUAL` - Entered manually
         * `BULK_UPLOAD` - Excel/CSV upload
         * `PLATFORM_SYNC` - Synced from MCG building-plan module
-    StatusEnum:
+    Status181Enum:
       enum:
       - DRAFT
       - PENDING_AE
@@ -5865,6 +6751,18 @@ components:
         * `CLOSED` - Closed
         * `DROPPED` - Dropped - no violation
         * `REGULARISED` - Regularised / compounded
+    StayScopeEnum:
+      enum:
+      - FULL
+      - DEMOLITION_ONLY
+      - STATUS_QUO
+      - PARTIAL
+      type: string
+      description: |-
+        * `FULL` - All action stayed
+        * `DEMOLITION_ONLY` - Demolition stayed (sealing / stop-work continue)
+        * `STATUS_QUO` - Status quo (no construction, no demolition)
+        * `PARTIAL` - Partial - see conditions
     TokenRefresh:
       type: object
       properties:
@@ -5915,7 +6813,7 @@ components:
           type: string
           maxLength: 40
         status:
-          $ref: '#/components/schemas/StatusEnum'
+          $ref: '#/components/schemas/Status181Enum'
         status_display:
           type: string
           readOnly: true
@@ -6009,6 +6907,20 @@ components:
           type: boolean
         sealed:
           type: boolean
+        litigation_status:
+          type: string
+          maxLength: 20
+        litigation_authority:
+          type: string
+          maxLength: 30
+        stay_until:
+          type: string
+          format: date
+          nullable: true
+        next_hearing_on:
+          type: string
+          format: date
+          nullable: true
         violation_codes:
           type: string
           readOnly: true
@@ -6019,6 +6931,9 @@ components:
           type: string
           readOnly: true
         thumbnail:
+          type: string
+          readOnly: true
+        pending_referrals:
           type: string
           readOnly: true
         created_at:
@@ -6200,6 +7115,9 @@ components:
           items:
             $ref: '#/components/schemas/CaseEvent'
           readOnly: true
+        referrals:
+          type: string
+          readOnly: true
         available_actions:
           type: string
           readOnly: true
@@ -6224,7 +7142,9 @@ components:
       - id
       - media
       - notices
+      - pending_referrals
       - primary_violation
+      - referrals
       - reported_by
       - responses
       - sanctioned_plan
@@ -6246,7 +7166,7 @@ components:
           type: string
           maxLength: 40
         status:
-          $ref: '#/components/schemas/StatusEnum'
+          $ref: '#/components/schemas/Status181Enum'
         status_display:
           type: string
           readOnly: true
@@ -6340,6 +7260,20 @@ components:
           type: boolean
         sealed:
           type: boolean
+        litigation_status:
+          type: string
+          maxLength: 20
+        litigation_authority:
+          type: string
+          maxLength: 30
+        stay_until:
+          type: string
+          format: date
+          nullable: true
+        next_hearing_on:
+          type: string
+          format: date
+          nullable: true
         violation_codes:
           type: string
           readOnly: true
@@ -6350,6 +7284,9 @@ components:
           type: string
           readOnly: true
         thumbnail:
+          type: string
+          readOnly: true
+        pending_referrals:
           type: string
           readOnly: true
         created_at:
@@ -6368,6 +7305,7 @@ components:
       - created_at
       - days_in_stage
       - id
+      - pending_referrals
       - primary_violation
       - reported_by
       - status_display

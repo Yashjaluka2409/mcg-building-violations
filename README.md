@@ -30,7 +30,8 @@ cd mobile && npm install && npx expo start      # scan the QR with Expo Go, or `
 
 Demo logins (OTP is `123456` in DEBUG mode): JE `9000000001`, AE `9000000002`, JC `9000000003`,
 JC clerk `9000000004`, XEN `9000000005`, field squad `9000000006`, Additional Commissioner
-`9000000007`, module admin `9000000009` (Django admin password `mcgadmin`).
+`9000000007`, module admin `9000000009` (Django admin password `mcgadmin`), Planning Branch
+`9000000011`, Revenue Branch `9000000012`, Legal Branch `9000000013`.
 
 Hindi PDFs need Pango on the host (`brew install pango` on macOS, `apt install libpango-1.0-0
 libpangoft2-1.0-0` on Ubuntu); without it the reportlab fallback produces English-only PDFs.
@@ -51,6 +52,16 @@ libpangoft2-1.0-0` on Ubuntu); without it the reportlab fallback produces Englis
   ageing, SLA turnaround, officer performance, map, deadlines; 8 registers exportable to CSV/Excel.
 * **Masters** - zones/wards/divisions, violation types, legal sections, order types, SLA config,
   sanctioned plans and licences (manual + bulk CSV/XLSX), government land layers, officers.
+* **Branch referrals** - a case can be sent to the Planning, Revenue, Legal, Engineering or Fire branch
+  (or any branch the admin adds) for a report; the branch sees the full history and answers in the
+  system; a "hold" referral blocks the final order until answered.
+* **Litigation** - appeals before the Divisional Commissioner, Commissioner, civil court, High Court,
+  Supreme Court or NGT; stays are recorded only with the stay order uploaded; stay expiry reminders;
+  litigation register.
+* **Administration** - workflow rules (who may do what at each stage), routing switches, role
+  permissions with per-officer overrides, jurisdictions (zones/wards/divisions/supervisor/branch),
+  bulk re-assignment, SLA and order periods, branches - all data-driven, every change logged with the
+  authorising order.
 
 See `docs/02-INTEGRATION-GUIDE.md` for the exact steps to mount the module inside the existing
 MCG platform (sms-be / mcg-sms.austere.biz) and the MCG HARYANA app.

@@ -44,4 +44,7 @@ class Command(BaseCommand):
                 "notes": v.get("notes") or "", "active": v.get("active", True), "sort_order": i})
         for stage, hours in DEFAULT_SLA_HOURS.items():
             SLAConfig.objects.get_or_create(stage=stage, defaults={"label": stage.replace("_", " ").title(), "hours": hours, "escalate_to_role": DEFAULT_ESCALATION.get(stage, "") or ""})
+        from building_violations.services import access
+        seeded = access.seed_all()
+        self.stdout.write(f"Access defaults seeded: {seeded}")
         self.stdout.write(self.style.SUCCESS(f"Loaded {LegalStatute.objects.count()} statutes, {n} sections, {ViolationType.objects.count()} violation types, {OrderType.objects.count()} order types"))

@@ -5,6 +5,7 @@ Demo logins (standalone mode, OTP = BVMS_OTP_DEMO_CODE, default 123456):
   JE      9000000001   AE       9000000002   JC       9000000003
   CLERK   9000000004   XEN      9000000005   ADMIN    9000000009
   FIELD   9000000006   ADDL.COMMR 9000000007
+  PLANNING BRANCH 9000000011   REVENUE BRANCH 9000000012   LEGAL BRANCH 9000000013
 """
 from datetime import date, timedelta
 
@@ -28,7 +29,11 @@ DEMO_OFFICERS = [
     ("9000000006", Role.FIELD_STAFF, "Enforcement Inspector", "Deepak", "Rao", [2, 3, 4]),
     ("9000000007", Role.ADDL_COMMISSIONER, "Additional Commissioner", "Yash", "Jaluka", None),
     ("9000000009", Role.ADMIN, "Module Administrator (IT Cell)", "IT", "Admin", None),
+    ("9000000011", Role.BRANCH_OFFICER, "District Town Planner (Planning Branch)", "Kavita", "Sharma", None),
+    ("9000000012", Role.BRANCH_OFFICER, "Tehsildar (Revenue Branch)", "Om", "Prakash", None),
+    ("9000000013", Role.BRANCH_OFFICER, "Law Officer (Legal Branch)", "Meenakshi", "Rana", None),
 ]
+BRANCH_OF = {"9000000011": "PLANNING", "9000000012": "REVENUE", "9000000013": "LEGAL"}
 
 
 class Command(BaseCommand):
@@ -58,6 +63,10 @@ class Command(BaseCommand):
             p, _ = OfficerProfile.objects.get_or_create(user=u, defaults={"role": role, "designation": desig, "mobile": mobile, "email": f"{first.lower()}.{last.lower()}@mcg.gov.in"})
             for z in (zone or []):
                 p.zones.add(zones[z])
+            if mobile in BRANCH_OF:
+                from building_violations.models import Branch
+                p.branch = Branch.objects.filter(code=BRANCH_OF[mobile]).first()
+                p.save()
             if role == Role.JC:
                 jc = p
                 p.delegation_order_no = "MCG/Comm/Delegation/2026/114"
@@ -119,5 +128,8 @@ class Command(BaseCommand):
         wf.jc_issue_notice(made[0], jc, order_type_code="SCN_261", remarks="Issue SCN with stop-work direction")
         wf.submit_to_ae(made[1], je)
         wf.ae_forward(made[1], ae, remarks="Encroachment on green belt confirmed against GIS layer", recommendation="DEMOLITION")
+        from building_violations.models import Branch
+        wf.refer_to_branch(made[1], jc, branch=Branch.objects.get(code="REVENUE"), query="Please confirm from the jamabandi / mussavi whether khasra 112/2 vests in the Corporation and furnish the demarcation report.", hold_case=True)
+        wf.refer_to_branch(made[0], jc, branch=Branch.objects.get(code="PLANNING"), query="Report on the sanctioned plan MCG/BP/2025/00412: permissible floors / FAR and whether the 4th floor is regularisable under HBC 2017.")
         wf.submit_to_ae(made[2], je)
         self.stdout.write(self.style.SUCCESS(f"Sample cases: {', '.join(c.case_no for c in made)}"))

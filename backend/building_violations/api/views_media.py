@@ -40,9 +40,9 @@ class MediaViewSet(viewsets.ModelViewSet):
             uploaded_by=request.user)
         case = d.get("case")
         if case and case.latitude is not None and att.latitude is not None:
-            from django.conf import settings
+            from ..services import access
             att.distance_from_case_m = round(haversine_m(att.latitude, att.longitude, case.latitude, case.longitude), 2)
-            att.geotag_verified = float(att.distance_from_case_m) <= settings.BVMS_GEOTAG_TOLERANCE_M
+            att.geotag_verified = float(att.distance_from_case_m) <= access.geotag_tolerance_m()
         att.save()
         if case:
             from ..services.audit import record_event

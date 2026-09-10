@@ -10,7 +10,7 @@ from rest_framework.views import APIView
 from ..integrations.pid import get_pid_client
 from ..models import GovtLandParcel, LandLayerUpload, Ward
 from ..services.geo import geojson_bbox, parcels_containing, ward_for_point
-from .permissions import HasOfficerProfile, IsModuleAdmin
+from .permissions import HasOfficerProfile, HasPerm, IsModuleAdmin
 from .serializers import GovtLandParcelSerializer, LandLayerUploadSerializer, WardSerializer
 
 
@@ -66,7 +66,7 @@ class GovtLandParcelViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ("list", "retrieve", "geojson"):
             return [HasOfficerProfile()]
-        return [IsModuleAdmin()]
+        return [HasPerm.of("LAND_LAYERS_MANAGE")()]
 
     @action(detail=False, methods=["get"])
     def geojson(self, request):
@@ -93,7 +93,7 @@ class LandLayerUploadViewSet(viewsets.ModelViewSet):
     converted to GeoJSON in QGIS (Layer > Export > Save Features As > GeoJSON, CRS EPSG:4326)."""
     serializer_class = LandLayerUploadSerializer
     queryset = LandLayerUpload.objects.all()
-    permission_classes = [IsModuleAdmin]
+    permission_classes = [HasPerm.of("LAND_LAYERS_MANAGE")]
     parser_classes = [MultiPartParser, FormParser]
 
     def perform_create(self, serializer):

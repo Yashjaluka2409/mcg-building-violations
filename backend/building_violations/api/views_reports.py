@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .. import models as m
-from .permissions import HasOfficerProfile
+from .permissions import HasOfficerProfile, HasPerm
 from .views_dashboards import _scoped
 
 REPORTS = {}
@@ -101,6 +101,25 @@ def sla_breach(qs, params):
     return cols, rows
 
 
+@report("litigation-register")
+def litigation_register(qs, params):
+    cols = ["case_no", "case_status", "address", "ward", "authority", "appeal_no", "appellant", "filed_on", "order_appealed", "appeal_status", "stay", "stay_order_date", "stay_until", "stay_scope", "stay_order_uploaded", "next_hearing_on", "counsel_for_mcg", "decided_on", "decision"]
+    rows = []
+    for a in m.Appeal.objects.filter(case__in=qs).select_related("case", "case__ward", "order", "stay_order"):
+        c = a.case
+        rows.append([c.case_no, c.status, c.address_line, c.ward.number if c.ward else "", a.get_authority_display(), a.appeal_no, a.appellant_name, a.filed_on, a.order.notice_no if a.order else "", a.status, a.stay_granted, a.stay_order_date, a.stay_until, a.stay_scope, bool(a.stay_order_id), a.next_hearing_on, a.counsel_for_mcg, a.decided_on, a.decision_summary])
+    return cols, rows
+
+
+@report("branch-referrals")
+def branch_referrals(qs, params):
+    cols = ["case_no", "case_status", "address", "branch", "referred_by", "referred_on", "query", "due_on", "hold_case", "status", "responded_on", "responded_by", "recommendation", "response"]
+    rows = []
+    for r in m.BranchReferral.objects.filter(case__in=qs).select_related("case", "branch", "referred_by", "responded_by"):
+        rows.append([r.case.case_no, r.case.status, r.case.address_line, r.branch.name_en, _name(r.referred_by), r.referred_at, r.query, r.due_at, r.hold_case, r.status, r.responded_at, _name(r.responded_by), r.recommendation, r.response])
+    return cols, rows
+
+
 @report("sanctioned-plans")
 def sanctioned_plans(qs, params):
     cols = ["plan_no", "pid", "address", "ward", "owner", "mobile", "land_use", "sanctioned_on", "valid_till", "permitted_floors", "licence_no", "licence_holder", "licence_authority", "status", "cases"]
@@ -111,7 +130,7 @@ def sanctioned_plans(qs, params):
 
 
 class ReportView(APIView):
-    permission_classes = [HasOfficerProfile]
+    permission_classes = [HasPerm.of("REPORTS_EXPORT")]
 
     def get(self, request, name):
         fn = REPORTS.get(name)

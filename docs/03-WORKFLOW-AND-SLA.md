@@ -72,3 +72,52 @@ executions but cannot create or decide cases.
 * Affixation as a mode of service requires a geotagged photo within 150 m of the case point.
 * Execution requires ≥1 geotagged photo/video within 150 m (owner self-compliance uses kind COMPLIANCE).
 * Evidence cannot be deleted after the case leaves DRAFT; every file is SHA-256 hashed.
+
+
+## Branch referrals (Planning / Revenue / Legal / Engineering / Fire)
+
+* AE, XEN or JC (permission `BRANCH_REFER`) can **refer a case to a branch** at any time before closure:
+  query, days to respond, optional "hold final order", optional specific officer, documents.
+* The main workflow status is **not** changed. The referral is tracked separately (`bvms_branch_referral`)
+  and shown as a badge on the case; a *hold* referral blocks demolition / sealing / eviction orders until
+  answered (setting `block_final_order_on_pending_referral`).
+* **Branch officers** (role `BRANCH_OFFICER`, one branch each) see only the cases referred to their branch,
+  with the **complete history** (inspection, evidence, notices, replies, hearings, timeline), and respond with
+  a recommendation (violation confirmed / no violation / regularisable / government land confirmed /
+  ownership disputed / legal hold ...) and documents. Responses are events on the case and notify the
+  referring officer and the JC.
+* Branches are a master (Administration → Branches); the shipped ones are Planning, Revenue, Legal,
+  Engineering and Fire. Report: `reports/branch-referrals`.
+
+## Litigation flag and stays
+
+* `record_appeal` records an appeal/writ before the **Divisional Commissioner** (s.261(2) / s.263A(4)),
+  **Commissioner MCG** (s.408B), **civil court**, **High Court**, **Supreme Court**, **NGT** or another forum,
+  with appeal number, appellant, MCG counsel, order appealed and next hearing date.
+* A **stay** can be recorded only with the **stay / interim order uploaded** to the case file (setting
+  `require_stay_order_upload`, default on) - so every deferred action has a legal backing. Scope can be
+  full, demolition-only, status quo or partial; "till" date optional (until further orders).
+* The case carries `litigation_status` (NONE / APPEAL_PENDING / STAYED / DECIDED), `litigation_authority`,
+  `stay_until`, `next_hearing_on`; a stay moves the case to `APPEAL_STAY` and the field squad is warned.
+* `update_appeal` records later events: stay extended (new date + order), stay vacated, dismissed, allowed
+  (case closed), modified (fresh compliance period, never below the statutory minimum), next dates, final
+  order / judgment upload.
+* `stay_expiry_sweep` (part of the hourly deadline sweep) reminds the JC and JE `stay_expiry_reminder_days`
+  before a dated stay expires and again after it has expired. Dashboard: stays by authority, stays expiring,
+  court dates; report: `reports/litigation-register`.
+
+## What the administrator can change without a code release
+
+| Area | Where | Stored in |
+|---|---|---|
+| Who may do which action at which status (workflow rules) | Administration → Workflow rules | `bvms_workflow_rule` (seeded from `services/access.py`) |
+| Routing & guards: AE stage on/off, JE replies via AE, auto-assignment, hold-referral blocking, evidence requirements, geotag tolerance, stay-order requirement, reminders | Administration → Routing & guards | `bvms_workflow_setting` |
+| Role permissions (view all zones, export reports, manage plans, refer, respond ...) | Administration → Access control | `bvms_role_permission` |
+| Per-officer overrides (grant / revoke one permission for one officer) | Officers → officer → Permissions | `bvms_officer_permission_override` |
+| Jurisdiction: zones, wards, divisions, supervisor, branch, delegation order | Officers → officer → Jurisdiction | `bvms_officer_profile` |
+| Bulk re-assignment of cases after transfers | Administration → Re-assign cases | case events `REASSIGNED` |
+| SLA hours / escalation role; default notice & order periods | Administration → SLA & order periods | `bvms_sla_config`, `bvms_order_type` |
+| Branches | Administration → Branches | `bvms_branch` |
+
+Every administrative write requires an **office-order reference** and is written to `bvms_admin_audit_log`
+(before/after, actor, IP). Statutory minimum periods cannot be lowered from the UI.

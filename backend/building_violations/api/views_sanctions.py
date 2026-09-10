@@ -10,7 +10,7 @@ from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 
 from ..models import SanctionedPlan, Ward, Zone
-from .permissions import HasOfficerProfile, RoleIn
+from .permissions import HasOfficerProfile, HasPerm
 from .serializers import SanctionedPlanSerializer
 
 COLUMNS = ["plan_no", "pid", "address", "ward_number", "owner_name", "owner_mobile", "plot_area_sqm", "land_use", "building_type", "sanctioned_on", "valid_till",
@@ -48,8 +48,8 @@ class SanctionedPlanViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         if self.action in ("list", "retrieve", "by_pid", "template"):
-            return [HasOfficerProfile()]
-        return [RoleIn.of("JE", "AE", "JC", "XEN", "ADMIN")()]
+            return [HasPerm.of("PLANS_VIEW")()]
+        return [HasPerm.of("PLANS_MANAGE")()]
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user, source="MANUAL")

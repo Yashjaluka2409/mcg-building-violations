@@ -20,9 +20,10 @@ from django.db import transaction
 from django.utils import timezone
 
 from ..models import (
-    Appeal, CaseResponse, CaseStatus, CaseViolation, ExecutionRecord, Hearing, LandType, MediaAttachment, Notice,
+    Appeal, Branch, BranchReferral, CaseResponse, CaseStatus, CaseViolation, ExecutionRecord, Hearing, LandType, MediaAttachment, Notice,
     OfficerProfile, OrderType, Role, ViolationCase, ViolationType,
 )
+from . import access
 from .audit import record_event
 from .geo import haversine_m, parcels_containing, ward_for_point
 from .notices import ORDER_KINDS_FINAL, SCN_TYPES, build_notice, dispatch_sms
@@ -47,9 +48,19 @@ def _profile(user) -> OfficerProfile:
     return prof
 
 
-def _require_role(user, *roles):
+def _authorize(user, action: str, case: ViolationCase | None = None, status: str | None = None) -> OfficerProfile:
+    """Check the admin-configurable workflow rules: may this role perform `action` when the case is in
+    `status`? Management roles always may. Raises WorkflowError(403) otherwise."""
     prof = _profile(user)
-    if prof.role not in roles and prof.role not in (Role.ADMIN, Role.COMMISSIONER, Role.ADDL_COMMISSIONER):
+    st = status or (case.status if case is not None else "*")
+    if not access.is_action_allowed(st, prof.role, action):
+        raise WorkflowError(f"Your role ({prof.get_role_display()}) is not allowed to '{access.ACTION_LABELS.get(action, action)}' while the case is in status {st}", 403)
+    return prof
+
+
+def _require_role(user, *roles):  # kept for backwards compatibility of callers outside this module
+    prof = _profile(user)
+    if prof.role not in roles and prof.role not in access.MANAGEMENT_ROLES:
         raise WorkflowError(f"Action allowed only for {', '.join(roles)}", 403)
     return prof
 
@@ -76,7 +87,7 @@ def _set_status(case, new_status, user, action, request=None, remarks="", payloa
 # ---------------------------------------------------------------------------
 @transaction.atomic
 def create_case(user, data: dict, violation_codes: list[dict], request=None, media_ids: list | None = None) -> ViolationCase:
-    prof = _require_role(user, Role.JE, Role.AE, Role.FIELD_STAFF)
+    prof = _authorize(user, "create", status="*")
     lat, lng = data.get("latitude"), data.get("longitude")
     ward = data.get("ward") or (ward_for_point(lat, lng) if lat and lng else None)
     zone = data.get("zone") or (ward.zone if ward else None) or (prof.zones.first())
@@ -130,16 +141,19 @@ def attach_media(case: ViolationCase, media_ids: list, user, kind: str | None = 
             m.notice = notice
         if m.latitude is not None and case.latitude is not None:
             m.distance_from_case_m = round(haversine_m(m.latitude, m.longitude, case.latitude, case.longitude), 2)
-            from django.conf import settings
-            m.geotag_verified = float(m.distance_from_case_m) <= settings.BVMS_GEOTAG_TOLERANCE_M
+            m.geotag_verified = float(m.distance_from_case_m) <= access.geotag_tolerance_m()
         m.save()
     return qs
 
 
 @transaction.atomic
 def update_draft(case, user, data: dict, violation_codes=None, request=None):
-    _require_role(user, Role.JE, Role.AE)
-    _require_status(case, S.DRAFT, S.RETURNED_TO_JE)
+    prof = _profile(user)
+    if access.has_perm(user, "CASE_EDIT_ANY"):
+        pass
+    else:
+        _authorize(user, "update", case)
+        _require_status(case, S.DRAFT, S.RETURNED_TO_JE)
     for f, v in data.items():
         if hasattr(case, f) and f not in ("id", "case_no", "status", "reported_by"):
             setattr(case, f, v)
@@ -154,17 +168,26 @@ def update_draft(case, user, data: dict, violation_codes=None, request=None):
 
 @transaction.atomic
 def submit_to_ae(case, user, request=None, remarks=""):
-    prof = _require_role(user, Role.JE, Role.FIELD_STAFF)
+    prof = _authorize(user, "submit_to_ae", case)
     _require_status(case, S.DRAFT, S.RETURNED_TO_JE)
     if not case.violations.exists():
         raise WorkflowError("Select at least one violation before submitting")
-    if not case.media.filter(kind="INSPECTION").exists():
+    if access.get_setting("require_inspection_media", True) and not case.media.filter(kind="INSPECTION").exists():
         raise WorkflowError("Upload at least one geotagged inspection photo/video before submitting")
+    case.submitted_at = timezone.now()
+    if not access.get_setting("require_ae_review", True):
+        # admin switched the AE stage off: straight to the Joint Commissioner
+        case.assigned_jc = case.assigned_jc or _pick_jc(case)
+        case.jc_received_at = timezone.now()
+        _set_status(case, S.PENDING_JC, user, "SUBMIT_TO_JC", request, remarks, owner_role=Role.JC)
+        notify_user(case.assigned_jc, case, f"New violation case {case.case_no} for orders", case.address_line)
+        return case
     if not case.assigned_ae_id:
-        ae = OfficerProfile.objects.filter(role=Role.AE, active=True, zones=case.zone).first() if case.zone_id else None
+        ae = None
+        if access.get_setting("auto_assign_ae_by_zone", True) and case.zone_id:
+            ae = OfficerProfile.objects.filter(role=Role.AE, active=True, zones=case.zone).first()
         ae = ae or (prof.reports_to if prof.reports_to and prof.reports_to.role == Role.AE else None)
         case.assigned_ae = ae.user if ae else None
-    case.submitted_at = timezone.now()
     _set_status(case, S.PENDING_AE, user, "SUBMIT_TO_AE", request, remarks, owner_role=Role.AE)
     notify_user(case.assigned_ae, case, f"New violation case {case.case_no} for review", case.address_line)
     if not case.assigned_ae_id:
@@ -172,19 +195,25 @@ def submit_to_ae(case, user, request=None, remarks=""):
     return case
 
 
+def _pick_jc(case):
+    jc = None
+    if access.get_setting("auto_assign_jc_by_zone", True) and case.zone_id:
+        jc = OfficerProfile.objects.filter(role=Role.JC, active=True, zones=case.zone).first()
+    jc = jc or OfficerProfile.objects.filter(role=Role.JC, active=True).first()
+    return jc.user if jc else None
+
+
 # ---------------------------------------------------------------------------
 # 2. AE review
 # ---------------------------------------------------------------------------
 @transaction.atomic
 def ae_forward(case, user, request=None, remarks="", jc_user=None, recommendation=""):
-    _require_role(user, Role.AE, Role.XEN)
+    _authorize(user, "ae_forward", case)
     _require_status(case, S.PENDING_AE)
     if not case.assigned_ae_id:
         case.assigned_ae = user
     if jc_user is None:
-        jc = OfficerProfile.objects.filter(role=Role.JC, active=True, zones=case.zone).first() if case.zone_id else None
-        jc = jc or OfficerProfile.objects.filter(role=Role.JC, active=True).first()
-        jc_user = jc.user if jc else None
+        jc_user = _pick_jc(case)
     case.assigned_jc = jc_user
     case.ae_forwarded_at = timezone.now()
     case.jc_received_at = timezone.now()
@@ -195,7 +224,7 @@ def ae_forward(case, user, request=None, remarks="", jc_user=None, recommendatio
 
 @transaction.atomic
 def ae_return(case, user, request=None, remarks=""):
-    _require_role(user, Role.AE, Role.XEN)
+    _authorize(user, "ae_return", case)
     _require_status(case, S.PENDING_AE)
     if not remarks:
         raise WorkflowError("Remarks are mandatory when returning a case")
@@ -212,8 +241,13 @@ def jc_issue_notice(case, user, request=None, *, order_type_code: str, days: int
                     addressee_address: str = "", mobiles: list[str] | None = None, hearing_at=None, hearing_venue: str = "",
                     operative_text_en: str = "", operative_text_hi: str = "", remarks: str = "", send_sms: bool = True,
                     is_final_order: bool | None = None) -> Notice:
-    prof = _require_role(user, Role.JC)
     ot = OrderType.objects.get(code=order_type_code, active=True)
+    final_guess = ot.code in ORDER_KINDS_FINAL if is_final_order is None else is_final_order
+    prof = _authorize(user, "issue_order" if final_guess else "issue_notice", case)
+    if final_guess and access.get_setting("block_final_order_on_pending_referral", True):
+        pend = case.referrals.filter(status=BranchReferral.Status.PENDING, hold_case=True).select_related("branch")
+        if pend.exists():
+            raise WorkflowError("A final order cannot be passed while a 'hold' referral is pending with: " + ", ".join(r.branch.name_en for r in pend))
     allowed = set()
     for cv in case.violations.select_related("violation_type"):
         allowed.update(cv.violation_type.orders_available or [])
@@ -287,7 +321,7 @@ def jc_issue_notice(case, user, request=None, *, order_type_code: str, days: int
 
 @transaction.atomic
 def jc_drop(case, user, request=None, remarks="", regularised=False):
-    _require_role(user, Role.JC)
+    _authorize(user, "regularise" if regularised else "drop", case)
     _require_status(case, S.PENDING_JC, S.SCN_SERVED, S.RESPONSE_RECEIVED, S.RESPONSE_PENDING_JC, S.NO_RESPONSE, S.HEARING_SCHEDULED, S.SCN_ISSUED, S.ORDER_SERVED, S.APPEAL_STAY, S.EXECUTION_DUE)
     if not remarks:
         raise WorkflowError("A speaking order / reasons are mandatory to drop or regularise a case")
@@ -305,9 +339,9 @@ def jc_drop(case, user, request=None, remarks="", regularised=False):
 # ---------------------------------------------------------------------------
 @transaction.atomic
 def record_service(notice: Notice, user, request=None, *, mode: str, served_at=None, remarks: str = "", media_ids: list | None = None):
-    _require_role(user, Role.JE, Role.FIELD_STAFF, Role.AE, Role.JC, Role.JC_CLERK)
     case = notice.case
-    if mode == "AFFIXATION" and not media_ids:
+    _authorize(user, "record_service", case)
+    if mode == "AFFIXATION" and not media_ids and access.get_setting("require_geotag_for_affixation", True):
         raise WorkflowError("Affixation must be proved by at least one geotagged photograph")
     if media_ids:
         attach_media(case, media_ids, user, kind="NOTICE_DELIVERY" if notice.kind == "NOTICE" else "ORDER_DELIVERY", notice=notice)
@@ -345,7 +379,7 @@ def record_service(notice: Notice, user, request=None, *, mode: str, served_at=N
 @transaction.atomic
 def record_response(case, user, request=None, *, notice: Notice | None, received_on, received_via: str, summary: str,
                     submitted_by_name: str = "", requests_hearing: bool = False, media_ids: list | None = None, remarks=""):
-    prof = _require_role(user, Role.JE, Role.JC_CLERK, Role.AE, Role.JC)
+    prof = _authorize(user, "record_response", case)
     _require_status(case, S.SCN_SERVED, S.SCN_ISSUED, S.NO_RESPONSE, S.HEARING_SCHEDULED, S.RESPONSE_RECEIVED, S.RESPONSE_PENDING_AE, S.RESPONSE_PENDING_JC)
     notice = notice or case.notices.filter(order_type__code__in=SCN_TYPES).order_by("-issued_at").first()
     within = True
@@ -357,8 +391,8 @@ def record_response(case, user, request=None, *, notice: Notice | None, received
     if media_ids:
         attach_media(case, media_ids, user, kind="RESPONSE")
     case.response_received_at = timezone.now()
-    # Route: JE-uploaded responses travel via AE to JC; clerk/JC uploads go straight to JC.
-    if prof.role in (Role.JE, Role.FIELD_STAFF):
+    # Route: JE-uploaded responses travel via AE to JC (configurable); clerk/JC uploads go straight to JC.
+    if prof.role in (Role.JE, Role.FIELD_STAFF) and access.get_setting("route_je_response_via_ae", True) and access.get_setting("require_ae_review", True):
         _set_status(case, S.RESPONSE_PENDING_AE, user, "RESPONSE_RECORDED", request, remarks, payload={"response_id": resp.id, "via": received_via}, owner_role=Role.AE)
         notify_user(case.assigned_ae, case, f"Response received on {case.case_no} - add comments and forward", summary[:200])
     else:
@@ -369,8 +403,8 @@ def record_response(case, user, request=None, *, notice: Notice | None, received
 
 @transaction.atomic
 def ae_forward_response(response: CaseResponse, user, request=None, comments=""):
-    _require_role(user, Role.AE, Role.XEN)
     case = response.case
+    _authorize(user, "ae_forward_response", case)
     _require_status(case, S.RESPONSE_PENDING_AE)
     response.ae_comments = comments
     response.ae_commented_at = timezone.now()
@@ -394,7 +428,9 @@ def mark_no_response(case, actor=None):
 # ---------------------------------------------------------------------------
 @transaction.atomic
 def schedule_hearing(case, user, request=None, *, scheduled_at, venue="", notice: Notice | None = None, remarks=""):
-    _require_role(user, Role.JC, Role.JC_CLERK)
+    prof = _authorize(user, "schedule_hearing", case)
+    if prof.role == Role.JC_CLERK and not access.get_setting("allow_jc_clerk_hearing", True):
+        raise WorkflowError("Clerks are not allowed to fix hearings (workflow setting)", 403)
     _require_status(case, S.SCN_SERVED, S.RESPONSE_RECEIVED, S.RESPONSE_PENDING_JC, S.NO_RESPONSE, S.HEARING_SCHEDULED, S.RESPONSE_PENDING_AE)
     presiding = case.assigned_jc or user
     h = Hearing.objects.create(case=case, notice=notice, scheduled_at=scheduled_at, venue=venue, presiding=presiding)
@@ -406,7 +442,7 @@ def schedule_hearing(case, user, request=None, *, scheduled_at, venue="", notice
 
 @transaction.atomic
 def record_hearing(hearing: Hearing, user, request=None, *, proceedings="", attendees="", outcome="HEARD", next_date=None, media_ids=None):
-    _require_role(user, Role.JC, Role.JC_CLERK)
+    _authorize(user, "record_hearing", hearing.case)
     hearing.held_at = timezone.now()
     hearing.proceedings, hearing.attendees, hearing.outcome, hearing.next_date = proceedings, attendees, outcome, next_date
     hearing.save()
@@ -425,42 +461,111 @@ def record_hearing(hearing: Hearing, user, request=None, *, proceedings="", atte
 # ---------------------------------------------------------------------------
 # 7. Appeal / stay
 # ---------------------------------------------------------------------------
+def _sync_litigation_flag(case: ViolationCase):
+    """Mirror the latest live appeal on the case so lists, dashboards and the app show the flag."""
+    ap = case.appeals.order_by("-filed_on", "-id").first()
+    if not ap:
+        case.litigation_status, case.litigation_authority, case.stay_until, case.next_hearing_on = "NONE", "", None, None
+    else:
+        case.litigation_authority = ap.authority
+        case.next_hearing_on = ap.next_hearing_on
+        if ap.status == Appeal.Status.STAYED:
+            case.litigation_status, case.stay_until = "STAYED", ap.stay_until
+        elif ap.status == Appeal.Status.PENDING:
+            case.litigation_status, case.stay_until = "APPEAL_PENDING", None
+        else:
+            case.litigation_status, case.stay_until = "DECIDED", None
+    case.save(update_fields=["litigation_status", "litigation_authority", "stay_until", "next_hearing_on"])
+
+
 @transaction.atomic
-def record_appeal(case, user, request=None, *, filed_on, authority, appeal_no="", stay_granted=False, stay_until=None, conditions="", order: Notice | None = None, media_ids=None, remarks=""):
-    _require_role(user, Role.JC, Role.JC_CLERK, Role.AE)
-    ap = Appeal.objects.create(case=case, order=order or case.final_order, filed_on=filed_on, authority=authority, appeal_no=appeal_no,
-                               status="STAYED" if stay_granted else "PENDING", stay_granted=stay_granted, stay_until=stay_until,
-                               conditions=conditions, recorded_by=user)
+def record_appeal(case, user, request=None, *, filed_on, authority, appeal_no="", authority_other="", appellant_name="", counsel_for_mcg="",
+                  stay_granted=False, stay_order_date=None, stay_until=None, stay_scope="", conditions="", next_hearing_on=None,
+                  stay_order_media=None, order: Notice | None = None, media_ids=None, remarks=""):
+    """Record an appeal / writ. A stay may be recorded only with the stay order uploaded (setting
+    `require_stay_order_upload`), so that every deferred action has a legal backing on the file."""
+    _authorize(user, "record_appeal", case)
+    if stay_granted and access.get_setting("require_stay_order_upload", True) and not stay_order_media:
+        raise WorkflowError("Upload the stay / interim order before recording a stay - a deferred action must have the court's order on file")
+    ap = Appeal.objects.create(case=case, order=order or case.final_order, authority=authority, authority_other=authority_other, filed_on=filed_on, appeal_no=appeal_no,
+                               appellant_name=appellant_name or case.owner_name, counsel_for_mcg=counsel_for_mcg,
+                               status=Appeal.Status.STAYED if stay_granted else Appeal.Status.PENDING, stay_granted=stay_granted, stay_order_date=stay_order_date,
+                               stay_until=stay_until, stay_scope=stay_scope or (Appeal.StayScope.FULL if stay_granted else ""), conditions=conditions,
+                               next_hearing_on=next_hearing_on, stay_order=stay_order_media, recorded_by=user)
     if media_ids:
         attach_media(case, media_ids, user, kind="APPEAL")
+    if stay_order_media:
+        stay_order_media.case = case
+        stay_order_media.kind = "STAY_ORDER"
+        stay_order_media.save(update_fields=["case", "kind"])
+    _sync_litigation_flag(case)
+    payload = {"appeal_id": ap.id, "authority": authority, "appeal_no": appeal_no, "stay": stay_granted, "stay_until": str(stay_until) if stay_until else None, "stay_order_media": str(stay_order_media.id) if stay_order_media else None}
     if stay_granted:
-        _set_status(case, S.APPEAL_STAY, user, "APPEAL_STAY", request, remarks, payload={"appeal_id": ap.id, "authority": authority, "stay_until": str(stay_until)}, owner_role=Role.JC)
+        _set_status(case, S.APPEAL_STAY, user, "APPEAL_STAY", request, remarks or f"Stay by {ap.get_authority_display()} ({appeal_no})", payload=payload, owner_role=Role.JC)
+        notify_user(case.reported_by, case, f"STAY on {case.case_no} by {ap.get_authority_display()}", "No further action till the stay is vacated / expires. Order is on the case file.")
+        notify_role(Role.FIELD_STAFF, case, f"STAY on {case.case_no} - do not execute", zone=case.zone, level="WARNING")
     else:
-        record_event(case, "APPEAL_FILED", actor=user, from_status=case.status, to_status=case.status, remarks=remarks, payload={"appeal_id": ap.id, "authority": authority}, request=request)
+        record_event(case, "APPEAL_FILED", actor=user, from_status=case.status, to_status=case.status, remarks=remarks, payload=payload, request=request)
+    notify_user(case.assigned_jc, case, f"Appeal recorded on {case.case_no} before {ap.get_authority_display()}", appeal_no)
     return ap
 
 
 @transaction.atomic
-def decide_appeal(appeal: Appeal, user, request=None, *, status: str, decided_on, decision_summary="", new_compliance_days: int | None = None, media_ids=None):
-    _require_role(user, Role.JC, Role.JC_CLERK)
-    appeal.status, appeal.decided_on, appeal.decision_summary = status, decided_on, decision_summary
-    appeal.save()
+def update_appeal(appeal: Appeal, user, request=None, *, status: str | None = None, decided_on=None, decision_summary="", new_compliance_days: int | None = None,
+                  stay_until=None, stay_scope=None, conditions=None, next_hearing_on=None, stay_order_media=None, final_order_media=None, appeal_no=None,
+                  counsel_for_mcg=None, media_ids=None, remarks=""):
+    """Update the litigation flag: extend / vacate a stay, record hearing dates, upload later orders,
+    record the final decision. Resumes the compliance clock when the stay goes."""
+    _authorize(user, "decide_appeal", appeal.case)
     case = appeal.case
+    before = appeal.status
     if media_ids:
         attach_media(case, media_ids, user, kind="APPEAL")
-    if status in ("DISMISSED", "MODIFIED", "WITHDRAWN") and case.status == S.APPEAL_STAY:
+    if stay_order_media:
+        stay_order_media.case, stay_order_media.kind = case, "STAY_ORDER"
+        stay_order_media.save(update_fields=["case", "kind"])
+        appeal.stay_order = stay_order_media
+    if final_order_media:
+        final_order_media.case, final_order_media.kind = case, "COURT_ORDER"
+        final_order_media.save(update_fields=["case", "kind"])
+        appeal.final_order = final_order_media
+    if status:
+        if status == Appeal.Status.STAYED and not appeal.stay_order and access.get_setting("require_stay_order_upload", True):
+            raise WorkflowError("Upload the stay / interim order before recording a stay")
+        appeal.status = status
+        appeal.stay_granted = status == Appeal.Status.STAYED
+    for f, v in (("stay_until", stay_until), ("stay_scope", stay_scope), ("conditions", conditions), ("next_hearing_on", next_hearing_on), ("appeal_no", appeal_no), ("counsel_for_mcg", counsel_for_mcg)):
+        if v is not None:
+            setattr(appeal, f, v)
+    if decided_on:
+        appeal.decided_on = decided_on
+    if decision_summary:
+        appeal.decision_summary = decision_summary
+    appeal.save()
+    _sync_litigation_flag(case)
+    payload = {"appeal_id": appeal.id, "from": before, "to": appeal.status, "stay_until": str(appeal.stay_until) if appeal.stay_until else None, "next_hearing_on": str(appeal.next_hearing_on) if appeal.next_hearing_on else None}
+    stay_lifted = before == Appeal.Status.STAYED and appeal.status in (Appeal.Status.STAY_VACATED, Appeal.Status.DISMISSED, Appeal.Status.MODIFIED, Appeal.Status.WITHDRAWN, Appeal.Status.DISPOSED)
+    if stay_lifted and case.status == S.APPEAL_STAY:
         if new_compliance_days:
             case.compliance_due_at = timezone.now() + timedelta(days=new_compliance_days)
         elif case.compliance_due_at and case.compliance_due_at < timezone.now():
-            case.compliance_due_at = timezone.now() + timedelta(days=3)  # residual period, at least statutory minimum
-        _set_status(case, S.ORDER_SERVED, user, "APPEAL_DECIDED", request, decision_summary, payload={"appeal_id": appeal.id, "status": status}, owner_role=Role.FIELD_STAFF)
-    elif status == "ALLOWED":
-        case.closure_reason = f"Order set aside in appeal: {decision_summary}"
+            case.compliance_due_at = timezone.now() + timedelta(days=3)  # residual period, never below the statutory minimum
+        _set_status(case, S.ORDER_SERVED if case.order_served_at else S.PENDING_JC, user, "STAY_LIFTED", request, decision_summary or remarks, payload=payload, owner_role=Role.FIELD_STAFF if case.order_served_at else Role.JC)
+        notify_user(case.reported_by, case, f"Stay lifted on {case.case_no} - compliance clock resumed", f"Comply by {case.compliance_due_at:%d-%m-%Y}" if case.compliance_due_at else "")
+    elif appeal.status == Appeal.Status.STAYED and case.status != S.APPEAL_STAY and case.status not in (S.CLOSED, S.DROPPED, S.REGULARISED):
+        _set_status(case, S.APPEAL_STAY, user, "APPEAL_STAY", request, remarks, payload=payload, owner_role=Role.JC)
+    elif appeal.status == Appeal.Status.ALLOWED:
+        case.closure_reason = f"Order set aside by {appeal.get_authority_display()}: {decision_summary}"
         case.closed_at = timezone.now()
-        _set_status(case, S.CLOSED, user, "APPEAL_ALLOWED", request, decision_summary, payload={"appeal_id": appeal.id}, owner_role=Role.JC)
+        _set_status(case, S.CLOSED, user, "APPEAL_ALLOWED", request, decision_summary, payload=payload, owner_role=Role.JC)
     else:
-        record_event(case, "APPEAL_UPDATED", actor=user, from_status=case.status, to_status=case.status, remarks=decision_summary, payload={"appeal_id": appeal.id, "status": status}, request=request)
+        record_event(case, "APPEAL_UPDATED", actor=user, from_status=case.status, to_status=case.status, remarks=decision_summary or remarks, payload=payload, request=request)
     return appeal
+
+
+def decide_appeal(appeal: Appeal, user, request=None, *, status: str, decided_on, decision_summary="", new_compliance_days: int | None = None, media_ids=None):
+    """Backwards-compatible wrapper around update_appeal."""
+    return update_appeal(appeal, user, request, status=status, decided_on=decided_on, decision_summary=decision_summary, new_compliance_days=new_compliance_days, media_ids=media_ids)
 
 
 # ---------------------------------------------------------------------------
@@ -480,13 +585,13 @@ def mark_execution_due(case, actor=None):
 @transaction.atomic
 def record_execution(case, user, request=None, *, action: str, mode: str, executed_on, media_ids: list, squad_incharge="", police_assistance=False,
                      police_station="", duty_magistrate="", machinery_used="", area_demolished_sqm=None, seal_memo_no="", cost_incurred_inr=None, remarks=""):
-    _require_role(user, Role.JE, Role.FIELD_STAFF, Role.AE, Role.JC)
+    _authorize(user, "record_execution", case)
     _require_status(case, S.ORDER_SERVED, S.EXECUTION_DUE, S.ORDER_ISSUED, S.PENDING_JC, S.SCN_SERVED, S.RESPONSE_PENDING_JC, S.NO_RESPONSE)
     if not media_ids:
         raise WorkflowError("Geotagged photographs/videos of the demolition or sealing are mandatory")
     attach_media(case, media_ids, user, kind="EXECUTION" if mode == "CORPORATION" else "COMPLIANCE")
     unverified = case.media.filter(id__in=media_ids, geotag_verified=False, latitude__isnull=False)
-    if case.latitude is not None and unverified.exists():
+    if access.get_setting("require_geotag_for_execution", True) and case.latitude is not None and unverified.exists():
         raise WorkflowError("Execution evidence must be captured at the property location (geotag mismatch)")
     ex = ExecutionRecord.objects.create(case=case, order=case.final_order, action=action, mode=mode, executed_on=executed_on, squad_incharge=squad_incharge,
                                         police_assistance=police_assistance, police_station=police_station, duty_magistrate=duty_magistrate,
@@ -511,7 +616,7 @@ def record_execution(case, user, request=None, *, action: str, mode: str, execut
 
 @transaction.atomic
 def verify_and_close(case, user, request=None, remarks=""):
-    _require_role(user, Role.JC, Role.AE)
+    _authorize(user, "close", case)
     _require_status(case, S.COMPLIED, S.EXECUTED, S.DROPPED, S.REGULARISED)
     ex = case.executions.order_by("-executed_on").first()
     if ex and not ex.verified_at:
@@ -525,7 +630,7 @@ def verify_and_close(case, user, request=None, remarks=""):
 
 @transaction.atomic
 def reopen(case, user, request=None, remarks=""):
-    _require_role(user, Role.JC)
+    _authorize(user, "reopen", case)
     _require_status(case, S.CLOSED, S.DROPPED, S.REGULARISED)
     if not remarks:
         raise WorkflowError("Reasons are mandatory to reopen a case")
@@ -534,39 +639,111 @@ def reopen(case, user, request=None, remarks=""):
     return case
 
 
-# Transitions exposed to the UI so buttons can be shown per role/status
-ACTION_MATRIX = {
-    S.DRAFT: {"JE": ["update", "submit_to_ae", "add_media"], "FIELD_STAFF": ["submit_to_ae", "add_media"]},
-    S.RETURNED_TO_JE: {"JE": ["update", "submit_to_ae", "add_media"]},
-    S.PENDING_AE: {"AE": ["ae_forward", "ae_return", "add_media"], "XEN": ["ae_forward", "ae_return"]},
-    S.PENDING_JC: {"JC": ["issue_notice", "issue_order", "drop", "regularise", "add_media"]},
-    S.SCN_ISSUED: {"JE": ["record_service", "add_media"], "FIELD_STAFF": ["record_service", "add_media"], "JC": ["issue_notice", "issue_order", "drop"], "JC_CLERK": ["record_response"]},
-    S.SCN_SERVED: {"JE": ["record_response", "add_media"], "JC_CLERK": ["record_response", "schedule_hearing"], "JC": ["record_response", "schedule_hearing", "issue_order", "issue_notice", "drop", "regularise"], "AE": ["record_response"]},
-    S.RESPONSE_PENDING_AE: {"AE": ["ae_forward_response"], "XEN": ["ae_forward_response"]},
-    S.RESPONSE_PENDING_JC: {"JC": ["issue_order", "issue_notice", "schedule_hearing", "drop", "regularise"], "JC_CLERK": ["schedule_hearing", "record_response"]},
-    S.RESPONSE_RECEIVED: {"JC": ["issue_order", "schedule_hearing", "drop", "regularise"]},
-    S.NO_RESPONSE: {"JC": ["issue_order", "issue_notice", "schedule_hearing", "drop"], "JC_CLERK": ["record_response", "schedule_hearing"], "JE": ["record_response"]},
-    S.HEARING_SCHEDULED: {"JC": ["record_hearing", "issue_order", "drop", "regularise"], "JC_CLERK": ["record_hearing", "record_response"]},
-    S.ORDER_ISSUED: {"JE": ["record_service", "add_media"], "FIELD_STAFF": ["record_service", "add_media"], "JC": ["record_appeal", "drop"], "JC_CLERK": ["record_appeal"]},
-    S.ORDER_SERVED: {"JE": ["record_execution", "add_media"], "FIELD_STAFF": ["record_execution", "add_media"], "JC": ["record_appeal", "record_execution", "drop"], "JC_CLERK": ["record_appeal"]},
-    S.APPEAL_STAY: {"JC": ["decide_appeal"], "JC_CLERK": ["decide_appeal"]},
-    S.EXECUTION_DUE: {"JE": ["record_execution", "add_media"], "FIELD_STAFF": ["record_execution", "add_media"], "JC": ["record_appeal", "record_execution", "drop"]},
-    S.COMPLIED: {"JC": ["close"], "AE": ["close"]},
-    S.EXECUTED: {"JC": ["close"], "AE": ["close"]},
-    S.CLOSED: {"JC": ["reopen"]},
-    S.DROPPED: {"JC": ["reopen"]},
-    S.REGULARISED: {"JC": ["reopen"]},
-}
+# ---------------------------------------------------------------------------
+# 9. Branch referrals (Planning / Revenue / Legal ...) and re-assignment
+# ---------------------------------------------------------------------------
+@transaction.atomic
+def refer_to_branch(case, user, request=None, *, branch: Branch, query: str, due_days: int | None = None, hold_case: bool = False, assigned_to=None, media_ids=None, remarks=""):
+    """Send the case to a branch for its report. The main workflow status is unchanged; the referral is
+    tracked separately and (optionally) blocks the final order until answered."""
+    _authorize(user, "refer_branch", case)
+    if not access.has_perm(user, "BRANCH_REFER"):
+        raise WorkflowError("You do not have the BRANCH_REFER permission", 403)
+    if not query.strip():
+        raise WorkflowError("State what the branch is asked to examine")
+    if case.status in (S.CLOSED, S.DROPPED, S.REGULARISED):
+        raise WorkflowError("Closed cases cannot be referred")
+    days = due_days if due_days is not None else (branch.default_response_days or access.get_setting("referral_default_days", 7))
+    ref = BranchReferral.objects.create(case=case, branch=branch, referred_by=user, query=query, due_at=timezone.now() + timedelta(days=int(days)),
+                                        hold_case=hold_case, assigned_to=assigned_to)
+    if media_ids:
+        attach_media(case, media_ids, user, kind="BRANCH_REFERRAL")
+    record_event(case, "REFERRED_TO_BRANCH", actor=user, from_status=case.status, to_status=case.status, remarks=f"{branch.name_en}: {query}", payload={"referral_id": ref.id, "branch": branch.code, "hold_case": hold_case, "due_at": str(ref.due_at)}, request=request)
+    if assigned_to:
+        notify_user(assigned_to, case, f"Referral on {case.case_no} - {branch.name_en}", query[:200])
+    else:
+        for p in OfficerProfile.objects.filter(role=Role.BRANCH_OFFICER, branch=branch, active=True):
+            notify_user(p.user, case, f"Referral on {case.case_no} - {branch.name_en}", query[:200])
+    return ref
+
+
+@transaction.atomic
+def respond_to_referral(ref: BranchReferral, user, request=None, *, response: str, recommendation: str = "", media_ids=None):
+    case = ref.case
+    prof = _authorize(user, "respond_branch", case)
+    if prof.role == Role.BRANCH_OFFICER and prof.branch_id != ref.branch_id and not access.has_perm(user, "REFERRALS_VIEW_ALL"):
+        raise WorkflowError("This referral belongs to another branch", 403)
+    if ref.status != BranchReferral.Status.PENDING:
+        raise WorkflowError("This referral has already been answered / closed")
+    if not response.strip():
+        raise WorkflowError("Enter the branch's response")
+    ref.response, ref.recommendation, ref.responded_by, ref.responded_at = response, recommendation, user, timezone.now()
+    ref.status = BranchReferral.Status.RESPONDED
+    ref.save()
+    if media_ids:
+        attach_media(case, media_ids, user, kind="BRANCH_RESPONSE")
+    record_event(case, "BRANCH_RESPONDED", actor=user, from_status=case.status, to_status=case.status, remarks=f"{ref.branch.name_en}: {response}", payload={"referral_id": ref.id, "branch": ref.branch.code, "recommendation": recommendation}, request=request)
+    notify_user(ref.referred_by, case, f"{ref.branch.name_en} has responded on {case.case_no}", response[:200])
+    if case.assigned_jc_id and case.assigned_jc_id != ref.referred_by_id:
+        notify_user(case.assigned_jc, case, f"{ref.branch.name_en} has responded on {case.case_no}", response[:200])
+    return ref
+
+
+@transaction.atomic
+def close_referral(ref: BranchReferral, user, request=None, *, remarks="", withdrawn=False):
+    case = ref.case
+    _authorize(user, "refer_branch", case)
+    if ref.referred_by_id != user.pk and not access.has_perm(user, "REFERRALS_VIEW_ALL") and getattr(user, "bvms_profile", None) and user.bvms_profile.role not in access.MANAGEMENT_ROLES:
+        raise WorkflowError("Only the referring officer can close this referral", 403)
+    ref.status = BranchReferral.Status.WITHDRAWN if withdrawn else BranchReferral.Status.CLOSED
+    ref.closed_by, ref.closed_at, ref.closing_remarks = user, timezone.now(), remarks
+    ref.save()
+    record_event(case, "REFERRAL_WITHDRAWN" if withdrawn else "REFERRAL_CLOSED", actor=user, from_status=case.status, to_status=case.status, remarks=remarks, payload={"referral_id": ref.id}, request=request)
+    return ref
+
+
+@transaction.atomic
+def reassign_case(case, user, request=None, *, assigned_ae=None, assigned_jc=None, reported_by=None, remarks="", order_reference=""):
+    """Change the officers handling a case (used when jurisdictions change or an officer is transferred)."""
+    _authorize(user, "reassign", case)
+    if not access.has_perm(user, "CASE_REASSIGN"):
+        raise WorkflowError("You do not have the CASE_REASSIGN permission", 403)
+    before = {"ae": case.assigned_ae_id, "jc": case.assigned_jc_id, "je": case.reported_by_id}
+    if assigned_ae is not None:
+        case.assigned_ae = assigned_ae
+    if assigned_jc is not None:
+        case.assigned_jc = assigned_jc
+    if reported_by is not None:
+        case.reported_by = reported_by
+    case.save()
+    after = {"ae": case.assigned_ae_id, "jc": case.assigned_jc_id, "je": case.reported_by_id}
+    record_event(case, "REASSIGNED", actor=user, from_status=case.status, to_status=case.status, remarks=remarks or order_reference, payload={"before": before, "after": after, "order_reference": order_reference}, request=request)
+    for u in (assigned_ae, assigned_jc, reported_by):
+        if u is not None:
+            notify_user(u, case, f"Case {case.case_no} assigned to you", remarks)
+    return case
 
 
 def available_actions(case, user) -> list[str]:
+    """Actions the UI may offer this user on this case (DB-driven rules + per-case guards)."""
     prof = getattr(user, "bvms_profile", None)
-    if not prof:
+    if not prof or not prof.active:
         return []
-    role = prof.role
-    if role in (Role.ADMIN, Role.COMMISSIONER, Role.ADDL_COMMISSIONER):
-        acts = set()
-        for r in ACTION_MATRIX.get(case.status, {}).values():
-            acts.update(r)
-        return sorted(acts)
-    return ACTION_MATRIX.get(case.status, {}).get(role, [])
+    acts = set(access.actions_for(case.status, prof.role))
+    if "respond_branch" in acts:
+        pend = case.referrals.filter(status=BranchReferral.Status.PENDING)
+        if prof.role == Role.BRANCH_OFFICER and not access.has_perm(user, "REFERRALS_VIEW_ALL"):
+            pend = pend.filter(branch=prof.branch)
+        if not pend.exists():
+            acts.discard("respond_branch")
+    if "refer_branch" in acts and (case.status in (S.CLOSED, S.DROPPED, S.REGULARISED) or not access.has_perm(user, "BRANCH_REFER")):
+        acts.discard("refer_branch")
+    if "reassign" in acts and not access.has_perm(user, "CASE_REASSIGN"):
+        acts.discard("reassign")
+    if "create" in acts:
+        acts.discard("create")
+    return sorted(acts)
+
+
+# Backwards-compatible alias for code that imported the static matrix
+ACTION_MATRIX = access.DEFAULT_ACTION_MATRIX

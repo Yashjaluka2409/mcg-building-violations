@@ -1,5 +1,5 @@
 import { API_BASE, api } from "./client";
-import type { Appeal, CaseDetail, CaseListItem, GovtParcel, LegalSection, Me, Media, Notice, Notification, OrderType, Paginated, SanctionedPlan, ViolationType, Ward, Zone } from "./types";
+import type { AdminLog, Appeal, Branch, CaseDetail, CaseListItem, GovtParcel, LegalSection, Me, Media, Notice, Notification, OrderType, Paginated, PermMatrix, Referral, RulesMatrix, SanctionedPlan, ViolationType, Ward, WorkflowSetting, Zone } from "./types";
 
 export const auth = {
   requestOtp: (mobile: string) => api.post("/auth/otp/request/", { mobile }).then((r) => r.data),
@@ -77,5 +77,27 @@ export const officers = {
   list: (params?: Record<string, unknown>) => api.get("/officers/", { params: { page_size: 200, ...params } }).then((r) => r.data as Paginated<any>),
   create: (d: Record<string, unknown>) => api.post("/officers/", d).then((r) => r.data),
   update: (id: number, d: Record<string, unknown>) => api.patch(`/officers/${id}/`, d).then((r) => r.data),
+};
+export const branches = {
+  list: () => api.get<Branch[]>("/branches/").then((r) => r.data),
+  save: (d: Partial<Branch> & { order_reference?: string }) => (d.code && d.code.length ? api.patch<Branch>(`/branches/${d.code}/`, d).then((r) => r.data) : api.post<Branch>("/branches/", d).then((r) => r.data)),
+  create: (d: Partial<Branch> & { order_reference?: string }) => api.post<Branch>("/branches/", d).then((r) => r.data),
+};
+export const referrals = {
+  list: (params: Record<string, unknown>) => api.get<Paginated<Referral>>("/referrals/", { params }).then((r) => r.data),
+  counts: () => api.get("/referrals/counts/").then((r) => r.data as { pending: number; overdue: number; responded: number }),
+};
+export const admin = {
+  rules: () => api.get<RulesMatrix>("/admin/workflow-rules/").then((r) => r.data),
+  saveRules: (rules: { status: string; role: string; action: string; allowed: boolean }[], order_reference: string, remarks = "") => api.put<RulesMatrix>("/admin/workflow-rules/", { rules, order_reference, remarks }).then((r) => r.data),
+  resetRules: (order_reference: string) => api.post<RulesMatrix>("/admin/workflow-rules/", { order_reference }).then((r) => r.data),
+  settings: () => api.get<WorkflowSetting[]>("/admin/settings/").then((r) => r.data),
+  saveSettings: (values: Record<string, unknown>, order_reference: string) => api.put<WorkflowSetting[]>("/admin/settings/", { values, order_reference }).then((r) => r.data),
+  permissions: () => api.get<PermMatrix>("/admin/permissions/").then((r) => r.data),
+  savePermissions: (grants: { role: string; permission: string; allowed: boolean }[], order_reference: string) => api.put<PermMatrix>("/admin/permissions/", { grants, order_reference }).then((r) => r.data),
+  officerOverrides: (id: number) => api.get(`/officers/${id}/permissions/`).then((r) => r.data as { overrides: { permission: string; allowed: boolean; reason: string }[]; effective: string[]; role_defaults: string[] }),
+  saveOfficerOverrides: (id: number, overrides: { permission: string; allowed: boolean; reason?: string }[], order_reference: string) => api.put(`/officers/${id}/permissions/`, { overrides, order_reference }).then((r) => r.data),
+  auditLog: (params?: Record<string, string>) => api.get<AdminLog[]>("/admin/audit-log/", { params }).then((r) => r.data),
+  reassign: (d: Record<string, unknown>) => api.post("/admin/reassign-cases/", d).then((r) => r.data as { reassigned: number }),
 };
 export type { Appeal };

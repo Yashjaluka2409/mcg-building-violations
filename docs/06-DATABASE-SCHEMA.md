@@ -36,6 +36,20 @@ All tables are prefixed `bvms_`. Generated from `backend/building_violations/mod
 | boundary | JSONField | yes | GeoJSON Polygon/MultiPolygon (WGS84) |
 | active | BooleanField | no |  |
 
+## `bvms_branch` - Branch
+
+A branch of the Corporation that can be consulted on a case (Planning, Revenue, Legal, Fire ...).
+
+| Column | Type | Null | Description |
+|---|---|---|---|
+| code | CharField | no |  |
+| name_en | CharField | no |  |
+| name_hi | CharField | no |  |
+| description | TextField | no |  |
+| head_designation | CharField | no |  |
+| default_response_days | PositiveSmallIntegerField | no |  |
+| active | BooleanField | no |  |
+
 ## `bvms_officer_profile` - OfficerProfile
 
 Role and jurisdiction of a platform user inside this module.
@@ -46,7 +60,7 @@ Role and jurisdiction of a platform user inside this module.
 | created_at | DateTimeField | no |  |
 | updated_at | DateTimeField | no |  |
 | user_id | FK → auth_user | no |  |
-| role | CharField | no | choices: JE, AE, XEN, JC, JC_CLERK, ADDL_COMMISSIONER, COMMISSIONER, FIELD_STAFF, ADMIN, VIEWER |
+| role | CharField | no | choices: JE, AE, XEN, JC, JC_CLERK, ADDL_COMMISSIONER, COMMISSIONER, FIELD_STAFF, BRANCH_OFFICER, ADMIN, VIEWER |
 | designation | CharField | no |  |
 | employee_code | CharField | no |  |
 | mobile | CharField | no |  |
@@ -56,6 +70,7 @@ Role and jurisdiction of a platform user inside this module.
 | delegation_order_date | DateField | yes |  |
 | signature_image | FileField | yes |  |
 | parent_profile_id | FK → bvms_officer_profile | yes | For JC_CLERK: the JC whose office this clerk belongs to |
+| branch_id | FK → bvms_branch | yes | For BRANCH_OFFICER: the branch this officer answers for |
 | active | BooleanField | no |  |
 | zones | ManyToManyField | no |  |
 | wards | ManyToManyField | no |  |
@@ -144,7 +159,7 @@ Turn-around time per workflow stage; escalation goes to `escalate_to_role`.
 | stage | CharField | no |  |
 | label | CharField | no |  |
 | hours | PositiveIntegerField | no |  |
-| escalate_to_role | CharField | no | choices: JE, AE, XEN, JC, JC_CLERK, ADDL_COMMISSIONER, COMMISSIONER, FIELD_STAFF, ADMIN, VIEWER |
+| escalate_to_role | CharField | no | choices: JE, AE, XEN, JC, JC_CLERK, ADDL_COMMISSIONER, COMMISSIONER, FIELD_STAFF, BRANCH_OFFICER, ADMIN, VIEWER |
 | active | BooleanField | no |  |
 
 ## `bvms_land_layer_upload` - LandLayerUpload
@@ -235,7 +250,7 @@ Turn-around time per workflow stage; escalation goes to `escalate_to_role`.
 | case_id | FK → bvms_case | yes |  |
 | notice_id | FK → bvms_notice | yes |  |
 | sanctioned_plan_id | FK → bvms_sanctioned_plan | yes |  |
-| kind | CharField | no | choices: INSPECTION, NOTICE_DELIVERY, ORDER_DELIVERY, RESPONSE, HEARING, EXECUTION, COMPLIANCE, APPEAL, SANCTION_DOC, OTHER |
+| kind | CharField | no | choices: INSPECTION, NOTICE_DELIVERY, ORDER_DELIVERY, RESPONSE, HEARING, EXECUTION, COMPLIANCE, APPEAL, STAY_ORDER, COURT_ORDER, SANCTION_DOC, BRANCH_REFERRAL, BRANCH_RE |
 | media_type | CharField | no |  |
 | file | FileField | no |  |
 | original_name | CharField | no |  |
@@ -308,7 +323,7 @@ Atomic counters for case / notice numbering.
 | reported_by_id | FK → auth_user | no |  |
 | assigned_ae_id | FK → auth_user | yes |  |
 | assigned_jc_id | FK → auth_user | yes |  |
-| current_owner_role | CharField | no | choices: JE, AE, XEN, JC, JC_CLERK, ADDL_COMMISSIONER, COMMISSIONER, FIELD_STAFF, ADMIN, VIEWER |
+| current_owner_role | CharField | no | choices: JE, AE, XEN, JC, JC_CLERK, ADDL_COMMISSIONER, COMMISSIONER, FIELD_STAFF, BRANCH_OFFICER, ADMIN, VIEWER |
 | stage_due_at | DateTimeField | yes | SLA due time for the current stage |
 | sla_breached | BooleanField | no |  |
 | inspected_at | DateTimeField | no |  |
@@ -326,6 +341,10 @@ Atomic counters for case / notice numbering.
 | compliance_due_at | DateTimeField | yes |  |
 | executed_at | DateTimeField | yes |  |
 | closed_at | DateTimeField | yes |  |
+| litigation_status | CharField | no |  |
+| litigation_authority | CharField | no |  |
+| stay_until | DateField | yes |  |
+| next_hearing_on | DateField | yes |  |
 | stop_work_issued | BooleanField | no |  |
 | sealed | BooleanField | no |  |
 | decision | CharField | no |  |
@@ -451,6 +470,8 @@ Reply of the noticee to a show-cause notice.
 
 ## `bvms_appeal` - Appeal
 
+An appeal / writ / suit against a notice or order, and the stay (if any) granted in it.
+
 | Column | Type | Null | Description |
 |---|---|---|---|
 | id | BigAutoField | no |  |
@@ -458,15 +479,23 @@ Reply of the noticee to a show-cause notice.
 | updated_at | DateTimeField | no |  |
 | case_id | FK → bvms_case | no |  |
 | order_id | FK → bvms_notice | yes |  |
+| authority | CharField | no | choices: DIVISIONAL_COMMISSIONER, COMMISSIONER_MCG, CIVIL_COURT, HIGH_COURT, SUPREME_COURT, NGT, OTHER |
+| authority_other | CharField | no |  |
 | filed_on | DateField | no |  |
-| authority | CharField | no |  |
-| appeal_no | CharField | no |  |
-| status | CharField | no |  |
+| appeal_no | CharField | no | Appeal / CWP / SLP / OA number |
+| appellant_name | CharField | no |  |
+| counsel_for_mcg | CharField | no |  |
+| status | CharField | no | choices: PENDING, STAYED, STAY_VACATED, DISMISSED, ALLOWED, MODIFIED, WITHDRAWN, DISPOSED |
 | stay_granted | BooleanField | no |  |
-| stay_until | DateField | yes |  |
+| stay_order_date | DateField | yes |  |
+| stay_until | DateField | yes | Blank = until further orders / next date |
+| stay_scope | CharField | no | choices: FULL, DEMOLITION_ONLY, STATUS_QUO, PARTIAL |
+| stay_order_id | FK → bvms_media | yes | Uploaded copy of the stay / interim order |
 | conditions | TextField | no |  |
+| next_hearing_on | DateField | yes |  |
 | decided_on | DateField | yes |  |
 | decision_summary | TextField | no |  |
+| final_order_id | FK → bvms_media | yes | Uploaded copy of the final order / judgment |
 | recorded_by_id | FK → auth_user | no |  |
 
 ## `bvms_execution` - ExecutionRecord
@@ -542,3 +571,103 @@ Standalone-mode OTP login (the platform's own OTP service is used when mounted i
 | consumed | BooleanField | no |  |
 | attempts | PositiveSmallIntegerField | no |  |
 | created_at | DateTimeField | no |  |
+
+## `bvms_branch_referral` - BranchReferral
+
+| Column | Type | Null | Description |
+|---|---|---|---|
+| id | BigAutoField | no |  |
+| created_at | DateTimeField | no |  |
+| updated_at | DateTimeField | no |  |
+| case_id | FK → bvms_case | no |  |
+| branch_id | FK → bvms_branch | no |  |
+| referred_by_id | FK → auth_user | no |  |
+| referred_at | DateTimeField | no |  |
+| query | TextField | no | What the branch is asked to examine / report on |
+| due_at | DateTimeField | yes |  |
+| hold_case | BooleanField | no | If true, final orders are blocked until the branch responds (subject to workflow setting) |
+| status | CharField | no | choices: PENDING, RESPONDED, CLOSED, WITHDRAWN |
+| assigned_to_id | FK → auth_user | yes |  |
+| response | TextField | no |  |
+| recommendation | CharField | no |  |
+| responded_by_id | FK → auth_user | yes |  |
+| responded_at | DateTimeField | yes |  |
+| closed_by_id | FK → auth_user | yes |  |
+| closed_at | DateTimeField | yes |  |
+| closing_remarks | TextField | no |  |
+
+## `bvms_workflow_rule` - WorkflowRule
+
+Which role may perform which action when a case is in a given status.
+
+| Column | Type | Null | Description |
+|---|---|---|---|
+| id | BigAutoField | no |  |
+| status | CharField | no |  |
+| role | CharField | no | choices: JE, AE, XEN, JC, JC_CLERK, ADDL_COMMISSIONER, COMMISSIONER, FIELD_STAFF, BRANCH_OFFICER, ADMIN, VIEWER |
+| action | CharField | no |  |
+| allowed | BooleanField | no |  |
+| updated_by_id | FK → auth_user | yes |  |
+| updated_at | DateTimeField | no |  |
+
+## `bvms_workflow_setting` - WorkflowSetting
+
+Typed key/value settings that change the routing and guards of the workflow.
+
+| Column | Type | Null | Description |
+|---|---|---|---|
+| key | CharField | no |  |
+| value | JSONField | no |  |
+| value_type | CharField | no |  |
+| label | CharField | no |  |
+| description | TextField | no |  |
+| group | CharField | no |  |
+| choices | JSONField | no |  |
+| updated_by_id | FK → auth_user | yes |  |
+| updated_at | DateTimeField | no |  |
+
+## `bvms_role_permission` - RolePermission
+
+Module-level permissions per role (view all zones, export reports, manage plans ...).
+
+| Column | Type | Null | Description |
+|---|---|---|---|
+| id | BigAutoField | no |  |
+| role | CharField | no | choices: JE, AE, XEN, JC, JC_CLERK, ADDL_COMMISSIONER, COMMISSIONER, FIELD_STAFF, BRANCH_OFFICER, ADMIN, VIEWER |
+| permission | CharField | no |  |
+| allowed | BooleanField | no |  |
+| updated_by_id | FK → auth_user | yes |  |
+| updated_at | DateTimeField | no |  |
+
+## `bvms_officer_permission_override` - OfficerPermissionOverride
+
+Grant or revoke a permission for one officer, over and above the role defaults.
+
+| Column | Type | Null | Description |
+|---|---|---|---|
+| id | BigAutoField | no |  |
+| profile_id | FK → bvms_officer_profile | no |  |
+| permission | CharField | no |  |
+| allowed | BooleanField | no |  |
+| reason | CharField | no |  |
+| order_reference | CharField | no | Office order / Commissioner's order authorising the change |
+| updated_by_id | FK → auth_user | yes |  |
+| updated_at | DateTimeField | no |  |
+
+## `bvms_admin_audit_log` - AdminAuditLog
+
+Every administrative change (officer, jurisdiction, rule, permission, setting, re-assignment).
+
+| Column | Type | Null | Description |
+|---|---|---|---|
+| id | BigAutoField | no |  |
+| at | DateTimeField | no |  |
+| actor_id | FK → auth_user | yes |  |
+| action | CharField | no |  |
+| target_type | CharField | no |  |
+| target_id | CharField | no |  |
+| before | JSONField | no |  |
+| after | JSONField | no |  |
+| order_reference | CharField | no |  |
+| remarks | TextField | no |  |
+| ip_address | GenericIPAddressField | yes |  |

@@ -18,6 +18,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from ..integrations.sms import get_gateway, normalise_mobile
 from ..models import Notification, OfficerProfile, OTPRequest
+from ..services import access
 from .permissions import HasOfficerProfile, IsModuleAdmin
 from .serializers import MeSerializer, NotificationSerializer, OfficerProfileSerializer, OTPRequestSerializer, OTPVerifySerializer
 
@@ -77,6 +78,8 @@ def _me_payload(user):
         "zones": prof.zones.all() if prof else [], "wards": prof.wards.all() if prof else [],
         "delegation_order_no": prof.delegation_order_no if prof else "",
         "unread_notifications": Notification.objects.filter(user=user, read_at__isnull=True).count(),
+        "permissions": sorted(access.permissions_for(user)),
+        "branch": ({"code": prof.branch.code, "name_en": prof.branch.name_en, "name_hi": prof.branch.name_hi} if prof and prof.branch_id else None),
     }).data
 
 
@@ -104,11 +107,16 @@ class NotificationViewSet(viewsets.ReadOnlyModelViewSet):
         return Response({"updated": n})
 
 
+def _officer_snapshot(p: OfficerProfile) -> dict:
+    return {"role": p.role, "designation": p.designation, "mobile": p.mobile, "zones": sorted(p.zones.values_list("code", flat=True)), "wards": sorted(p.wards.values_list("number", flat=True)),
+            "divisions": sorted(p.divisions.values_list("code", flat=True)), "reports_to": p.reports_to_id, "branch": p.branch_id, "parent_profile": p.parent_profile_id, "active": p.active, "delegation_order_no": p.delegation_order_no}
+
+
 class OfficerProfileViewSet(viewsets.ModelViewSet):
     """Officer directory. Admin creates JE/AE/JC/clerk logins; JC can create its own clerk sub-login."""
     serializer_class = OfficerProfileSerializer
-    queryset = OfficerProfile.objects.select_related("user").prefetch_related("zones", "wards", "divisions")
-    filterset_fields = ("role", "active", "zones")
+    queryset = OfficerProfile.objects.select_related("user", "branch", "reports_to__user").prefetch_related("zones", "wards", "divisions", "permission_overrides")
+    filterset_fields = ("role", "active", "zones", "branch")
     search_fields = ("user__first_name", "user__last_name", "mobile", "designation", "employee_code")
 
     def get_permissions(self):
@@ -117,25 +125,32 @@ class OfficerProfileViewSet(viewsets.ModelViewSet):
         return [HasOfficerProfile()]
 
     def perform_create(self, serializer):
+        from ..services.workflow import WorkflowError
         me = self.request.user.bvms_profile
         role = serializer.validated_data.get("role")
-        if me.role == "JC":
-            if role != "JC_CLERK":
-                from ..services.workflow import WorkflowError
-                raise WorkflowError("A Joint Commissioner may only create clerk sub-logins", 403)
-            serializer.save(parent_profile=me)
-            return
-        if me.role not in ("ADMIN", "COMMISSIONER", "ADDL_COMMISSIONER"):
-            from ..services.workflow import WorkflowError
-            raise WorkflowError("Only the module administrator can create officer logins", 403)
-        serializer.save()
+        order_ref = self.request.data.get("order_reference", "")
+        if access.has_perm(self.request.user, "OFFICERS_MANAGE"):
+            obj = serializer.save()
+        elif access.has_perm(self.request.user, "CLERK_MANAGE") and role == "JC_CLERK":
+            obj = serializer.save(parent_profile=me)
+        else:
+            raise WorkflowError("Only the module administrator can create officer logins (JC may create clerk sub-logins)", 403)
+        access.invalidate()
+        access.log_admin(self.request.user, "OFFICER_CREATE", "OfficerProfile", obj.id, after=_officer_snapshot(obj), order_reference=order_ref, request=self.request)
 
     def perform_update(self, serializer):
+        from ..services.workflow import WorkflowError
         me = self.request.user.bvms_profile
-        if me.role not in ("ADMIN", "COMMISSIONER", "ADDL_COMMISSIONER") and serializer.instance.parent_profile_id != me.id and serializer.instance.id != me.id:
-            from ..services.workflow import WorkflowError
+        inst = serializer.instance
+        if not access.has_perm(self.request.user, "OFFICERS_MANAGE") and inst.parent_profile_id != me.id and inst.id != me.id:
             raise WorkflowError("Not allowed to edit this officer", 403)
-        serializer.save()
+        if inst.id == me.id and not access.has_perm(self.request.user, "OFFICERS_MANAGE"):
+            for k in ("role", "zones", "wards", "divisions", "reports_to", "branch", "active", "delegation_order_no"):
+                serializer.validated_data.pop(k, None)   # an officer may edit only contact details of own profile
+        before = _officer_snapshot(inst)
+        obj = serializer.save()
+        access.invalidate()
+        access.log_admin(self.request.user, "OFFICER_UPDATE", "OfficerProfile", obj.id, before=before, after=_officer_snapshot(obj), order_reference=self.request.data.get("order_reference", ""), request=self.request)
 
     @action(detail=False, methods=["get"])
     def dropdown(self, request):

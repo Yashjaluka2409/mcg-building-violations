@@ -87,13 +87,30 @@ class OfficerProfileSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(write_only=True, required=False, allow_blank=True)
     last_name = serializers.CharField(write_only=True, required=False, allow_blank=True)
     display_name = serializers.CharField(read_only=True)
+    order_reference = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    permission_overrides = serializers.SerializerMethodField()
+    effective_permissions = serializers.SerializerMethodField()
+    reports_to_name = serializers.SerializerMethodField()
+    branch_name = serializers.CharField(source="branch.name_en", read_only=True, default=None)
 
     class Meta:
         model = m.OfficerProfile
         fields = ("id", "user", "user_id", "username", "first_name", "last_name", "display_name", "role", "designation", "employee_code", "mobile", "email",
-                  "zones", "wards", "divisions", "reports_to", "delegation_order_no", "delegation_order_date", "parent_profile", "active", "created_at")
+                  "zones", "wards", "divisions", "reports_to", "reports_to_name", "delegation_order_no", "delegation_order_date", "parent_profile", "branch", "branch_name", "active", "created_at",
+                  "order_reference", "permission_overrides", "effective_permissions")
+
+    def get_permission_overrides(self, p):
+        return [{"permission": o.permission, "allowed": o.allowed, "reason": o.reason, "order_reference": o.order_reference} for o in p.permission_overrides.all()]
+
+    def get_effective_permissions(self, p):
+        from ..services import access
+        return sorted(access.permissions_for(p.user))
+
+    def get_reports_to_name(self, p):
+        return p.reports_to.display_name if p.reports_to else None
 
     def create(self, validated):
+        validated.pop("order_reference", None)
         username = validated.pop("username", None)
         first, last = validated.pop("first_name", ""), validated.pop("last_name", "")
         if "user" not in validated:
@@ -107,7 +124,7 @@ class OfficerProfileSerializer(serializers.ModelSerializer):
         return prof
 
     def update(self, inst, validated):
-        for k in ("username", "first_name", "last_name"):
+        for k in ("username", "first_name", "last_name", "order_reference"):
             validated.pop(k, None)
         return super().update(inst, validated)
 
@@ -123,6 +140,8 @@ class MeSerializer(serializers.Serializer):
     wards = WardSerializer(many=True)
     delegation_order_no = serializers.CharField(allow_blank=True)
     unread_notifications = serializers.IntegerField()
+    permissions = serializers.ListField(child=serializers.CharField())
+    branch = serializers.DictField(allow_null=True)
 
 
 # ---------------------------------------------------------------- GIS / sanctions
@@ -267,6 +286,12 @@ class HearingSerializer(serializers.ModelSerializer):
 
 class AppealSerializer(serializers.ModelSerializer):
     recorded_by = UserLiteSerializer(read_only=True)
+    authority_display = serializers.CharField(source="get_authority_display", read_only=True)
+    status_display = serializers.CharField(source="get_status_display", read_only=True)
+    stay_order = MediaAttachmentSerializer(read_only=True)
+    final_order = MediaAttachmentSerializer(read_only=True)
+    is_stay_active = serializers.BooleanField(read_only=True)
+    order_no = serializers.CharField(source="order.notice_no", read_only=True, default=None)
 
     class Meta:
         model = m.Appeal
@@ -310,13 +335,18 @@ class ViolationCaseListSerializer(serializers.ModelSerializer):
     status_display = serializers.CharField(source="get_status_display", read_only=True)
     days_in_stage = serializers.SerializerMethodField()
     thumbnail = serializers.SerializerMethodField()
+    pending_referrals = serializers.SerializerMethodField()
 
     class Meta:
         model = m.ViolationCase
         fields = ("id", "case_no", "status", "status_display", "priority", "source", "pid", "address_line", "locality", "sector", "ward", "ward_number", "zone", "zone_code",
                   "latitude", "longitude", "land_type", "owner_name", "construction_stage", "reported_by", "assigned_ae", "assigned_jc", "current_owner_role",
                   "stage_due_at", "sla_breached", "inspected_at", "scn_issued_at", "response_due_at", "compliance_due_at", "decision", "stop_work_issued", "sealed",
-                  "violation_codes", "primary_violation", "days_in_stage", "thumbnail", "created_at", "updated_at")
+                  "litigation_status", "litigation_authority", "stay_until", "next_hearing_on",
+                  "violation_codes", "primary_violation", "days_in_stage", "thumbnail", "pending_referrals", "created_at", "updated_at")
+
+    def get_pending_referrals(self, o):
+        return [r.branch_id for r in o.referrals.all() if r.status == "PENDING"]
 
     def get_violation_codes(self, o):
         return [cv.violation_type_id for cv in o.violations.all()]
@@ -349,6 +379,7 @@ class ViolationCaseDetailSerializer(ViolationCaseListSerializer):
     appeals = AppealSerializer(many=True, read_only=True)
     executions = ExecutionRecordSerializer(many=True, read_only=True)
     events = CaseEventSerializer(many=True, read_only=True)
+    referrals = serializers.SerializerMethodField()
     sanctioned_plan = SanctionedPlanSerializer(read_only=True)
     govt_parcel = GovtLandParcelSerializer(read_only=True)
     available_actions = serializers.SerializerMethodField()
@@ -361,7 +392,10 @@ class ViolationCaseDetailSerializer(ViolationCaseListSerializer):
             "storeys", "height_m", "use_observed", "description", "measurements", "submitted_at", "ae_forwarded_at", "jc_received_at", "scn_served_at",
             "response_received_at", "hearing_at", "decided_at", "order_issued_at", "order_served_at", "executed_at", "closed_at", "decision_reasons", "final_order",
             "closure_reason", "demolition_cost_inr", "cost_recovery_status", "violations", "media", "notices", "responses", "hearings", "appeals", "executions",
-            "events", "available_actions", "available_order_types")
+            "events", "referrals", "available_actions", "available_order_types")
+
+    def get_referrals(self, o):
+        return BranchReferralSerializer(o.referrals.select_related("branch", "referred_by", "responded_by", "assigned_to", "closed_by"), many=True, context=self.context).data
 
     def get_available_actions(self, o):
         from ..services.workflow import available_actions
@@ -484,22 +518,40 @@ class RecordHearingSerializer(serializers.Serializer):
 
 class RecordAppealSerializer(RemarksSerializer):
     filed_on = serializers.DateField()
-    authority = serializers.CharField()
+    authority = serializers.ChoiceField(choices=m.Appeal.Authority.choices)
+    authority_other = serializers.CharField(required=False, allow_blank=True, default="")
     appeal_no = serializers.CharField(required=False, allow_blank=True, default="")
+    appellant_name = serializers.CharField(required=False, allow_blank=True, default="")
+    counsel_for_mcg = serializers.CharField(required=False, allow_blank=True, default="")
     stay_granted = serializers.BooleanField(required=False, default=False)
+    stay_order_date = serializers.DateField(required=False, allow_null=True)
     stay_until = serializers.DateField(required=False, allow_null=True)
+    stay_scope = serializers.ChoiceField(choices=m.Appeal.StayScope.choices, required=False, allow_blank=True, default="")
     conditions = serializers.CharField(required=False, allow_blank=True, default="")
+    next_hearing_on = serializers.DateField(required=False, allow_null=True)
+    stay_order_media = serializers.PrimaryKeyRelatedField(queryset=m.MediaAttachment.objects.all(), required=False, allow_null=True)
     order = serializers.PrimaryKeyRelatedField(queryset=m.Notice.objects.all(), required=False, allow_null=True)
     media_ids = serializers.ListField(child=serializers.UUIDField(), required=False, default=list)
 
 
-class DecideAppealSerializer(serializers.Serializer):
+class UpdateAppealSerializer(RemarksSerializer):
     appeal = serializers.PrimaryKeyRelatedField(queryset=m.Appeal.objects.all())
-    status = serializers.ChoiceField(choices=["PENDING", "STAYED", "DISMISSED", "ALLOWED", "MODIFIED", "WITHDRAWN"])
-    decided_on = serializers.DateField()
+    status = serializers.ChoiceField(choices=m.Appeal.Status.choices, required=False, allow_null=True)
+    decided_on = serializers.DateField(required=False, allow_null=True)
     decision_summary = serializers.CharField(required=False, allow_blank=True, default="")
     new_compliance_days = serializers.IntegerField(required=False, allow_null=True)
+    stay_until = serializers.DateField(required=False, allow_null=True)
+    stay_scope = serializers.ChoiceField(choices=m.Appeal.StayScope.choices, required=False, allow_null=True, allow_blank=True)
+    conditions = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    next_hearing_on = serializers.DateField(required=False, allow_null=True)
+    appeal_no = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    counsel_for_mcg = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    stay_order_media = serializers.PrimaryKeyRelatedField(queryset=m.MediaAttachment.objects.all(), required=False, allow_null=True)
+    final_order_media = serializers.PrimaryKeyRelatedField(queryset=m.MediaAttachment.objects.all(), required=False, allow_null=True)
     media_ids = serializers.ListField(child=serializers.UUIDField(), required=False, default=list)
+
+
+DecideAppealSerializer = UpdateAppealSerializer
 
 
 class RecordExecutionSerializer(RemarksSerializer):
@@ -530,3 +582,99 @@ class OTPVerifySerializer(serializers.Serializer):
     mobile = serializers.CharField()
     otp = serializers.CharField()
     device_id = serializers.CharField(required=False, allow_blank=True)
+
+
+# ---------------------------------------------------------------- branches, referrals, administration
+class BranchSerializer(serializers.ModelSerializer):
+    officers = serializers.SerializerMethodField()
+
+    class Meta:
+        model = m.Branch
+        fields = ("code", "name_en", "name_hi", "description", "head_designation", "default_response_days", "active", "officers")
+
+    def get_officers(self, b):
+        return [{"user_id": p.user_id, "name": p.display_name, "designation": p.designation} for p in b.officers.filter(active=True).select_related("user")]
+
+
+class BranchReferralSerializer(serializers.ModelSerializer):
+    branch = BranchSerializer(read_only=True)
+    referred_by = UserLiteSerializer(read_only=True)
+    responded_by = UserLiteSerializer(read_only=True)
+    assigned_to = UserLiteSerializer(read_only=True)
+    closed_by = UserLiteSerializer(read_only=True)
+    case_no = serializers.CharField(source="case.case_no", read_only=True)
+    case_status = serializers.CharField(source="case.status", read_only=True)
+    case_address = serializers.CharField(source="case.address_line", read_only=True)
+    ward_number = serializers.IntegerField(source="case.ward.number", read_only=True, default=None)
+    is_overdue = serializers.SerializerMethodField()
+
+    class Meta:
+        model = m.BranchReferral
+        fields = ("id", "case", "case_no", "case_status", "case_address", "ward_number", "branch", "referred_by", "referred_at", "query", "due_at", "hold_case", "status", "assigned_to",
+                  "response", "recommendation", "responded_by", "responded_at", "closed_by", "closed_at", "closing_remarks", "is_overdue", "created_at")
+
+    def get_is_overdue(self, r):
+        from django.utils import timezone
+        return bool(r.status == "PENDING" and r.due_at and r.due_at < timezone.now())
+
+
+class ReferBranchSerializer(RemarksSerializer):
+    branch = serializers.PrimaryKeyRelatedField(queryset=m.Branch.objects.filter(active=True))
+    query = serializers.CharField()
+    due_days = serializers.IntegerField(required=False, allow_null=True, min_value=1, max_value=90)
+    hold_case = serializers.BooleanField(required=False, default=False)
+    assigned_to = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), required=False, allow_null=True)
+    media_ids = serializers.ListField(child=serializers.UUIDField(), required=False, default=list)
+
+
+class RespondReferralSerializer(serializers.Serializer):
+    referral = serializers.PrimaryKeyRelatedField(queryset=m.BranchReferral.objects.all())
+    response = serializers.CharField()
+    recommendation = serializers.ChoiceField(choices=["", "VIOLATION_CONFIRMED", "NO_VIOLATION", "REGULARISABLE", "GOVT_LAND_CONFIRMED", "PRIVATE_LAND_CONFIRMED", "OWNERSHIP_DISPUTED", "LEGAL_OK_TO_PROCEED", "LEGAL_HOLD", "FURTHER_INQUIRY"], required=False, allow_blank=True, default="")
+    media_ids = serializers.ListField(child=serializers.UUIDField(), required=False, default=list)
+
+
+class CloseReferralSerializer(RemarksSerializer):
+    referral = serializers.PrimaryKeyRelatedField(queryset=m.BranchReferral.objects.all())
+    withdrawn = serializers.BooleanField(required=False, default=False)
+
+
+class ReassignSerializer(RemarksSerializer):
+    assigned_ae = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), required=False, allow_null=True)
+    assigned_jc = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), required=False, allow_null=True)
+    reported_by = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), required=False, allow_null=True)
+    order_reference = serializers.CharField(required=False, allow_blank=True, default="")
+
+
+class BulkReassignSerializer(ReassignSerializer):
+    case_ids = serializers.ListField(child=serializers.UUIDField(), required=False, default=list)
+    zone = serializers.PrimaryKeyRelatedField(queryset=m.Zone.objects.all(), required=False, allow_null=True)
+    ward = serializers.PrimaryKeyRelatedField(queryset=m.Ward.objects.all(), required=False, allow_null=True)
+    from_user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), required=False, allow_null=True)
+    only_open = serializers.BooleanField(required=False, default=True)
+
+
+class WorkflowRuleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = m.WorkflowRule
+        fields = ("id", "status", "role", "action", "allowed", "updated_at")
+
+
+class WorkflowSettingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = m.WorkflowSetting
+        fields = ("key", "value", "value_type", "label", "description", "group", "choices", "updated_at")
+
+
+class OfficerPermissionOverrideSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = m.OfficerPermissionOverride
+        fields = ("id", "permission", "allowed", "reason", "order_reference", "updated_at")
+
+
+class AdminAuditLogSerializer(serializers.ModelSerializer):
+    actor = UserLiteSerializer(read_only=True)
+
+    class Meta:
+        model = m.AdminAuditLog
+        fields = ("id", "at", "actor", "action", "target_type", "target_id", "before", "after", "order_reference", "remarks", "ip_address")

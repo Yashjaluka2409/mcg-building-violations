@@ -3,7 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from .. import models as m
-from .permissions import HasOfficerProfile, IsModuleAdmin
+from .permissions import HasOfficerProfile, HasPerm
 from . import serializers as s
 
 
@@ -11,9 +11,9 @@ class _MasterViewSet(viewsets.ModelViewSet):
     pagination_class = None
 
     def get_permissions(self):
-        if self.action in ("list", "retrieve"):
+        if self.action in ("list", "retrieve", "geojson", "statutes"):
             return [HasOfficerProfile()]
-        return [IsModuleAdmin()]
+        return [HasPerm.of("MASTERS_MANAGE")()]
 
 
 class ZoneViewSet(_MasterViewSet):

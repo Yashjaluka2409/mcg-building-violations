@@ -7,7 +7,7 @@ from django.conf import settings
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from .api import views_auth, views_cases, views_dashboards, views_masters, views_media, views_notices, views_property, views_reports, views_sanctions
+from .api import views_admin, views_auth, views_cases, views_dashboards, views_masters, views_media, views_notices, views_property, views_referrals, views_reports, views_sanctions
 
 router = DefaultRouter()
 router.register("cases", views_cases.ViolationCaseViewSet, basename="case")
@@ -24,6 +24,8 @@ router.register("masters/legal-sections", views_masters.LegalSectionViewSet, bas
 router.register("masters/order-types", views_masters.OrderTypeViewSet, basename="order-type")
 router.register("masters/sla", views_masters.SLAConfigViewSet, basename="sla")
 router.register("officers", views_auth.OfficerProfileViewSet, basename="officer")
+router.register("referrals", views_referrals.BranchReferralViewSet, basename="referral")
+router.register("branches", views_admin.BranchViewSet, basename="branch")
 router.register("notifications", views_auth.NotificationViewSet, basename="notification")
 
 api_urls = [
@@ -41,6 +43,12 @@ api_urls = [
     path("dashboards/trends/", views_dashboards.TrendsView.as_view()),
     path("dashboards/map/", views_dashboards.MapView.as_view()),
     path("dashboards/deadlines/", views_dashboards.UpcomingDeadlinesView.as_view()),
+    path("admin/workflow-rules/", views_admin.WorkflowRulesView.as_view(), name="workflow-rules"),
+    path("admin/settings/", views_admin.WorkflowSettingsView.as_view(), name="workflow-settings"),
+    path("admin/permissions/", views_admin.PermissionsView.as_view(), name="permissions"),
+    path("admin/audit-log/", views_admin.AdminAuditLogView.as_view(), name="admin-audit-log"),
+    path("admin/reassign-cases/", views_admin.BulkReassignView.as_view(), name="bulk-reassign"),
+    path("officers/<int:pk>/permissions/", views_admin.OfficerOverridesView.as_view(), name="officer-overrides"),
     path("reports/", views_reports.ReportListView.as_view()),
     path("reports/<slug:name>/", views_reports.ReportView.as_view()),
 ]

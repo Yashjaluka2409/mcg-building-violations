@@ -1,8 +1,9 @@
 from rest_framework.permissions import BasePermission
 
 from ..models import Role
+from ..services import access
 
-MANAGEMENT_ROLES = (Role.ADMIN, Role.COMMISSIONER, Role.ADDL_COMMISSIONER)
+MANAGEMENT_ROLES = access.MANAGEMENT_ROLES
 
 
 def role_of(user):
@@ -22,8 +23,25 @@ class IsModuleAdmin(BasePermission):
         return role_of(request.user) in MANAGEMENT_ROLES
 
 
+class HasPerm(BasePermission):
+    """Use as HasPerm.of("PLANS_MANAGE") - checks the admin-configurable permission matrix
+    (role defaults + per-officer overrides; management roles always pass)."""
+    codes: tuple = ()
+    message = "You do not have the required permission."
+
+    @classmethod
+    def of(cls, *codes):
+        return type("HasPerm_" + "_".join(codes), (cls,), {"codes": codes, "message": f"Requires permission: {', '.join(codes)}"})
+
+    def has_permission(self, request, view):
+        if not (request.user and request.user.is_authenticated and role_of(request.user)):
+            return False
+        perms = access.permissions_for(request.user)
+        return any(c in perms for c in self.codes)
+
+
 class RoleIn(BasePermission):
-    """Use as RoleIn.of("JE", "AE") in permission_classes."""
+    """Legacy helper; prefer HasPerm."""
     roles: tuple = ()
 
     @classmethod

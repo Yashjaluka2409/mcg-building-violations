@@ -1,10 +1,10 @@
 import { clsx } from "clsx";
-import { Bell, BookOpenText, ClipboardList, FileSignature, FolderKanban, Globe, Inbox, LayoutDashboard, LogOut, Map as MapIcon, MapPinned, Menu, Moon, PlusCircle, ScrollText, Sun, UserCog } from "lucide-react";
+import { Bell, BookOpenText, ClipboardList, FileSignature, FolderKanban, Globe, Inbox, LayoutDashboard, LogOut, Map as MapIcon, MapPinned, Menu, Moon, PlusCircle, ScrollText, Settings2, Share2, Sun, UserCog } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { cases, notificationsApi } from "@/api/endpoints";
+import { cases, notificationsApi, referrals } from "@/api/endpoints";
 import { useAuth } from "@/store/auth";
 import { ago } from "@/utils/format";
 
@@ -19,21 +19,26 @@ export default function Shell() {
   const [bell, setBell] = useState(false);
   const counts = useQuery({ queryKey: ["counts"], queryFn: cases.counts, refetchInterval: 60_000 });
   const notes = useQuery({ queryKey: ["notifications"], queryFn: notificationsApi.list, refetchInterval: 60_000 });
+  const refCounts = useQuery({ queryKey: ["referral-counts"], queryFn: referrals.counts, refetchInterval: 120_000 });
   useEffect(() => { document.documentElement.classList.toggle("dark", dark); localStorage.setItem("bvmsDark", dark ? "1" : "0"); }, [dark]);
   const role = user?.role || "VIEWER";
-  const can = (...roles: string[]) => roles.includes(role) || ["ADMIN", "COMMISSIONER", "ADDL_COMMISSIONER"].includes(role);
+  const perms = user?.permissions || [];
+  const has = (...codes: string[]) => codes.some((c) => perms.includes(c));
+  const isBranch = role === "BRANCH_OFFICER";
   const items = [
-    { to: "/dashboard", icon: LayoutDashboard, label: t("nav.dashboard") },
-    { to: "/inbox", icon: Inbox, label: t("nav.inbox"), badge: counts.data?.inbox },
-    { to: "/cases/new", icon: PlusCircle, label: t("nav.new_case"), show: can("JE", "AE", "FIELD_STAFF") },
-    { to: "/cases", icon: FolderKanban, label: t("nav.cases") },
-    { to: "/map", icon: MapPinned, label: t("nav.map") },
-    { to: "/notices", icon: FileSignature, label: t("nav.notices") },
-    { to: "/plans", icon: ClipboardList, label: t("nav.plans") },
+    { to: "/dashboard", icon: LayoutDashboard, label: t("nav.dashboard"), show: has("DASHBOARD_VIEW") },
+    { to: "/inbox", icon: Inbox, label: t("nav.inbox"), badge: counts.data?.inbox, show: !isBranch },
+    { to: "/referrals", icon: Share2, label: isBranch ? "Branch inbox" : "Branch referrals", badge: refCounts.data?.pending, show: has("BRANCH_RESPOND", "BRANCH_REFER", "REFERRALS_VIEW_ALL") },
+    { to: "/cases/new", icon: PlusCircle, label: t("nav.new_case"), show: ["JE", "AE", "FIELD_STAFF", "ADMIN", "COMMISSIONER", "ADDL_COMMISSIONER"].includes(role) },
+    { to: "/cases", icon: FolderKanban, label: isBranch ? "Referred cases" : t("nav.cases") },
+    { to: "/map", icon: MapPinned, label: t("nav.map"), show: has("DASHBOARD_VIEW") },
+    { to: "/notices", icon: FileSignature, label: t("nav.notices"), show: !isBranch },
+    { to: "/plans", icon: ClipboardList, label: t("nav.plans"), show: has("PLANS_VIEW") },
     { to: "/govt-land", icon: MapIcon, label: t("nav.govt_land") },
-    { to: "/reports", icon: ScrollText, label: t("nav.reports") },
-    { to: "/legal", icon: BookOpenText, label: t("nav.legal") },
-    { to: "/officers", icon: UserCog, label: t("nav.officers"), show: can("JC") },
+    { to: "/reports", icon: ScrollText, label: t("nav.reports"), show: has("REPORTS_EXPORT") },
+    { to: "/legal", icon: BookOpenText, label: t("nav.legal"), show: has("LEGAL_VIEW") },
+    { to: "/officers", icon: UserCog, label: t("nav.officers"), show: has("OFFICERS_MANAGE", "CLERK_MANAGE") },
+    { to: "/admin", icon: Settings2, label: "Administration", show: has("WORKFLOW_CONFIGURE", "ACCESS_CONFIGURE", "BRANCH_MANAGE", "CASE_REASSIGN", "AUDIT_VIEW") },
   ].filter((i) => i.show !== false);
   const unread = notes.data?.results.filter((n) => !n.read_at).length || 0;
   return (

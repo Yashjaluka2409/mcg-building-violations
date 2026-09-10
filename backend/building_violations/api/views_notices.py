@@ -7,7 +7,7 @@ from rest_framework.views import APIView
 
 from ..models import Notice
 from ..services.notices import dispatch_sms, render_and_sign
-from .permissions import HasOfficerProfile, RoleIn
+from .permissions import HasOfficerProfile, HasPerm
 from .serializers import NoticeSerializer
 
 
@@ -19,6 +19,15 @@ class NoticeViewSet(viewsets.ReadOnlyModelViewSet):
     ordering_fields = ("issued_at", "served_at", "response_due_at", "compliance_due_at")
     permission_classes = [HasOfficerProfile]
 
+    def get_queryset(self):
+        from ..services import access
+        from .views_cases import ViolationCaseViewSet
+        qs = super().get_queryset()
+        if access.has_perm(self.request.user, "NOTICE_VIEW_ALL") or self.request.user.bvms_profile.role in access.MANAGEMENT_ROLES:
+            return qs
+        vs = ViolationCaseViewSet(); vs.request = self.request
+        return qs.filter(case__in=vs.get_queryset())
+
     @action(detail=True, methods=["get"])
     def pdf(self, request, pk=None):
         n = self.get_object()
@@ -29,7 +38,7 @@ class NoticeViewSet(viewsets.ReadOnlyModelViewSet):
         resp["Content-Disposition"] = f'inline; filename="{n.notice_no.replace("/", "-")}.pdf"'
         return resp
 
-    @action(detail=True, methods=["post"], permission_classes=[RoleIn.of("JC", "JC_CLERK", "AE", "JE")])
+    @action(detail=True, methods=["post"], permission_classes=[HasPerm.of("NOTICE_RESEND_SMS")])
     def resend_sms(self, request, pk=None):
         n = self.get_object()
         extra = request.data.get("mobiles") or []
@@ -39,7 +48,7 @@ class NoticeViewSet(viewsets.ReadOnlyModelViewSet):
         n.save(update_fields=["addressee_mobiles"])
         return Response({"dispatches": [{"to": d.to, "status": d.status} for d in dispatch_sms(n)]})
 
-    @action(detail=True, methods=["post"], permission_classes=[RoleIn.of("JC")])
+    @action(detail=True, methods=["post"], permission_classes=[HasPerm.of("NOTICE_RESIGN")])
     def resign(self, request, pk=None):
         """Re-run signing (e.g. after the DSC/eSign backend was configured)."""
         n = render_and_sign(self.get_object())

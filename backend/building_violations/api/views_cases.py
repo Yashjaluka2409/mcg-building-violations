@@ -5,6 +5,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from .. import models as m
+from ..services import access
 from ..services import workflow as wf
 from ..services.audit import verify_chain
 from .permissions import HasOfficerProfile, role_of
@@ -13,7 +14,7 @@ from . import serializers as s
 
 class ViolationCaseViewSet(viewsets.ModelViewSet):
     permission_classes = [HasOfficerProfile]
-    filterset_fields = ("status", "zone", "ward", "division", "land_type", "priority", "source", "current_owner_role", "sla_breached", "stop_work_issued", "sealed", "decision", "reported_by", "assigned_ae", "assigned_jc")
+    filterset_fields = ("status", "zone", "ward", "division", "land_type", "priority", "source", "current_owner_role", "sla_breached", "stop_work_issued", "sealed", "decision", "reported_by", "assigned_ae", "assigned_jc", "litigation_status", "litigation_authority")
     search_fields = ("case_no", "pid", "address_line", "locality", "sector", "owner_name", "occupier_name", "builder_name")
     ordering_fields = ("created_at", "updated_at", "status_changed_at", "stage_due_at", "response_due_at", "compliance_due_at", "inspected_at")
     ordering = ("-created_at",)
@@ -25,9 +26,11 @@ class ViolationCaseViewSet(viewsets.ModelViewSet):
         user = self.request.user
         prof = user.bvms_profile
         role = prof.role
-        # jurisdiction scoping
-        if role in ("ADMIN", "COMMISSIONER", "ADDL_COMMISSIONER", "VIEWER"):
+        # jurisdiction scoping (admin-configurable: CASE_VIEW_ALL lifts the filter for any role)
+        if role in access.MANAGEMENT_ROLES or access.has_perm(user, "CASE_VIEW_ALL"):
             pass
+        elif role == "BRANCH_OFFICER":
+            qs = qs.filter(Q(referrals__branch=prof.branch) | Q(referrals__assigned_to=user)) if access.has_perm(user, "CASE_VIEW_BRANCH") else qs.none()
         elif role == "JE":
             qs = qs.filter(Q(reported_by=user) | Q(ward__in=prof.wards.all()) | Q(zone__in=prof.zones.all()))
         elif role in ("AE", "XEN"):
@@ -163,17 +166,26 @@ class ViolationCaseViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["post"])
     def record_appeal(self, request, pk=None):
         ser = s.RecordAppealSerializer(data=request.data); ser.is_valid(raise_exception=True)
-        d = ser.validated_data
-        wf.record_appeal(self.get_object(), request.user, request=request, filed_on=d["filed_on"], authority=d["authority"], appeal_no=d["appeal_no"], stay_granted=d["stay_granted"],
-                         stay_until=d.get("stay_until"), conditions=d["conditions"], order=d.get("order"), media_ids=d["media_ids"], remarks=d["remarks"])
+        d = dict(ser.validated_data)
+        remarks = d.pop("remarks")
+        wf.record_appeal(self.get_object(), request.user, request=request, remarks=remarks, **d)
         return self._ok(self.get_object())
 
     @action(detail=True, methods=["post"])
     def decide_appeal(self, request, pk=None):
-        ser = s.DecideAppealSerializer(data=request.data); ser.is_valid(raise_exception=True)
-        d = ser.validated_data
-        wf.decide_appeal(d["appeal"], request.user, request=request, status=d["status"], decided_on=d["decided_on"], decision_summary=d["decision_summary"], new_compliance_days=d.get("new_compliance_days"), media_ids=d["media_ids"])
+        """Update the litigation flag: stay extended / vacated, hearing dates, later orders, final decision."""
+        ser = s.UpdateAppealSerializer(data=request.data); ser.is_valid(raise_exception=True)
+        d = dict(ser.validated_data)
+        appeal = d.pop("appeal")
+        remarks = d.pop("remarks")
+        if appeal.case_id != self.get_object().id:
+            return Response({"detail": "Appeal does not belong to this case"}, status=400)
+        wf.update_appeal(appeal, request.user, request=request, remarks=remarks, **d)
         return self._ok(self.get_object())
+
+    @action(detail=True, methods=["post"])
+    def update_appeal(self, request, pk=None):
+        return self.decide_appeal(request, pk)
 
     @action(detail=True, methods=["post"])
     def record_execution(self, request, pk=None):
@@ -193,6 +205,37 @@ class ViolationCaseViewSet(viewsets.ModelViewSet):
     def reopen(self, request, pk=None):
         ser = s.RemarksSerializer(data=request.data); ser.is_valid(raise_exception=True)
         wf.reopen(self.get_object(), request.user, request=request, remarks=ser.validated_data["remarks"])
+        return self._ok(self.get_object())
+
+    # ---------------- branch referrals & re-assignment ----------------
+    @action(detail=True, methods=["post"])
+    def refer_branch(self, request, pk=None):
+        ser = s.ReferBranchSerializer(data=request.data); ser.is_valid(raise_exception=True)
+        d = ser.validated_data
+        wf.refer_to_branch(self.get_object(), request.user, request=request, branch=d["branch"], query=d["query"], due_days=d.get("due_days"), hold_case=d["hold_case"], assigned_to=d.get("assigned_to"), media_ids=d["media_ids"], remarks=d["remarks"])
+        return self._ok(self.get_object())
+
+    @action(detail=True, methods=["post"])
+    def respond_branch(self, request, pk=None):
+        ser = s.RespondReferralSerializer(data=request.data); ser.is_valid(raise_exception=True)
+        d = ser.validated_data
+        if d["referral"].case_id != self.get_object().id:
+            return Response({"detail": "Referral does not belong to this case"}, status=400)
+        wf.respond_to_referral(d["referral"], request.user, request=request, response=d["response"], recommendation=d["recommendation"], media_ids=d["media_ids"])
+        return self._ok(self.get_object())
+
+    @action(detail=True, methods=["post"])
+    def close_referral(self, request, pk=None):
+        ser = s.CloseReferralSerializer(data=request.data); ser.is_valid(raise_exception=True)
+        d = ser.validated_data
+        wf.close_referral(d["referral"], request.user, request=request, remarks=d["remarks"], withdrawn=d["withdrawn"])
+        return self._ok(self.get_object())
+
+    @action(detail=True, methods=["post"])
+    def reassign(self, request, pk=None):
+        ser = s.ReassignSerializer(data=request.data); ser.is_valid(raise_exception=True)
+        d = ser.validated_data
+        wf.reassign_case(self.get_object(), request.user, request=request, assigned_ae=d.get("assigned_ae"), assigned_jc=d.get("assigned_jc"), reported_by=d.get("reported_by"), remarks=d["remarks"], order_reference=d["order_reference"])
         return self._ok(self.get_object())
 
     @action(detail=True, methods=["get"])

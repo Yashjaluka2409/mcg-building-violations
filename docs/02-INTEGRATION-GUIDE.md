@@ -20,7 +20,8 @@ touch points; each is a small, well-marked change.
 5. `pip install -r backend/requirements.txt` (adds WeasyPrint, pyHanko, qrcode, shapely, openpyxl).
    Install Pango on the servers for Hindi PDFs.
 6. `python manage.py migrate building_violations && python manage.py load_legal_catalogue`.
-7. Create `OfficerProfile` rows for existing users (Django admin → *Officer profiles*, or the
+7. Branch officers: create users with role `BRANCH_OFFICER` and `branch` = PLANNING / REVENUE / LEGAL / ENGINEERING / FIRE (Administration → Branches to add more). They see only referred cases.
+8. Create `OfficerProfile` rows for existing users (Django admin → *Officer profiles*, or the
    `/building-violations/api/officers/` endpoint). Role and zones drive every permission.
    For the Joint Commissioner enter the Commissioner's delegation order number (s.401(2)) - it is
    printed on every notice.

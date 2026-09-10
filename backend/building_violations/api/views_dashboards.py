@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .. import models as m
-from .permissions import HasOfficerProfile
+from .permissions import HasOfficerProfile, HasPerm
 from .views_cases import ViolationCaseViewSet
 
 OPEN_EXCLUDE = ["CLOSED", "DROPPED", "REGULARISED"]
@@ -35,7 +35,7 @@ def _scoped(request):
 
 
 class _Base(APIView):
-    permission_classes = [HasOfficerProfile]
+    permission_classes = [HasPerm.of("DASHBOARD_VIEW")]
 
 
 class SummaryView(_Base):
@@ -64,6 +64,13 @@ class SummaryView(_Base):
             "signature_failed": notices.filter(signature_status="FAILED").count(),
             "sms_failed": m.NoticeDispatch.objects.filter(notice__case__in=qs, status="FAILED").count(),
             "demolition_cost_inr": float(qs.aggregate(t=Sum("demolition_cost_inr"))["t"] or 0),
+            "litigation_pending": qs.filter(litigation_status="APPEAL_PENDING").count(),
+            "stayed_high_court": qs.filter(litigation_status="STAYED", litigation_authority="HIGH_COURT").count(),
+            "stayed_supreme_court": qs.filter(litigation_status="STAYED", litigation_authority="SUPREME_COURT").count(),
+            "stayed_divisional_commissioner": qs.filter(litigation_status="STAYED", litigation_authority="DIVISIONAL_COMMISSIONER").count(),
+            "stays_expiring_7d": m.Appeal.objects.filter(case__in=qs, status="STAYED", stay_until__isnull=False, stay_until__lte=(now + timedelta(days=7)).date()).count(),
+            "referrals_pending": m.BranchReferral.objects.filter(case__in=qs, status="PENDING").count(),
+            "referrals_overdue": m.BranchReferral.objects.filter(case__in=qs, status="PENDING", due_at__lt=now).count(),
             "cost_recovery_pending": qs.filter(cost_recovery_status__in=["PENDING", "DEMANDED"]).count(),
         })
 
@@ -183,8 +190,12 @@ class UpcomingDeadlinesView(_Base):
         resp = qs.filter(status="SCN_SERVED", response_due_at__lte=soon).order_by("response_due_at")
         comp = qs.filter(status__in=["ORDER_SERVED"], compliance_due_at__lte=soon).order_by("compliance_due_at")
         hearings = m.Hearing.objects.filter(case__in=qs, held_at__isnull=True, scheduled_at__lte=soon).select_related("case").order_by("scheduled_at")
-        appeals = m.Appeal.objects.filter(case__in=qs, status="STAYED", stay_until__lte=soon.date()).select_related("case")
+        appeals = m.Appeal.objects.filter(case__in=qs, status="STAYED", stay_until__isnull=False, stay_until__lte=soon.date()).select_related("case")
+        court_dates = m.Appeal.objects.filter(case__in=qs, next_hearing_on__isnull=False, next_hearing_on__lte=soon.date(), next_hearing_on__gte=now.date()).exclude(status__in=["DISMISSED", "ALLOWED", "WITHDRAWN", "DISPOSED"]).select_related("case")
+        refs = m.BranchReferral.objects.filter(case__in=qs, status="PENDING", due_at__lte=soon).select_related("case", "branch")
         f = lambda c, dt: {"id": str(c.id), "case_no": c.case_no, "address": c.address_line, "ward": c.ward.number if c.ward else None, "due": dt}
         return Response({"responses_due": [f(c, c.response_due_at) for c in resp[:100]], "compliance_due": [f(c, c.compliance_due_at) for c in comp[:100]],
                          "hearings": [{**f(h.case, h.scheduled_at), "venue": h.venue} for h in hearings[:100]],
-                         "stays_expiring": [{**f(a.case, a.stay_until), "authority": a.authority} for a in appeals[:100]]})
+                         "stays_expiring": [{**f(a.case, a.stay_until), "authority": a.get_authority_display()} for a in appeals[:100]],
+                         "court_dates": [{**f(a.case, a.next_hearing_on), "authority": a.get_authority_display(), "appeal_no": a.appeal_no} for a in court_dates[:100]],
+                         "referrals_due": [{**f(r.case, r.due_at), "branch": r.branch.name_en} for r in refs[:100]]})

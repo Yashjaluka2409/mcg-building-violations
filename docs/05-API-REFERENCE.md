@@ -27,6 +27,13 @@ Base path: `/building-violations/api/` · Auth: `Authorization: Bearer <access_t
 | GET `reports/` · GET `reports/{name}/?export=csv|xlsx` | Registers: case-register, notice-register, order-register, execution-register, pendency, govt-land, sla-breach, sanctioned-plans |
 | GET/POST/PATCH `officers/` · GET `officers/dropdown/?role=&zone=` | Officer directory (admin; JC may add clerks) |
 | GET `notifications/` · POST `notifications/mark_read/` | In-app notifications |
+| POST `cases/{id}/refer_branch/` `{branch, query, due_days, hold_case, assigned_to, media_ids}` · POST `cases/{id}/respond_branch/` `{referral, response, recommendation, media_ids}` · POST `cases/{id}/close_referral/` | Branch consultation |
+| GET `referrals/?inbox=1&status=` · GET `referrals/counts/` | Referrals scoped to my branch / my referrals |
+| POST `cases/{id}/record_appeal/` (authority, appeal_no, stay_granted, stay_order_media, stay_until, stay_scope, next_hearing_on ...) · POST `cases/{id}/decide_appeal/` (= `update_appeal/`: status, stay_until, next_hearing_on, stay_order_media, final_order_media, new_compliance_days ...) | Litigation flag; stay requires the uploaded order |
+| POST `cases/{id}/reassign/` `{reported_by, assigned_ae, assigned_jc, order_reference}` · POST `admin/reassign-cases/` (by zone / ward / from_user / case_ids) | Re-assignment |
+| GET/POST/PATCH `branches/` | Branch master |
+| GET/PUT/POST(reset) `admin/workflow-rules/` · GET/PUT `admin/settings/` · GET/PUT `admin/permissions/` · GET/PUT `officers/{id}/permissions/` · GET `admin/audit-log/` | Administration (all writes take `order_reference`) |
+| GET `reports/litigation-register/` · GET `reports/branch-referrals/` | New registers |
 
 ### issue_notice body
 

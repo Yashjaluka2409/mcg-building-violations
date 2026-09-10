@@ -15,6 +15,8 @@ import LegalPage from "@/pages/LegalPage";
 import OfficersPage from "@/pages/OfficersPage";
 import CaseMapPage from "@/pages/CaseMapPage";
 import VerifyPage from "@/pages/VerifyPage";
+import AdminPage from "@/pages/AdminPage";
+import BranchInboxPage from "@/pages/BranchInboxPage";
 import { Spinner } from "@/components/ui";
 
 function RequireAuth({ children }: { children: JSX.Element }) {
@@ -47,6 +49,8 @@ export default function App() {
         <Route path="reports" element={<ReportsPage />} />
         <Route path="legal" element={<LegalPage />} />
         <Route path="officers" element={<OfficersPage />} />
+        <Route path="admin" element={<AdminPage />} />
+        <Route path="referrals" element={<BranchInboxPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>

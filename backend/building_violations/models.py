@@ -100,8 +100,28 @@ class Role(models.TextChoices):
     ADDL_COMMISSIONER = "ADDL_COMMISSIONER", "Additional Commissioner"
     COMMISSIONER = "COMMISSIONER", "Commissioner"
     FIELD_STAFF = "FIELD_STAFF", "Enforcement / demolition squad"
+    BRANCH_OFFICER = "BRANCH_OFFICER", "Branch officer (Planning / Revenue / Legal ...) - consulted on cases"
     ADMIN = "ADMIN", "Module administrator"
     VIEWER = "VIEWER", "Read-only (MIS)"
+
+
+class Branch(models.Model):
+    """A branch of the Corporation that can be consulted on a case (Planning, Revenue, Legal, Fire ...).
+    Admin-editable; branch officers see only the cases referred to their branch."""
+    code = models.CharField(max_length=20, primary_key=True)     # PLANNING, REVENUE, LEGAL ...
+    name_en = models.CharField(max_length=120)
+    name_hi = models.CharField(max_length=120, blank=True)
+    description = models.TextField(blank=True)
+    head_designation = models.CharField(max_length=120, blank=True)   # e.g. District Town Planner (MCG)
+    default_response_days = models.PositiveSmallIntegerField(default=7)
+    active = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = "bvms_branch"
+        ordering = ["code"]
+
+    def __str__(self):
+        return self.name_en
 
 
 class OfficerProfile(TimeStamped):
@@ -122,6 +142,8 @@ class OfficerProfile(TimeStamped):
     signature_image = models.ImageField(upload_to="bvms/signatures/", null=True, blank=True)
     parent_profile = models.ForeignKey("self", null=True, blank=True, on_delete=models.CASCADE, related_name="sub_logins",
                                        help_text="For JC_CLERK: the JC whose office this clerk belongs to")
+    branch = models.ForeignKey(Branch, null=True, blank=True, on_delete=models.SET_NULL, related_name="officers",
+                               help_text="For BRANCH_OFFICER: the branch this officer answers for")
     active = models.BooleanField(default=True)
 
     class Meta:
@@ -367,8 +389,12 @@ class MediaKind(models.TextChoices):
     HEARING = "HEARING", "Hearing record"
     EXECUTION = "EXECUTION", "Demolition / sealing evidence"
     COMPLIANCE = "COMPLIANCE", "Self-compliance evidence"
-    APPEAL = "APPEAL", "Appeal / court order"
+    APPEAL = "APPEAL", "Appeal memo / pleadings"
+    STAY_ORDER = "STAY_ORDER", "Stay / interim order of the appellate authority or court"
+    COURT_ORDER = "COURT_ORDER", "Final order / judgment"
     SANCTION_DOC = "SANCTION_DOC", "Sanction / licence document"
+    BRANCH_REFERRAL = "BRANCH_REFERRAL", "Document sent with a branch referral"
+    BRANCH_RESPONSE = "BRANCH_RESPONSE", "Branch response / report"
     OTHER = "OTHER", "Other"
 
 
@@ -519,6 +545,12 @@ class ViolationCase(TimeStamped):
     compliance_due_at = models.DateTimeField(null=True, blank=True)
     executed_at = models.DateTimeField(null=True, blank=True)
     closed_at = models.DateTimeField(null=True, blank=True)
+
+    # ---- litigation flag (mirrors the latest Appeal so lists / dashboards can filter) ----
+    litigation_status = models.CharField(max_length=20, default="NONE", db_index=True)   # NONE | APPEAL_PENDING | STAYED | DECIDED
+    litigation_authority = models.CharField(max_length=30, blank=True)                   # DIVISIONAL_COMMISSIONER | HIGH_COURT | SUPREME_COURT ...
+    stay_until = models.DateField(null=True, blank=True)
+    next_hearing_on = models.DateField(null=True, blank=True)
 
     # ---- outcome ----
     stop_work_issued = models.BooleanField(default=False)
@@ -688,21 +720,63 @@ class Hearing(TimeStamped):
 
 
 class Appeal(TimeStamped):
+    """An appeal / writ / suit against a notice or order, and the stay (if any) granted in it.
+    A stay is recorded only with the stay order uploaded to the case file, so that every deferred
+    action has a legal backing on record."""
+    class Authority(models.TextChoices):
+        DIVISIONAL_COMMISSIONER = "DIVISIONAL_COMMISSIONER", "Divisional Commissioner, Gurugram (s.261(2) / s.263A(4))"
+        COMMISSIONER_MCG = "COMMISSIONER_MCG", "Commissioner, MCG (s.408B)"
+        CIVIL_COURT = "CIVIL_COURT", "Civil Court / District Court"
+        HIGH_COURT = "HIGH_COURT", "Punjab & Haryana High Court"
+        SUPREME_COURT = "SUPREME_COURT", "Supreme Court of India"
+        NGT = "NGT", "National Green Tribunal"
+        OTHER = "OTHER", "Other forum"
+
+    class Status(models.TextChoices):
+        PENDING = "PENDING", "Pending - no stay"
+        STAYED = "STAYED", "Stay / status quo granted"
+        STAY_VACATED = "STAY_VACATED", "Stay vacated"
+        DISMISSED = "DISMISSED", "Dismissed"
+        ALLOWED = "ALLOWED", "Allowed (order set aside)"
+        MODIFIED = "MODIFIED", "Order modified"
+        WITHDRAWN = "WITHDRAWN", "Withdrawn"
+        DISPOSED = "DISPOSED", "Disposed with directions"
+
+    class StayScope(models.TextChoices):
+        FULL = "FULL", "All action stayed"
+        DEMOLITION_ONLY = "DEMOLITION_ONLY", "Demolition stayed (sealing / stop-work continue)"
+        STATUS_QUO = "STATUS_QUO", "Status quo (no construction, no demolition)"
+        PARTIAL = "PARTIAL", "Partial - see conditions"
+
     case = models.ForeignKey(ViolationCase, on_delete=models.CASCADE, related_name="appeals")
     order = models.ForeignKey(Notice, null=True, blank=True, on_delete=models.SET_NULL, related_name="appeals")
+    authority = models.CharField(max_length=30, choices=Authority.choices)
+    authority_other = models.CharField(max_length=200, blank=True)
     filed_on = models.DateField()
-    authority = models.CharField(max_length=200)            # Divisional Commissioner / Commissioner / High Court
-    appeal_no = models.CharField(max_length=80, blank=True)
-    status = models.CharField(max_length=16, default="PENDING")   # PENDING | STAYED | DISMISSED | ALLOWED | MODIFIED | WITHDRAWN
+    appeal_no = models.CharField(max_length=120, blank=True, help_text="Appeal / CWP / SLP / OA number")
+    appellant_name = models.CharField(max_length=200, blank=True)
+    counsel_for_mcg = models.CharField(max_length=200, blank=True)
+    status = models.CharField(max_length=16, choices=Status.choices, default=Status.PENDING)
     stay_granted = models.BooleanField(default=False)
-    stay_until = models.DateField(null=True, blank=True)
-    conditions = models.TextField(blank=True)               # e.g. bank guarantee under s.263A(4)
+    stay_order_date = models.DateField(null=True, blank=True)
+    stay_until = models.DateField(null=True, blank=True, help_text="Blank = until further orders / next date")
+    stay_scope = models.CharField(max_length=20, choices=StayScope.choices, blank=True)
+    stay_order = models.ForeignKey(MediaAttachment, null=True, blank=True, on_delete=models.SET_NULL, related_name="+", help_text="Uploaded copy of the stay / interim order")
+    conditions = models.TextField(blank=True)               # e.g. bank guarantee under s.263A(4), no further construction
+    next_hearing_on = models.DateField(null=True, blank=True)
     decided_on = models.DateField(null=True, blank=True)
     decision_summary = models.TextField(blank=True)
+    final_order = models.ForeignKey(MediaAttachment, null=True, blank=True, on_delete=models.SET_NULL, related_name="+", help_text="Uploaded copy of the final order / judgment")
     recorded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="+")
 
     class Meta:
         db_table = "bvms_appeal"
+        ordering = ["-filed_on", "-id"]
+
+    @property
+    def is_stay_active(self) -> bool:
+        from django.utils import timezone as _tz
+        return self.status == self.Status.STAYED and (self.stay_until is None or self.stay_until >= _tz.localdate())
 
 
 class ExecutionRecord(TimeStamped):
@@ -800,3 +874,120 @@ class OTPRequest(models.Model):
 
     class Meta:
         db_table = "bvms_otp"
+
+
+# ============================================================================
+# 7. Branch referrals (consultation with Planning / Revenue / Legal ...)
+# ============================================================================
+class BranchReferral(TimeStamped):
+    class Status(models.TextChoices):
+        PENDING = "PENDING", "Awaiting branch response"
+        RESPONDED = "RESPONDED", "Response received"
+        CLOSED = "CLOSED", "Closed by referring officer"
+        WITHDRAWN = "WITHDRAWN", "Withdrawn"
+
+    case = models.ForeignKey(ViolationCase, on_delete=models.CASCADE, related_name="referrals")
+    branch = models.ForeignKey(Branch, on_delete=models.PROTECT, related_name="referrals")
+    referred_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="bvms_referrals_made")
+    referred_at = models.DateTimeField(default=timezone.now)
+    query = models.TextField(help_text="What the branch is asked to examine / report on")
+    due_at = models.DateTimeField(null=True, blank=True)
+    hold_case = models.BooleanField(default=False, help_text="If true, final orders are blocked until the branch responds (subject to workflow setting)")
+    status = models.CharField(max_length=12, choices=Status.choices, default=Status.PENDING, db_index=True)
+    assigned_to = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="bvms_referrals_assigned")
+    response = models.TextField(blank=True)
+    recommendation = models.CharField(max_length=40, blank=True)   # e.g. VIOLATION_CONFIRMED / NO_VIOLATION / REGULARISABLE / GOVT_LAND_CONFIRMED / PRIVATE_LAND
+    responded_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="bvms_referrals_answered")
+    responded_at = models.DateTimeField(null=True, blank=True)
+    closed_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
+    closed_at = models.DateTimeField(null=True, blank=True)
+    closing_remarks = models.TextField(blank=True)
+
+    class Meta:
+        db_table = "bvms_branch_referral"
+        ordering = ["-referred_at"]
+
+    def __str__(self):
+        return f"{self.case_id} -> {self.branch_id}"
+
+
+# ============================================================================
+# 8. Admin-configurable workflow, permissions and audit of admin changes
+# ============================================================================
+class WorkflowRule(models.Model):
+    """Which role may perform which action when a case is in a given status.
+    status "*" = any status. Seeded from the defaults in services/access.py; edited by the admin."""
+    status = models.CharField(max_length=30)      # CaseStatus value or "*"
+    role = models.CharField(max_length=24, choices=Role.choices)
+    action = models.CharField(max_length=40)
+    allowed = models.BooleanField(default=True)
+    updated_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "bvms_workflow_rule"
+        unique_together = ("status", "role", "action")
+
+
+class WorkflowSetting(models.Model):
+    """Typed key/value settings that change the routing and guards of the workflow."""
+    key = models.CharField(max_length=60, primary_key=True)
+    value = models.JSONField()
+    value_type = models.CharField(max_length=10, default="bool")   # bool | int | str | choice
+    label = models.CharField(max_length=160)
+    description = models.TextField(blank=True)
+    group = models.CharField(max_length=40, default="Routing")
+    choices = models.JSONField(default=list, blank=True)
+    updated_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "bvms_workflow_setting"
+        ordering = ["group", "key"]
+
+
+class RolePermission(models.Model):
+    """Module-level permissions per role (view all zones, export reports, manage plans ...)."""
+    role = models.CharField(max_length=24, choices=Role.choices)
+    permission = models.CharField(max_length=40)
+    allowed = models.BooleanField(default=True)
+    updated_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "bvms_role_permission"
+        unique_together = ("role", "permission")
+
+
+class OfficerPermissionOverride(models.Model):
+    """Grant or revoke a permission for one officer, over and above the role defaults."""
+    profile = models.ForeignKey(OfficerProfile, on_delete=models.CASCADE, related_name="permission_overrides")
+    permission = models.CharField(max_length=40)
+    allowed = models.BooleanField(default=True)
+    reason = models.CharField(max_length=300, blank=True)
+    order_reference = models.CharField(max_length=120, blank=True, help_text="Office order / Commissioner's order authorising the change")
+    updated_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "bvms_officer_permission_override"
+        unique_together = ("profile", "permission")
+
+
+class AdminAuditLog(models.Model):
+    """Every administrative change (officer, jurisdiction, rule, permission, setting, re-assignment)."""
+    id = models.BigAutoField(primary_key=True)
+    at = models.DateTimeField(default=timezone.now, db_index=True)
+    actor = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
+    action = models.CharField(max_length=40)          # OFFICER_CREATE, OFFICER_UPDATE, RULES_UPDATE, PERMISSIONS_UPDATE, SETTING_UPDATE, CASES_REASSIGN, BRANCH_UPDATE
+    target_type = models.CharField(max_length=40, blank=True)
+    target_id = models.CharField(max_length=60, blank=True)
+    before = models.JSONField(default=dict, blank=True)
+    after = models.JSONField(default=dict, blank=True)
+    order_reference = models.CharField(max_length=120, blank=True)
+    remarks = models.TextField(blank=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+
+    class Meta:
+        db_table = "bvms_admin_audit_log"
+        ordering = ["-at"]
