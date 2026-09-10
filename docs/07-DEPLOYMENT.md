@@ -1,5 +1,12 @@
 # 07 - Deployment
 
+## Sandbox / demo in one command
+
+`./sandbox/run_sandbox.sh [--tunnel]` (see `sandbox/README.md`) builds the portal, seeds demo data and serves
+everything from Django on one port; `--tunnel` adds a public Cloudflare quick-tunnel URL for demos.
+`docker compose -f sandbox/docker-compose.yml up -d --build` does the same in a container with PostgreSQL.
+Set `SERVE_SPA=1` + `DEMO_MODE=1` for sandboxes only.
+
 ## Standalone (UAT server)
 
 ```

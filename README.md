@@ -14,6 +14,12 @@ the Haryana Building Code, 2017 and the Haryana Public Premises Act, 1972.
 | Legal catalogue | `shared/legal/` | 5 statutes, 125 sections, 36 violation types, 28 notice/order types (JSON, single source of truth) | Complete; "verify" flags for Legal Branch |
 | Documentation | `docs/` | Architecture, integration guide, workflow/SLA, legal framework, API (OpenAPI), DB schema, deployment, UAT plan, security notes | Complete |
 
+## Sandbox / demo
+
+`./sandbox/run_sandbox.sh --tunnel` serves the portal + API from one origin and prints a public
+`https://<random>.trycloudflare.com/building-violations/` link (see `sandbox/README.md`; Docker files for
+the IT team's sandbox are there too). Source: https://github.com/Yashjaluka2409/mcg-building-violations (private).
+
 ## Quick start (demo on one machine)
 
 ```bash
