@@ -42,7 +42,7 @@ class OTPRequestView(APIView):
         prof = OfficerProfile.objects.filter(mobile=mobile, active=True).first()
         if not prof:
             return Response({"detail": "This mobile number is not registered as an officer of the Building Violation module"}, status=404)
-        code = settings.BVMS_OTP_DEMO_CODE if settings.DEBUG else f"{secrets.randbelow(10**6):06d}"
+        code = settings.BVMS_OTP_DEMO_CODE if (settings.DEBUG or getattr(settings, "BVMS_DEMO_MODE", False)) else f"{secrets.randbelow(10**6):06d}"
         OTPRequest.objects.create(mobile=mobile, code_hash=_hash(code), expires_at=timezone.now() + timedelta(minutes=10))
         get_gateway().send(mobile, f"{code} is your OTP for MCG Building Violation System. Valid 10 minutes. - MCGGGN", "")
         return Response({"detail": "OTP sent", "expires_in": 600})

@@ -38,7 +38,7 @@ export default function Uploader({ caseId, kind, noticeId, onUploaded, accept = 
       <button type="button" className="btn-outline w-full border-dashed py-4 justify-center" disabled={busy} onClick={() => input.current?.click()}>
         {busy ? <><Upload className="h-4 w-4 animate-pulse" /> Uploading {progress}%</> : <><Camera className="h-4 w-4 text-accent-600" /> {label}</>}
       </button>
-      <input ref={input} type="file" multiple accept={accept} className="hidden" onChange={(e) => onFiles(e.target.files)} />
+      <input ref={input} type="file" multiple accept={accept} capture={requireGeo ? "environment" : undefined} className="hidden" onChange={(e) => onFiles(e.target.files)} />
       {err && <div className="text-xs text-danger-600 mt-1">{err}</div>}
     </div>
   );

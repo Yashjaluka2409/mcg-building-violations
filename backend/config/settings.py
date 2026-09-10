@@ -32,7 +32,15 @@ if sys.platform == "darwin":
 
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-only-insecure-key-change-me")
 DEBUG = os.getenv("DJANGO_DEBUG", "1") == "1"
+# DEMO_MODE: fixed OTP, demo PID records, media served by Django, SPA served from web/dist - for sandboxes only
+BVMS_DEMO_MODE = os.getenv("DEMO_MODE", "0") == "1"
 ALLOWED_HOSTS = [h.strip() for h in os.getenv("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1,*").split(",") if h.strip()]
+CSRF_TRUSTED_ORIGINS = [o for o in os.getenv("CSRF_TRUSTED_ORIGINS", "https://*.trycloudflare.com,http://localhost:5173,http://127.0.0.1:8000").split(",") if o]
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+USE_X_FORWARDED_HOST = True
+# Serve the built web portal (web/dist) from Django on /building-violations/ when SERVE_SPA=1
+BVMS_SERVE_SPA = os.getenv("SERVE_SPA", "0") == "1"
+BVMS_SPA_DIST = Path(os.getenv("SPA_DIST", str(BASE_DIR.parent / "web" / "dist")))
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -183,7 +191,7 @@ BVMS_FONTS_DIR = BASE_DIR / "building_violations" / "fonts"
 BVMS_LEGAL_DIR = BASE_DIR.parent / "shared" / "legal"
 # Geo-tag tolerance: a delivery/execution photo must be within this many metres of the case point
 BVMS_GEOTAG_TOLERANCE_M = int(os.getenv("BVMS_GEOTAG_TOLERANCE_M", "150"))
-BVMS_OTP_DEMO_CODE = os.getenv("BVMS_OTP_DEMO_CODE", "123456")  # standalone demo only
+BVMS_OTP_DEMO_CODE = os.getenv("BVMS_OTP_DEMO_CODE", "123456")  # standalone demo only (used when DEBUG or DEMO_MODE)
 
 LOGGING = {
     "version": 1, "disable_existing_loggers": False,
