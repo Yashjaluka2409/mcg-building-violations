@@ -7,7 +7,11 @@
     "orientation": "portrait",
     "icon": "./assets/brand/mcg-logo.png",
     "userInterfaceStyle": "automatic",
-    "splash": { "image": "./assets/brand/mcg-logo.png", "resizeMode": "contain", "backgroundColor": "#782669" },
+    "splash": {
+      "image": "./assets/brand/mcg-logo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#782669"
+    },
     "ios": {
       "bundleIdentifier": "in.gov.mcg.buildingviolations",
       "supportsTablet": true,
@@ -20,16 +24,44 @@
     },
     "android": {
       "package": "in.gov.mcg.buildingviolations",
-      "adaptiveIcon": { "foregroundImage": "./assets/brand/mcg-logo.png", "backgroundColor": "#782669" },
-      "permissions": ["CAMERA", "RECORD_AUDIO", "ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION", "READ_MEDIA_IMAGES", "READ_MEDIA_VIDEO"]
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/brand/mcg-logo.png",
+        "backgroundColor": "#782669"
+      },
+      "permissions": [
+        "CAMERA",
+        "RECORD_AUDIO",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "READ_MEDIA_IMAGES",
+        "READ_MEDIA_VIDEO"
+      ]
     },
     "plugins": [
       "expo-router",
-      ["expo-camera", { "cameraPermission": "Capture geotagged evidence of building violations.", "microphonePermission": "Record site videos.", "recordAudioAndroid": true }],
-      ["expo-location", { "locationWhenInUsePermission": "Location is attached to every inspection and photograph as evidence." }],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Capture geotagged evidence of building violations.",
+          "microphonePermission": "Record site videos.",
+          "recordAudioAndroid": true
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Location is attached to every inspection and photograph as evidence."
+        }
+      ],
       "expo-secure-store",
-      "expo-sqlite"
+      "expo-sqlite",
+      "expo-status-bar"
     ],
-    "extra": { "apiBase": "https://sms-be.austere.biz/building-violations/api", "eas": { "projectId": "REPLACE-WITH-EAS-PROJECT-ID" } }
+    "extra": {
+      "apiBase": "https://sms-be.austere.biz/building-violations/api",
+      "eas": {
+        "projectId": "REPLACE-WITH-EAS-PROJECT-ID"
+      }
+    }
   }
 }

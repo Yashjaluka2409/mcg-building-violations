@@ -1,0 +1,4 @@
+Web portal (any browser/phone): https://loan-americans-advert-blocked.trycloudflare.com/building-violations/
+Mobile app in Expo Go: 
+GitHub: https://github.com/Yashjaluka2409/mcg-building-violations
+OTP for all demo logins: 123456
