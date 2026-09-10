@@ -6,6 +6,10 @@ import App from "./App";
 import "./index.css";
 import "./i18n";
 
+// Standalone dev convenience: opening http://localhost:5173/ lands on the module prefix.
+const BASENAME = import.meta.env.VITE_ROUTER_BASENAME || "/building-violations";
+if (window.location.pathname === "/" && BASENAME !== "/") window.history.replaceState(null, "", BASENAME + "/");
+
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 1, staleTime: 30_000, refetchOnWindowFocus: false } } });
 
 // The module is mounted at /building-violations inside the MCG portal; when served standalone
@@ -13,7 +17,7 @@ const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 1, sta
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter basename={import.meta.env.VITE_ROUTER_BASENAME || "/building-violations"}>
+      <BrowserRouter basename={BASENAME}>
         <App />
       </BrowserRouter>
     </QueryClientProvider>

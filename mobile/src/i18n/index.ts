@@ -19,6 +19,6 @@ const hi: typeof en = {
   recordExecution: "ध्वस्तीकरण / सीलिंग दर्ज करें", sealedPremises: "सील", stopWork: "कार्य-रोक", governmentLand: "सरकारी भूमि", private: "निजी भूमि",
 };
 i18n.use(initReactI18next).init({ resources: { en: { translation: en }, hi: { translation: hi } }, lng: "en", fallbackLng: "en", interpolation: { escapeValue: false } });
-AsyncStorage.getItem("lang").then((l) => l && i18n.changeLanguage(l));
+AsyncStorage.getItem("lang").then((l) => { if (l) i18n.changeLanguage(l); });
 export const setLang = async (l: string) => { await AsyncStorage.setItem("lang", l); i18n.changeLanguage(l); };
 export default i18n;

@@ -75,7 +75,7 @@ class Command(BaseCommand):
         # a couple of government land parcels (demo polygons near Sector 14 / Sushant Lok)
         if not GovtLandParcel.objects.exists():
             GovtLandParcel.objects.create(name="Green belt, Sector 14 (demo)", agency="MCG", land_use="Green belt", village="Gurugram", khasra_no="112/2",
-                                          ward=Ward.objects.get(number=19), geometry={"type": "Polygon", "coordinates": [[[77.0440, 28.4690], [77.0470, 28.4690], [77.0470, 28.4715], [77.0440, 28.4715], [77.0440, 28.4690]]]})
+                                          ward=Ward.objects.get(number=19), geometry={"type": "Polygon", "coordinates": [[[77.0452, 28.4690], [77.0470, 28.4690], [77.0470, 28.4715], [77.0452, 28.4715], [77.0452, 28.4690]]]})
             GovtLandParcel.objects.create(name="Community site, Sushant Lok-1 (demo)", agency="HSVP", land_use="Community facility", village="Sukhrali", khasra_no="45",
                                           ward=Ward.objects.get(number=30), geometry={"type": "Polygon", "coordinates": [[[77.0790, 28.4610], [77.0820, 28.4610], [77.0820, 28.4635], [77.0790, 28.4635], [77.0790, 28.4610]]]})
         if not SanctionedPlan.objects.exists():

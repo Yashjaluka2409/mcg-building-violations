@@ -44,8 +44,7 @@ class WorkflowTests(TestCase):
 
     def test_full_private_land_flow(self):
         case = self._case()
-        self.assertEqual(case.land_type, "GOVT_MCG")  # demo green-belt polygon contains the point -> auto detection
-        case.land_type = "PRIVATE"; case.govt_parcel = None; case.save()
+        self.assertEqual(case.land_type, "PRIVATE")  # outside the demo green-belt polygon
         self.assertIsNotNone(case.sanctioned_plan, "plan auto-linked by PID")
         wf.submit_to_ae(case, self.je)
         self.assertEqual(case.status, CaseStatus.PENDING_AE)
@@ -140,7 +139,7 @@ class WorkflowTests(TestCase):
         r = c.get("/building-violations/api/property/pid/GGN012345/")
         self.assertEqual(r.status_code, 200)
         self.assertEqual(r.json()["owner_name"], "Ramesh Kumar")
-        r = c.get("/building-violations/api/gis/check-point/", {"lat": 28.47, "lng": 77.045})
+        r = c.get("/building-violations/api/gis/check-point/", {"lat": 28.47, "lng": 77.0455})
         self.assertEqual(r.json()["land_type"], "GOVT_MCG")
         payload = {"pid": "GGN012345", "address_line": "H.No. 123", "latitude": 28.47, "longitude": 77.045, "description": "x", "violations": [{"code": "PL-01"}], "land_type": "PRIVATE"}
         r = c.post("/building-violations/api/cases/", payload, format="json")
