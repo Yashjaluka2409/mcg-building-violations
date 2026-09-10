@@ -1,4 +1,4 @@
-import { api } from "./client";
+import { API_BASE, api } from "./client";
 import type { Appeal, CaseDetail, CaseListItem, GovtParcel, LegalSection, Me, Media, Notice, Notification, OrderType, Paginated, SanctionedPlan, ViolationType, Ward, Zone } from "./types";
 
 export const auth = {
@@ -49,7 +49,8 @@ export const notices = {
   pdfUrl: (id: string) => `${api.defaults.baseURL}/notices/${id}/pdf/`,
   resendSms: (id: string, mobiles: string[] = []) => api.post(`/notices/${id}/resend_sms/`, { mobiles }).then((r) => r.data),
   resign: (id: string) => api.post<Notice>(`/notices/${id}/resign/`).then((r) => r.data),
-  verifyPublic: (code: string, h?: string) => api.get(`${api.defaults.baseURL!.replace(/\/api$/, "")}/public/verify/${code}/`, { params: h ? { h } : {} }).then((r) => r.data),
+  // public endpoint lives beside the API prefix (/building-violations/public/...); baseURL is cleared so axios does not prepend it
+  verifyPublic: (code: string, h?: string) => api.get(`${API_BASE.replace(/\/api\/?$/, "")}/public/verify/${code}/`, { baseURL: "", params: h ? { h } : {} }).then((r) => r.data),
 };
 export const dashboards = {
   summary: (p: Record<string, unknown>) => api.get("/dashboards/summary/", { params: p }).then((r) => r.data as Record<string, number>),
