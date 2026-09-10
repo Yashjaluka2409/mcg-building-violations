@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import { CloudUpload, FileSignature, FolderKanban, Hammer, Inbox, MapPin, PlusCircle } from "lucide-react-native";
+import { CloudUpload, Crosshair, FileSignature, FolderKanban, Hammer, Inbox, MapPin, PlusCircle } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
@@ -16,6 +16,7 @@ export default function HomeScreen() {
   const r = useRouter();
   const user = useAuth((s) => s.user);
   const counts = useQuery({ queryKey: ["counts"], queryFn: cases.counts });
+  const taskCounts = useQuery({ queryKey: ["task-counts"], queryFn: () => import("@/api/client").then(({ api }) => api.get("/inspections/tasks/counts/").then((x) => x.data)) });
   const deadlines = useQuery({ queryKey: ["deadlines"], queryFn: dashboards.deadlines });
   const [acc, setAcc] = useState<number | null>(null);
   const [queued, setQueued] = useState(0);
@@ -35,6 +36,7 @@ export default function HomeScreen() {
         <Card><CardTitle>{t("quickActions")}</CardTitle>
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
             {["JE", "AE", "FIELD_STAFF", "ADMIN"].includes(role) && <Tile icon={<PlusCircle color={colors.secondary} size={30} />} label={t("newInspection")} onPress={() => r.push("/inspection/new")} />}
+            <Tile icon={<Crosshair color={colors.secondary} size={30} />} label="Planned inspections" badge={taskCounts.data?.assigned_to_me} onPress={() => r.push("/tasks")} />
             <Tile icon={<Inbox color={colors.secondary} size={30} />} label={t("inbox")} badge={c.inbox} onPress={() => r.push({ pathname: "/(tabs)/cases", params: { inbox: "1" } })} />
             <Tile icon={<FileSignature color={colors.secondary} size={30} />} label={t("toServe")} badge={c.to_serve} onPress={() => r.push({ pathname: "/(tabs)/cases", params: { status: "SCN_ISSUED,ORDER_ISSUED" } })} />
             <Tile icon={<Hammer color={colors.secondary} size={30} />} label={t("executionDue")} badge={c.execution_due} onPress={() => r.push({ pathname: "/(tabs)/cases", params: { status: "EXECUTION_DUE" } })} />

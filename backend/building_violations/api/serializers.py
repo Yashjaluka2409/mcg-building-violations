@@ -153,10 +153,16 @@ class GovtLandParcelSerializer(serializers.ModelSerializer):
 
 
 class LandLayerUploadSerializer(serializers.ModelSerializer):
+    uploaded_by = UserLiteSerializer(read_only=True)
+    active_parcels = serializers.SerializerMethodField()
+
     class Meta:
         model = m.LandLayerUpload
-        fields = ("id", "name", "agency", "source_file", "feature_count", "uploaded_by", "remarks", "created_at")
-        read_only_fields = ("feature_count", "uploaded_by")
+        fields = ("id", "name", "layer_key", "version", "replaces", "agency", "source_file", "file_format", "source", "survey_date", "feature_count", "skipped_count", "uploaded_by", "remarks", "active", "import_log", "active_parcels", "created_at")
+        read_only_fields = ("feature_count", "skipped_count", "uploaded_by", "version", "replaces", "file_format", "import_log", "active")
+
+    def get_active_parcels(self, o):
+        return o.parcels.filter(active=True).count()
 
 
 class SanctionedPlanSerializer(serializers.ModelSerializer):
@@ -197,6 +203,7 @@ class MediaUploadSerializer(serializers.Serializer):
     case = serializers.PrimaryKeyRelatedField(queryset=m.ViolationCase.objects.all(), required=False, allow_null=True)
     notice = serializers.PrimaryKeyRelatedField(queryset=m.Notice.objects.all(), required=False, allow_null=True)
     sanctioned_plan = serializers.PrimaryKeyRelatedField(queryset=m.SanctionedPlan.objects.all(), required=False, allow_null=True)
+    task = serializers.PrimaryKeyRelatedField(queryset=m.InspectionTask.objects.all(), required=False, allow_null=True)
     latitude = serializers.DecimalField(max_digits=10, decimal_places=7, required=False, allow_null=True)
     longitude = serializers.DecimalField(max_digits=10, decimal_places=7, required=False, allow_null=True)
     accuracy_m = serializers.DecimalField(max_digits=8, decimal_places=2, required=False, allow_null=True)
@@ -380,6 +387,7 @@ class ViolationCaseDetailSerializer(ViolationCaseListSerializer):
     executions = ExecutionRecordSerializer(many=True, read_only=True)
     events = CaseEventSerializer(many=True, read_only=True)
     referrals = serializers.SerializerMethodField()
+    task_summary = serializers.SerializerMethodField()
     sanctioned_plan = SanctionedPlanSerializer(read_only=True)
     govt_parcel = GovtLandParcelSerializer(read_only=True)
     available_actions = serializers.SerializerMethodField()
@@ -392,7 +400,11 @@ class ViolationCaseDetailSerializer(ViolationCaseListSerializer):
             "storeys", "height_m", "use_observed", "description", "measurements", "submitted_at", "ae_forwarded_at", "jc_received_at", "scn_served_at",
             "response_received_at", "hearing_at", "decided_at", "order_issued_at", "order_served_at", "executed_at", "closed_at", "decision_reasons", "final_order",
             "closure_reason", "demolition_cost_inr", "cost_recovery_status", "violations", "media", "notices", "responses", "hearings", "appeals", "executions",
-            "events", "referrals", "available_actions", "available_order_types")
+            "events", "referrals", "task_summary", "inspector_latitude", "inspector_longitude", "inspector_distance_m", "available_actions", "available_order_types")
+
+    def get_task_summary(self, o):
+        t = o.task
+        return {"id": t.id, "category": t.get_category_display(), "instructions": t.instructions, "created_by": t.created_by.bvms_profile.display_name if hasattr(t.created_by, "bvms_profile") else str(t.created_by), "batch": t.batch.title if t.batch_id else None, "assigned_at": t.assigned_at, "started_at": t.started_at, "start_distance_m": t.start_distance_m} if t else None
 
     def get_referrals(self, o):
         return BranchReferralSerializer(o.referrals.select_related("branch", "referred_by", "responded_by", "assigned_to", "closed_by"), many=True, context=self.context).data
@@ -444,6 +456,9 @@ class CaseCreateSerializer(serializers.Serializer):
     description = serializers.CharField()
     measurements = serializers.JSONField(required=False)
     inspected_at = serializers.DateTimeField(required=False)
+    task = serializers.PrimaryKeyRelatedField(queryset=m.InspectionTask.objects.all(), required=False, allow_null=True)
+    inspector_latitude = serializers.DecimalField(max_digits=10, decimal_places=7, required=False, allow_null=True)
+    inspector_longitude = serializers.DecimalField(max_digits=10, decimal_places=7, required=False, allow_null=True)
     violations = CaseViolationInputSerializer(many=True)
     media_ids = serializers.ListField(child=serializers.UUIDField(), required=False)
     submit = serializers.BooleanField(required=False, default=False)
@@ -678,3 +693,78 @@ class AdminAuditLogSerializer(serializers.ModelSerializer):
     class Meta:
         model = m.AdminAuditLog
         fields = ("id", "at", "actor", "action", "target_type", "target_id", "before", "after", "order_reference", "remarks", "ip_address")
+
+
+
+# ---------------------------------------------------------------- planned inspections
+class InspectionTaskSerializer(serializers.ModelSerializer):
+    created_by = UserLiteSerializer(read_only=True)
+    assigned_to = UserLiteSerializer(read_only=True)
+    ward_number = serializers.IntegerField(source="ward.number", read_only=True, default=None)
+    zone_code = serializers.CharField(source="zone.code", read_only=True, default=None)
+    batch_title = serializers.CharField(source="batch.title", read_only=True, default=None)
+    case_no = serializers.CharField(source="case.case_no", read_only=True, default=None)
+    case_id = serializers.UUIDField(source="case.id", read_only=True, default=None)
+    case_status = serializers.CharField(source="case.status", read_only=True, default=None)
+    related_case_no = serializers.CharField(source="related_case.case_no", read_only=True, default=None)
+    status_display = serializers.CharField(source="get_status_display", read_only=True)
+    category_display = serializers.CharField(source="get_category_display", read_only=True)
+    is_overdue = serializers.SerializerMethodField()
+    media = MediaAttachmentSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = m.InspectionTask
+        fields = ("id", "batch", "batch_title", "category", "category_display", "pid", "pid_snapshot", "address", "owner_name", "owner_mobile", "latitude", "longitude", "ward", "ward_number", "zone", "zone_code",
+                  "instructions", "priority", "created_by", "assigned_to", "assigned_at", "due_at", "status", "status_display", "related_case", "related_case_no", "started_at", "start_latitude", "start_longitude",
+                  "start_distance_m", "completed_at", "outcome_remarks", "geofence_m", "case_no", "case_id", "case_status", "is_overdue", "media", "created_at", "updated_at")
+
+    def get_is_overdue(self, t):
+        from django.utils import timezone
+        return bool(t.status in ("ASSIGNED", "UNASSIGNED", "IN_PROGRESS") and t.due_at and t.due_at < timezone.now())
+
+
+class InspectionTaskCreateSerializer(serializers.Serializer):
+    pid = serializers.CharField(required=False, allow_blank=True, default="")
+    address = serializers.CharField(required=False, allow_blank=True, default="")
+    latitude = serializers.DecimalField(max_digits=10, decimal_places=7, required=False, allow_null=True)
+    longitude = serializers.DecimalField(max_digits=10, decimal_places=7, required=False, allow_null=True)
+    category = serializers.ChoiceField(choices=m.InspectionTask.Category.choices, default="VERIFICATION")
+    instructions = serializers.CharField(required=False, allow_blank=True, default="")
+    priority = serializers.ChoiceField(choices=["LOW", "NORMAL", "HIGH", "URGENT"], default="NORMAL")
+    assigned_to = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), required=False, allow_null=True)
+    due_days = serializers.IntegerField(required=False, allow_null=True, min_value=1, max_value=90)
+    ward = serializers.PrimaryKeyRelatedField(queryset=m.Ward.objects.all(), required=False, allow_null=True)
+    owner_name = serializers.CharField(required=False, allow_blank=True, default="")
+    owner_mobile = serializers.CharField(required=False, allow_blank=True, default="")
+    related_case = serializers.PrimaryKeyRelatedField(queryset=m.ViolationCase.objects.all(), required=False, allow_null=True)
+
+
+class InspectionBatchSerializer(serializers.ModelSerializer):
+    created_by = UserLiteSerializer(read_only=True)
+    progress = serializers.SerializerMethodField()
+
+    class Meta:
+        model = m.InspectionBatch
+        fields = ("id", "title", "category", "created_by", "instructions", "due_at", "total", "errors", "progress", "created_at")
+
+    def get_progress(self, b):
+        from django.db.models import Count
+        return {r["status"]: r["n"] for r in b.tasks.values("status").annotate(n=Count("id"))}
+
+
+class TaskStartSerializer(serializers.Serializer):
+    latitude = serializers.DecimalField(max_digits=10, decimal_places=7)
+    longitude = serializers.DecimalField(max_digits=10, decimal_places=7)
+    accuracy_m = serializers.DecimalField(max_digits=8, decimal_places=2, required=False, allow_null=True)
+
+
+class TaskCloseSerializer(serializers.Serializer):
+    outcome = serializers.ChoiceField(choices=["NO_VIOLATION", "NOT_FOUND"])
+    remarks = serializers.CharField()
+    media_ids = serializers.ListField(child=serializers.UUIDField(), required=False, default=list)
+    latitude = serializers.DecimalField(max_digits=10, decimal_places=7, required=False, allow_null=True)
+    longitude = serializers.DecimalField(max_digits=10, decimal_places=7, required=False, allow_null=True)
+
+
+class TaskAssignSerializer(RemarksSerializer):
+    assigned_to = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())

@@ -33,7 +33,12 @@ Base path: `/building-violations/api/` · Auth: `Authorization: Bearer <access_t
 | POST `cases/{id}/reassign/` `{reported_by, assigned_ae, assigned_jc, order_reference}` · POST `admin/reassign-cases/` (by zone / ward / from_user / case_ids) | Re-assignment |
 | GET/POST/PATCH `branches/` | Branch master |
 | GET/PUT/POST(reset) `admin/workflow-rules/` · GET/PUT `admin/settings/` · GET/PUT `admin/permissions/` · GET/PUT `officers/{id}/permissions/` · GET `admin/audit-log/` | Administration (all writes take `order_reference`) |
-| GET `reports/litigation-register/` · GET `reports/branch-referrals/` | New registers |
+| GET `reports/litigation-register/` · GET `reports/branch-referrals/` · GET `reports/planned-inspections/` | New registers |
+| GET/POST `inspections/tasks/` (create: pid / address / latitude+longitude, category, instructions, assigned_to, due_days) · GET `inspections/tasks/counts/` · GET `inspections/tasks/geojson/` · GET `inspections/tasks/template/` · POST `inspections/tasks/bulk_upload/` (multipart file + title, category, instructions, due_days, assign_to, lookup_pid) | Planned inspections |
+| POST `inspections/tasks/{id}/start/` `{latitude, longitude, accuracy_m}` (400 outside the geofence) · GET `inspections/tasks/{id}/distance/?lat&lng` · POST `.../close/` `{outcome, remarks, media_ids, latitude, longitude}` · POST `.../assign/` · POST `.../cancel/` · GET `inspections/batches/` | Field execution of pushed inspections |
+| POST `cases/` with `task`, `inspector_latitude`, `inspector_longitude` | Case recorded from a pushed inspection (geofence enforced) |
+| GET/POST `gis/land-layers/` (multipart: name, layer_key, agency, source, survey_date, source_file .geojson/.kml/.kmz/.zip) · DELETE `gis/land-layers/{id}/` (retire) · POST `gis/land-layers/{id}/reactivate/` | GIS-lab layer versions |
+| GET `dashboards/map/?open=1&tasks=1` (pins with status + history) · GET `gis/govt-land/geojson/` (parcels with linked cases) | Live map |
 
 ### issue_notice body
 

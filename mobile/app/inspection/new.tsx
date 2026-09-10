@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { Camera, CheckCircle2, LocateFixed, Search, Video } from "lucide-react-native";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -16,8 +16,12 @@ import { colors, radius } from "@/theme";
 export default function NewInspection() {
   const { t } = useTranslation();
   const r = useRouter();
+  const prm = useLocalSearchParams<{ task?: string; pid?: string; address?: string; lat?: string; lng?: string; owner?: string; mobile?: string; instructions?: string }>();
   const vtypes = useQuery({ queryKey: ["vtypes"], queryFn: masters.violationTypes });
-  const [f, setF] = useState<any>({ construction_stage: "UNDER_CONSTRUCTION", priority: "NORMAL", land_type: "UNKNOWN", source: "FIELD_INSPECTION" });
+  const [f, setF] = useState<any>({ construction_stage: "UNDER_CONSTRUCTION", priority: "NORMAL", land_type: "UNKNOWN", source: "FIELD_INSPECTION",
+    pid: prm.pid || "", address_line: prm.address || "", owner_name: prm.owner || "", pid_linked_mobile: prm.mobile || "",
+    latitude: prm.lat ? Number(prm.lat) : undefined, longitude: prm.lng ? Number(prm.lng) : undefined,
+    description: prm.task ? `[Planned inspection #${prm.task}] ${prm.instructions || ""}\n\nObservations: ` : "" });
   const [fix, setFix] = useState<Fix | null>(null);
   const [landCheck, setLandCheck] = useState<any>(null);
   const [pidInfo, setPidInfo] = useState<any>(null);
@@ -39,7 +43,11 @@ export default function NewInspection() {
     if (!f.description) return Alert.alert("Required", "Enter observations");
     if (send && !captures.length) return Alert.alert("Required", "Capture at least one geotagged photo");
     setBusy(true);
-    const data = { ...f, violations: Object.entries(sel).map(([code, remarks], i) => ({ code, remarks, is_primary: i === 0 })), submit: send };
+    const data: any = { ...f, violations: Object.entries(sel).map(([code, remarks], i) => ({ code, remarks, is_primary: i === 0 })), submit: send };
+    if (prm.task) {
+      try { const here = await currentFix(); data.task = Number(prm.task); data.inspector_latitude = here.latitude.toFixed(7); data.inspector_longitude = here.longitude.toFixed(7); }
+      catch (e) { setBusy(false); return Alert.alert("Location", "Your location is required to record a planned inspection (must be within 100 m of the property)."); }
+    }
     try {
       const ids: string[] = [];
       for (const c of captures) { const up = await uploadMedia(c.file, c.kind, { fix: c.fix }); ids.push(up.id); }
@@ -53,7 +61,7 @@ export default function NewInspection() {
   };
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <Header title={t("newInspection")} subtitle="Building violation report" back />
+      <Header title={t("newInspection")} subtitle={prm.task ? `Planned inspection #${prm.task} · record within 100 m` : "Building violation report"} back />
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
         <Card><CardTitle>1. Property</CardTitle>
           <Text style={{ fontWeight: "600", marginBottom: 6 }}>{t("pid")}</Text>

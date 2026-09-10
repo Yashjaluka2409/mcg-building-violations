@@ -20,7 +20,8 @@ touch points; each is a small, well-marked change.
 5. `pip install -r backend/requirements.txt` (adds WeasyPrint, pyHanko, qrcode, shapely, openpyxl).
    Install Pango on the servers for Hindi PDFs.
 6. `python manage.py migrate building_violations && python manage.py load_legal_catalogue`.
-7. Branch officers: create users with role `BRANCH_OFFICER` and `branch` = PLANNING / REVENUE / LEGAL / ENGINEERING / FIRE (Administration → Branches to add more). They see only referred cases.
+7. GIS lab: create users with role `GIS_LAB`; they upload and version the government-land layers (GeoJSON / KML / zipped shapefile in EPSG:4326) from the portal - or run a nightly sync from the platform GIS into `bvms_govt_land_parcel` keyed by `layer_key`.
+7a. Branch officers: create users with role `BRANCH_OFFICER` and `branch` = PLANNING / REVENUE / LEGAL / ENGINEERING / FIRE (Administration → Branches to add more). They see only referred cases.
 8. Create `OfficerProfile` rows for existing users (Django admin → *Officer profiles*, or the
    `/building-violations/api/officers/` endpoint). Role and zones drive every permission.
    For the Joint Commissioner enter the Commissioner's delegation order number (s.401(2)) - it is

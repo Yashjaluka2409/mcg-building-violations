@@ -5,7 +5,7 @@ Demo logins (standalone mode, OTP = BVMS_OTP_DEMO_CODE, default 123456):
   JE      9000000001   AE       9000000002   JC       9000000003
   CLERK   9000000004   XEN      9000000005   ADMIN    9000000009
   FIELD   9000000006   ADDL.COMMR 9000000007
-  PLANNING BRANCH 9000000011   REVENUE BRANCH 9000000012   LEGAL BRANCH 9000000013
+  PLANNING BRANCH 9000000011   REVENUE BRANCH 9000000012   LEGAL BRANCH 9000000013   GIS LAB 9000000014
 """
 from datetime import date, timedelta
 
@@ -32,6 +32,7 @@ DEMO_OFFICERS = [
     ("9000000011", Role.BRANCH_OFFICER, "District Town Planner (Planning Branch)", "Kavita", "Sharma", None),
     ("9000000012", Role.BRANCH_OFFICER, "Tehsildar (Revenue Branch)", "Om", "Prakash", None),
     ("9000000013", Role.BRANCH_OFFICER, "Law Officer (Legal Branch)", "Meenakshi", "Rana", None),
+    ("9000000014", Role.GIS_LAB, "GIS Analyst (GIS Lab)", "Rohit", "Bansal", None),
 ]
 BRANCH_OF = {"9000000011": "PLANNING", "9000000012": "REVENUE", "9000000013": "LEGAL"}
 
@@ -132,4 +133,11 @@ class Command(BaseCommand):
         wf.refer_to_branch(made[1], jc, branch=Branch.objects.get(code="REVENUE"), query="Please confirm from the jamabandi / mussavi whether khasra 112/2 vests in the Corporation and furnish the demarcation report.", hold_case=True)
         wf.refer_to_branch(made[0], jc, branch=Branch.objects.get(code="PLANNING"), query="Report on the sanctioned plan MCG/BP/2025/00412: permissible floors / FAR and whether the 4th floor is regularisable under HBC 2017.")
         wf.submit_to_ae(made[2], je)
-        self.stdout.write(self.style.SUCCESS(f"Sample cases: {', '.join(c.case_no for c in made)}"))
+        # planned inspections pushed by the JC (e.g. PG verification drive)
+        from building_violations.services import tasks as ts
+        rows = [{"pid": "GGN012345", "address": "H.No. 123, Sector 14", "latitude": 28.4700, "longitude": 77.0450, "ward_number": 19, "owner_name": "Ramesh Kumar", "owner_mobile": "9811100001", "category": "PG_HOSTEL"},
+                {"pid": "GGN098765", "address": "Plot 45, Sushant Lok Phase-1", "latitude": 28.4620, "longitude": 77.0800, "ward_number": 30, "owner_name": "Sunita Devi", "owner_mobile": "9811100002", "category": "PG_HOSTEL"},
+                {"pid": "", "address": "Plot 77, Sector 15 Part-II (map point)", "latitude": 28.4665, "longitude": 77.0410, "ward_number": 19, "category": "DRONE_FLAG", "instructions": "Drone change-detection flag: new roof slab visible since June; verify sanction."}]
+        batch = ts.bulk_create_from_rows(jc, rows, title="PG / hostel verification drive - Zones 3-4 (demo)", category="PG_HOSTEL",
+                                         instructions="Verify whether the premises are run as a paying-guest accommodation / hostel without change of land use; count rooms, occupants, kitchens; check fire exits and parking. Record a violation or report 'no violation' on site.", due_days=7, default_assignee=je, lookup_pid=False)
+        self.stdout.write(self.style.SUCCESS(f"Sample cases: {', '.join(c.case_no for c in made)}; planned inspections batch #{batch.id} with {batch.total} tasks"))

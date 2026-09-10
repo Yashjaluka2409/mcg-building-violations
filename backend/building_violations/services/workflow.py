@@ -119,6 +119,22 @@ def create_case(user, data: dict, violation_codes: list[dict], request=None, med
     if case.pid and not case.sanctioned_plan_id:
         from ..models import SanctionedPlan
         case.sanctioned_plan = SanctionedPlan.objects.filter(pid=case.pid).order_by("-sanctioned_on").first()
+    # planned inspection: link the task and enforce the geofence (officer must be on site)
+    task = data.get("task")
+    if task is not None:
+        from .tasks import link_case_to_task
+        if task.assigned_to_id and task.assigned_to_id != user.pk and not access.has_perm(user, "TASKS_ASSIGN"):
+            raise WorkflowError("This inspection task is assigned to another officer", 403)
+        case.inspector_latitude, case.inspector_longitude = data.get("inspector_latitude"), data.get("inspector_longitude")
+        if not case.pid and task.pid:
+            case.pid = task.pid
+        if not case.latitude and task.latitude is not None:
+            case.latitude, case.longitude = task.latitude, task.longitude
+        link_case_to_task(task, case, case.inspector_latitude, case.inspector_longitude)
+    elif data.get("inspector_latitude") is not None:
+        case.inspector_latitude, case.inspector_longitude = data.get("inspector_latitude"), data.get("inspector_longitude")
+        if case.latitude is not None:
+            case.inspector_distance_m = round(haversine_m(case.inspector_latitude, case.inspector_longitude, case.latitude, case.longitude), 2)
     case.save()
     for i, v in enumerate(violation_codes):
         vt = ViolationType.objects.get(code=v["code"])
@@ -126,8 +142,8 @@ def create_case(user, data: dict, violation_codes: list[dict], request=None, med
     if media_ids:
         attach_media(case, media_ids, user)
     record_event(case, "CREATE", actor=user, to_status=S.DRAFT, request=request,
-                 payload={"violations": [v["code"] for v in violation_codes], "land_type": case.land_type},
-                 lat=case.latitude, lng=case.longitude)
+                 payload={"violations": [v["code"] for v in violation_codes], "land_type": case.land_type, "task": case.task_id, "inspector_distance_m": float(case.inspector_distance_m) if case.inspector_distance_m is not None else None},
+                 lat=case.inspector_latitude or case.latitude, lng=case.inspector_longitude or case.longitude)
     return case
 
 

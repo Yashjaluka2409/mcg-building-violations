@@ -120,6 +120,16 @@ def branch_referrals(qs, params):
     return cols, rows
 
 
+@report("planned-inspections")
+def planned_inspections(qs, params):
+    cols = ["task_id", "batch", "category", "pid", "address", "ward", "assigned_to", "assigned_at", "due_at", "status", "started_at", "start_distance_m", "completed_at", "case_no", "outcome_remarks", "created_by"]
+    rows = []
+    for t in m.InspectionTask.objects.select_related("batch", "ward", "assigned_to", "created_by").prefetch_related("case"):
+        c = getattr(t, "case", None)
+        rows.append([t.id, t.batch.title if t.batch else "", t.category, t.pid, t.address, t.ward.number if t.ward else "", _name(t.assigned_to), t.assigned_at, t.due_at, t.status, t.started_at, t.start_distance_m, t.completed_at, c.case_no if c else "", t.outcome_remarks, _name(t.created_by)])
+    return cols, rows
+
+
 @report("sanctioned-plans")
 def sanctioned_plans(qs, params):
     cols = ["plan_no", "pid", "address", "ward", "owner", "mobile", "land_use", "sanctioned_on", "valid_till", "permitted_floors", "licence_no", "licence_holder", "licence_authority", "status", "cases"]

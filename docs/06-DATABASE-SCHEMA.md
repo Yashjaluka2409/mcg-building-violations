@@ -60,7 +60,7 @@ Role and jurisdiction of a platform user inside this module.
 | created_at | DateTimeField | no |  |
 | updated_at | DateTimeField | no |  |
 | user_id | FK → auth_user | no |  |
-| role | CharField | no | choices: JE, AE, XEN, JC, JC_CLERK, ADDL_COMMISSIONER, COMMISSIONER, FIELD_STAFF, BRANCH_OFFICER, ADMIN, VIEWER |
+| role | CharField | no | choices: JE, AE, XEN, JC, JC_CLERK, ADDL_COMMISSIONER, COMMISSIONER, FIELD_STAFF, BRANCH_OFFICER, GIS_LAB, ADMIN, VIEWER |
 | designation | CharField | no |  |
 | employee_code | CharField | no |  |
 | mobile | CharField | no |  |
@@ -159,10 +159,12 @@ Turn-around time per workflow stage; escalation goes to `escalate_to_role`.
 | stage | CharField | no |  |
 | label | CharField | no |  |
 | hours | PositiveIntegerField | no |  |
-| escalate_to_role | CharField | no | choices: JE, AE, XEN, JC, JC_CLERK, ADDL_COMMISSIONER, COMMISSIONER, FIELD_STAFF, BRANCH_OFFICER, ADMIN, VIEWER |
+| escalate_to_role | CharField | no | choices: JE, AE, XEN, JC, JC_CLERK, ADDL_COMMISSIONER, COMMISSIONER, FIELD_STAFF, BRANCH_OFFICER, GIS_LAB, ADMIN, VIEWER |
 | active | BooleanField | no |  |
 
 ## `bvms_land_layer_upload` - LandLayerUpload
+
+One upload of a government-land layer by the GIS lab (GeoJSON / KML / zipped shapefile, WGS84).
 
 | Column | Type | Null | Description |
 |---|---|---|---|
@@ -170,11 +172,20 @@ Turn-around time per workflow stage; escalation goes to `escalate_to_role`.
 | created_at | DateTimeField | no |  |
 | updated_at | DateTimeField | no |  |
 | name | CharField | no |  |
+| layer_key | SlugField | no | Stable id of the layer, e.g. mcg-green-belts; re-uploads with the same key replace the old version |
+| version | PositiveIntegerField | no |  |
+| replaces_id | FK → bvms_land_layer_upload | yes |  |
 | agency | CharField | no | choices: MCG, HSVP, GMDA, STATE_GOVT, PWD, IRRIGATION, FOREST, PANCHAYAT, RAILWAYS, NHAI, DEFENCE, OTHER |
 | source_file | FileField | no |  |
+| file_format | CharField | no | choices: GEOJSON, KML, SHP_ZIP |
+| source | CharField | no | Revenue record / survey / drone / DTP layout ... |
+| survey_date | DateField | yes |  |
 | feature_count | PositiveIntegerField | no |  |
+| skipped_count | PositiveIntegerField | no |  |
 | uploaded_by_id | FK → auth_user | yes |  |
 | remarks | TextField | no |  |
+| active | BooleanField | no |  |
+| import_log | TextField | no |  |
 
 ## `bvms_govt_land_parcel` - GovtLandParcel
 
@@ -194,6 +205,7 @@ Turn-around time per workflow stage; escalation goes to `escalate_to_role`.
 | bbox | JSONField | no | [minx, miny, maxx, maxy] for quick filtering |
 | properties | JSONField | no |  |
 | layer_upload_id | FK → bvms_land_layer_upload | yes |  |
+| layer_key | SlugField | no |  |
 | active | BooleanField | no |  |
 
 ## `bvms_sanctioned_plan` - SanctionedPlan
@@ -248,9 +260,10 @@ Turn-around time per workflow stage; escalation goes to `escalate_to_role`.
 | updated_at | DateTimeField | no |  |
 | id | UUIDField | no |  |
 | case_id | FK → bvms_case | yes |  |
+| task_id | FK → bvms_inspection_task | yes |  |
 | notice_id | FK → bvms_notice | yes |  |
 | sanctioned_plan_id | FK → bvms_sanctioned_plan | yes |  |
-| kind | CharField | no | choices: INSPECTION, NOTICE_DELIVERY, ORDER_DELIVERY, RESPONSE, HEARING, EXECUTION, COMPLIANCE, APPEAL, STAY_ORDER, COURT_ORDER, SANCTION_DOC, BRANCH_REFERRAL, BRANCH_RE |
+| kind | CharField | no | choices: INSPECTION, NOTICE_DELIVERY, ORDER_DELIVERY, RESPONSE, HEARING, EXECUTION, COMPLIANCE, APPEAL, STAY_ORDER, COURT_ORDER, SANCTION_DOC, TASK_EVIDENCE, BRANCH_REFE |
 | media_type | CharField | no |  |
 | file | FileField | no |  |
 | original_name | CharField | no |  |
@@ -323,7 +336,7 @@ Atomic counters for case / notice numbering.
 | reported_by_id | FK → auth_user | no |  |
 | assigned_ae_id | FK → auth_user | yes |  |
 | assigned_jc_id | FK → auth_user | yes |  |
-| current_owner_role | CharField | no | choices: JE, AE, XEN, JC, JC_CLERK, ADDL_COMMISSIONER, COMMISSIONER, FIELD_STAFF, BRANCH_OFFICER, ADMIN, VIEWER |
+| current_owner_role | CharField | no | choices: JE, AE, XEN, JC, JC_CLERK, ADDL_COMMISSIONER, COMMISSIONER, FIELD_STAFF, BRANCH_OFFICER, GIS_LAB, ADMIN, VIEWER |
 | stage_due_at | DateTimeField | yes | SLA due time for the current stage |
 | sla_breached | BooleanField | no |  |
 | inspected_at | DateTimeField | no |  |
@@ -341,6 +354,10 @@ Atomic counters for case / notice numbering.
 | compliance_due_at | DateTimeField | yes |  |
 | executed_at | DateTimeField | yes |  |
 | closed_at | DateTimeField | yes |  |
+| task_id | FK → bvms_inspection_task | yes |  |
+| inspector_latitude | DecimalField | yes | Officer's device location at the time of recording |
+| inspector_longitude | DecimalField | yes |  |
+| inspector_distance_m | DecimalField | yes |  |
 | litigation_status | CharField | no |  |
 | litigation_authority | CharField | no |  |
 | stay_until | DateField | yes |  |
@@ -604,7 +621,7 @@ Which role may perform which action when a case is in a given status.
 |---|---|---|---|
 | id | BigAutoField | no |  |
 | status | CharField | no |  |
-| role | CharField | no | choices: JE, AE, XEN, JC, JC_CLERK, ADDL_COMMISSIONER, COMMISSIONER, FIELD_STAFF, BRANCH_OFFICER, ADMIN, VIEWER |
+| role | CharField | no | choices: JE, AE, XEN, JC, JC_CLERK, ADDL_COMMISSIONER, COMMISSIONER, FIELD_STAFF, BRANCH_OFFICER, GIS_LAB, ADMIN, VIEWER |
 | action | CharField | no |  |
 | allowed | BooleanField | no |  |
 | updated_by_id | FK → auth_user | yes |  |
@@ -633,7 +650,7 @@ Module-level permissions per role (view all zones, export reports, manage plans 
 | Column | Type | Null | Description |
 |---|---|---|---|
 | id | BigAutoField | no |  |
-| role | CharField | no | choices: JE, AE, XEN, JC, JC_CLERK, ADDL_COMMISSIONER, COMMISSIONER, FIELD_STAFF, BRANCH_OFFICER, ADMIN, VIEWER |
+| role | CharField | no | choices: JE, AE, XEN, JC, JC_CLERK, ADDL_COMMISSIONER, COMMISSIONER, FIELD_STAFF, BRANCH_OFFICER, GIS_LAB, ADMIN, VIEWER |
 | permission | CharField | no |  |
 | allowed | BooleanField | no |  |
 | updated_by_id | FK → auth_user | yes |  |
@@ -671,3 +688,55 @@ Every administrative change (officer, jurisdiction, rule, permission, setting, r
 | order_reference | CharField | no |  |
 | remarks | TextField | no |  |
 | ip_address | GenericIPAddressField | yes |  |
+
+## `bvms_inspection_batch` - InspectionBatch
+
+A bulk push of properties for verification, e.g. 'all PGs in the PID database, Zone 2'.
+
+| Column | Type | Null | Description |
+|---|---|---|---|
+| id | BigAutoField | no |  |
+| created_at | DateTimeField | no |  |
+| updated_at | DateTimeField | no |  |
+| title | CharField | no |  |
+| category | CharField | no |  |
+| created_by_id | FK → auth_user | no |  |
+| source_file | FileField | yes |  |
+| instructions | TextField | no |  |
+| due_at | DateTimeField | yes |  |
+| total | PositiveIntegerField | no |  |
+| errors | JSONField | no |  |
+
+## `bvms_inspection_task` - InspectionTask
+
+| Column | Type | Null | Description |
+|---|---|---|---|
+| id | BigAutoField | no |  |
+| created_at | DateTimeField | no |  |
+| updated_at | DateTimeField | no |  |
+| batch_id | FK → bvms_inspection_batch | yes |  |
+| category | CharField | no | choices: VERIFICATION, PG_HOSTEL, COMPLAINT, DRONE_FLAG, COURT_DIRECTION, SANCTION_FOLLOWUP, GOVT_LAND, RE_INSPECTION, OTHER |
+| pid | CharField | no |  |
+| pid_snapshot | JSONField | no |  |
+| address | TextField | no |  |
+| owner_name | CharField | no |  |
+| owner_mobile | CharField | no |  |
+| latitude | DecimalField | yes |  |
+| longitude | DecimalField | yes |  |
+| ward_id | FK → bvms_ward | yes |  |
+| zone_id | FK → bvms_zone | yes |  |
+| instructions | TextField | no | What the field officer must check |
+| priority | CharField | no |  |
+| created_by_id | FK → auth_user | no |  |
+| assigned_to_id | FK → auth_user | yes |  |
+| assigned_at | DateTimeField | yes |  |
+| due_at | DateTimeField | yes |  |
+| status | CharField | no | choices: ASSIGNED, UNASSIGNED, IN_PROGRESS, VIOLATION_RECORDED, NO_VIOLATION, NOT_FOUND, CANCELLED |
+| related_case_id | FK → bvms_case | yes | For re-inspection tasks |
+| started_at | DateTimeField | yes |  |
+| start_latitude | DecimalField | yes |  |
+| start_longitude | DecimalField | yes |  |
+| start_distance_m | DecimalField | yes |  |
+| completed_at | DateTimeField | yes |  |
+| outcome_remarks | TextField | no |  |
+| geofence_m | PositiveIntegerField | no | Officer must be within this many metres of the point to start |

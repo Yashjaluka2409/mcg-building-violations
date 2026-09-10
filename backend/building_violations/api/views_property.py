@@ -79,42 +79,71 @@ class GovtLandParcelViewSet(viewsets.ModelViewSet):
                 minx, miny, maxx, maxy = [float(x) for x in bbox.split(",")]
             except ValueError:
                 return Response({"detail": "bad bbox"}, status=400)
+        from ..models import ViolationCase
+        cases_by_parcel: dict = {}
+        for c in ViolationCase.objects.filter(govt_parcel__in=qs).select_related("govt_parcel").only("id", "case_no", "status", "govt_parcel_id", "address_line", "sealed", "stop_work_issued", "litigation_status", "updated_at"):
+            cases_by_parcel.setdefault(c.govt_parcel_id, []).append({"id": str(c.id), "case_no": c.case_no, "status": c.status, "address": c.address_line, "sealed": c.sealed, "stop_work": c.stop_work_issued, "litigation": c.litigation_status, "updated_at": c.updated_at})
         for p in qs:
             b = p.bbox or []
             if bbox and len(b) == 4 and (b[2] < minx or b[0] > maxx or b[3] < miny or b[1] > maxy):
                 continue
+            cs = cases_by_parcel.get(p.id, [])
+            open_cs = [x for x in cs if x["status"] not in ("CLOSED", "DROPPED", "REGULARISED")]
             feats.append({"type": "Feature", "id": p.id, "geometry": p.geometry,
-                          "properties": {"id": p.id, "name": p.name, "agency": p.agency, "land_use": p.land_use, "village": p.village, "khasra_no": p.khasra_no, "area_sqm": p.area_sqm}})
+                          "properties": {"id": p.id, "name": p.name, "agency": p.agency, "land_use": p.land_use, "village": p.village, "khasra_no": p.khasra_no, "area_sqm": p.area_sqm, "layer_key": p.layer_key,
+                                         "case_count": len(cs), "open_case_count": len(open_cs), "cases": cs[:20]}})
         return Response({"type": "FeatureCollection", "features": feats})
 
 
 class LandLayerUploadViewSet(viewsets.ModelViewSet):
-    """Upload a GeoJSON FeatureCollection (WGS84) of government land parcels. KML/Shapefile should be
-    converted to GeoJSON in QGIS (Layer > Export > Save Features As > GeoJSON, CRS EPSG:4326)."""
+    """GIS lab: upload a government-land layer (GeoJSON / KML / KMZ / zipped shapefile, WGS84).
+    Re-uploading with the same `layer_key` creates a new version and retires the old parcels."""
     serializer_class = LandLayerUploadSerializer
-    queryset = LandLayerUpload.objects.all()
+    queryset = LandLayerUpload.objects.select_related("uploaded_by").prefetch_related("parcels")
     permission_classes = [HasPerm.of("LAND_LAYERS_MANAGE")]
     parser_classes = [MultiPartParser, FormParser]
+    filterset_fields = ("agency", "active", "layer_key")
+    http_method_names = ["get", "post", "patch", "delete", "head", "options"]
+
+    def get_permissions(self):
+        if self.action in ("list", "retrieve"):
+            return [HasOfficerProfile()]
+        return [HasPerm.of("LAND_LAYERS_MANAGE")()]
 
     def perform_create(self, serializer):
+        from ..services.geo_import import import_layer
+        from ..services.workflow import WorkflowError
         up = serializer.save(uploaded_by=self.request.user)
         up.source_file.open("rb")
         try:
-            data = json.load(up.source_file)
+            data = up.source_file.read()
         finally:
             up.source_file.close()
-        feats = data.get("features", []) if isinstance(data, dict) else []
-        n = 0
-        for f in feats:
-            geom = f.get("geometry")
-            if not geom or geom.get("type") not in ("Polygon", "MultiPolygon"):
-                continue
-            props = f.get("properties") or {}
-            GovtLandParcel.objects.create(
-                name=str(props.get("name") or props.get("NAME") or props.get("Name") or "")[:200], agency=up.agency,
-                land_use=str(props.get("land_use") or props.get("LANDUSE") or props.get("use") or "")[:120],
-                village=str(props.get("village") or props.get("VILLAGE") or "")[:120], khasra_no=str(props.get("khasra") or props.get("KHASRA") or props.get("khasra_no") or "")[:120],
-                area_sqm=props.get("area_sqm") or None, geometry=geom, bbox=geojson_bbox(geom), properties=props, layer_upload=up)
-            n += 1
-        up.feature_count = n
-        up.save(update_fields=["feature_count"])
+        try:
+            import_layer(up, data, up.source_file.name)
+        except Exception as exc:
+            up.delete()
+            raise WorkflowError(f"Layer could not be imported: {exc}")
+        if up.feature_count == 0:
+            up.delete()
+            raise WorkflowError("No polygon features found in the file (check the CRS is EPSG:4326 and geometries are polygons)")
+        from ..services import access
+        access.log_admin(self.request.user, "LAND_LAYER_UPLOAD", "LandLayerUpload", up.id, after={"layer_key": up.layer_key, "version": up.version, "features": up.feature_count, "skipped": up.skipped_count, "format": up.file_format}, order_reference=self.request.data.get("order_reference", ""), request=self.request)
+
+    def perform_destroy(self, instance):
+        """Retire a layer version (parcels become inactive); nothing is physically deleted."""
+        instance.active = False
+        instance.save(update_fields=["active"])
+        GovtLandParcel.objects.filter(layer_upload=instance).update(active=False)
+        from ..services import access
+        access.log_admin(self.request.user, "LAND_LAYER_RETIRE", "LandLayerUpload", instance.id, order_reference=self.request.data.get("order_reference", "") if hasattr(self.request, "data") else "", request=self.request)
+
+    @action(detail=True, methods=["post"])
+    def reactivate(self, request, pk=None):
+        up = self.get_object()
+        LandLayerUpload.objects.filter(layer_key=up.layer_key, active=True).exclude(pk=up.pk).update(active=False)
+        GovtLandParcel.objects.filter(layer_key=up.layer_key).update(active=False)
+        up.active = True
+        up.save(update_fields=["active"])
+        GovtLandParcel.objects.filter(layer_upload=up).update(active=True)
+        return Response(LandLayerUploadSerializer(up).data)

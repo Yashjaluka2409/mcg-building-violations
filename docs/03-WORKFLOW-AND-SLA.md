@@ -121,3 +121,43 @@ executions but cannot create or decide cases.
 
 Every administrative write requires an **office-order reference** and is written to `bvms_admin_audit_log`
 (before/after, actor, IP). Statutory minimum periods cannot be lowered from the UI.
+
+
+## Government-land database (GIS lab)
+
+* Role `GIS_LAB` (permission `LAND_LAYERS_MANAGE`) uploads layers as **GeoJSON, KML/KMZ or zipped
+  shapefile** in EPSG:4326 from Government land → *Upload / update a layer*. Attributes `name, land_use,
+  village, khasra, area_sqm, agency` are read when present; projected (UTM) shapefiles are rejected with a
+  message to re-export in WGS84.
+* Layers are **versioned by `layer_key`**: uploading again with the same key creates v2 and retires v1's
+  parcels (they remain in the database for the audit trail and can be reactivated). Every upload is logged in
+  the admin audit log with the memo reference.
+* Every inspection point, delivery photo and execution photo is tested against the active parcels
+  (`gis/check-point`); cases inside a parcel are linked to it.
+
+## Live enforcement map
+
+* `dashboards/map` returns every case pin with its current status, flags (stop-work, sealed, stay) and the
+  last N events (`map_history_events`, default 6) so that **clicking a pin shows the case history** in the
+  pop-up with a link to the file; planned inspections are drawn as diamonds when `?tasks=1`.
+* `gis/govt-land/geojson` returns, for each parcel, the cases linked to it (`case_count`, `open_case_count`,
+  `cases[]`) - parcels with open encroachment cases are filled red and **clicking a polygon lists its cases**.
+* The same pop-ups are rendered in the mobile app's map (Leaflet in a WebView) and refresh every minute.
+
+## Planned inspections (JC pushes PIDs / map points to the field)
+
+* Officers with `TASKS_ASSIGN` (JC, AE, XEN by default) push a property for verification: **one at a time**
+  (PID lookup, address or a click on the map) or **in bulk** (CSV/XLSX of PIDs with the template columns -
+  e.g. every PG in the PID database). Rows with only a PID are completed from the DULB record (owner, mobile,
+  address, coordinates). Each row becomes an `InspectionTask` with category (PG / hostel, complaint, drone
+  flag, court direction, sanction follow-up, government-land watch, re-inspection...), instructions, priority
+  and due date, auto-assigned to the JE of the ward (`auto_assign_tasks_by_ward`) or a named officer.
+* **Geofence.** The JE sees the task in the app with the distance to the property. *Start inspection* sends
+  the phone's GPS fix; the server refuses it unless the officer is within `inspection_geofence_m`
+  (default **100 m**, also stored per task). Recording the resulting case (`cases/` with `task` and
+  `inspector_latitude/longitude`) and filing a *no violation / not traceable* report (mandatory geotagged
+  photo) are checked the same way (`require_geofence_for_task_inspection`). The start fix and distance are
+  stored on the task and the case (`inspector_distance_m`).
+* Outcomes: `VIOLATION_RECORDED` (case created and linked), `NO_VIOLATION`, `NOT_FOUND`, `CANCELLED`.
+  The pushing officer is notified of every outcome; the dashboard shows open / overdue / violation-found /
+  clear counts; report `reports/planned-inspections`.

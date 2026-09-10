@@ -1,8 +1,8 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { CheckCircle2, LocateFixed, MapPin, Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { cases, masters, plans, property } from "@/api/endpoints";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { cases, masters, plans, property, tasks as tasksApi } from "@/api/endpoints";
 import { errorMessage } from "@/api/client";
 import type { Media, ViolationType } from "@/api/types";
 import MapView from "@/components/MapView";
@@ -19,6 +19,9 @@ export default function NewCasePage() {
   const zones = useQuery({ queryKey: ["zones"], queryFn: masters.zones });
   const wards = useQuery({ queryKey: ["wards-all"], queryFn: () => masters.wards() });
   const existing = useQuery({ queryKey: ["case", id], queryFn: () => cases.get(id!), enabled: !!id });
+  const [sp] = useSearchParams();
+  const taskId = sp.get("task") ? Number(sp.get("task")) : null;
+  const task = useQuery({ queryKey: ["task", taskId], queryFn: () => tasksApi.get(taskId!), enabled: !!taskId });
   const [f, setF] = useState<Record<string, any>>({ source: "FIELD_INSPECTION", priority: "NORMAL", construction_stage: "UNDER_CONSTRUCTION", land_type: "UNKNOWN", measurements: {} });
   const [sel, setSel] = useState<Record<string, { remarks: string; details: Record<string, string> }>>({});
   const [media, setMedia] = useState<Media[]>([]);
@@ -29,6 +32,7 @@ export default function NewCasePage() {
   const [cat, setCat] = useState("");
   const [q, setQ] = useState("");
   useEffect(() => { if (existing.data) { const c = existing.data; setF({ ...c, ward: c.ward, zone: c.zone }); setSel(Object.fromEntries(c.violations.map((v) => [v.code, { remarks: v.remarks, details: v.details as any }]))); setMedia(c.media); } }, [existing.data]);
+  useEffect(() => { if (task.data && !id) { const t = task.data; setF((s) => ({ ...s, pid: t.pid || s.pid, address_line: t.address || s.address_line, owner_name: t.owner_name || s.owner_name, pid_linked_mobile: t.owner_mobile || s.pid_linked_mobile, latitude: t.latitude ?? s.latitude, longitude: t.longitude ?? s.longitude, ward: t.ward ?? s.ward, zone: t.zone ?? s.zone, source: t.category === "COMPLAINT" ? "COMPLAINT" : t.category === "DRONE_FLAG" ? "DRONE" : t.category === "COURT_DIRECTION" ? "COURT" : "FIELD_INSPECTION", description: s.description || `[Planned inspection #${t.id} - ${t.category_display}] ${t.instructions}\n\nObservations: ` })); if (t.latitude && t.longitude) check(Number(t.latitude), Number(t.longitude)); } }, [task.data, id]);
   const set = (k: string, v: any) => setF((s) => ({ ...s, [k]: v }));
   const lookup = useMutation({ mutationFn: () => property.lookupPid(f.pid), onSuccess: async (d) => { setPidInfo(d); setF((s) => ({ ...s, owner_name: d.owner_name || s.owner_name, pid_linked_mobile: d.mobile || s.pid_linked_mobile, address_line: d.address || s.address_line, locality: d.colony || s.locality, sector: d.sector || s.sector, latitude: d.latitude ?? s.latitude, longitude: d.longitude ?? s.longitude, pid_snapshot: d.raw || d, ward: wards.data?.find((w) => String(w.number) === String(d.ward_no))?.id ?? s.ward })); try { setPlanMatch(await plans.byPid(f.pid)); } catch { setPlanMatch([]); } if (d.latitude && d.longitude) check(d.latitude, d.longitude); }, onError: (e) => setErr(errorMessage(e)) });
   const check = async (lat: number, lng: number) => { try { const r = await property.checkPoint(lat, lng); setLandCheck(r); setF((s) => ({ ...s, latitude: lat, longitude: lng, land_type: r.land_type, ward: r.ward?.id ?? s.ward })); } catch { /* ignore */ } };
@@ -36,12 +40,18 @@ export default function NewCasePage() {
   const save = useMutation({
     mutationFn: async (submit: boolean) => {
       const payload: any = { ...f, violations: Object.entries(sel).map(([code, v], i) => ({ code, remarks: v.remarks, details: v.details, is_primary: i === 0 })), media_ids: media.map((m) => m.id), submit };
+      if (taskId) {
+        payload.task = taskId;
+        const pos = await new Promise<GeolocationPosition | null>((res) => navigator.geolocation ? navigator.geolocation.getCurrentPosition(res, () => res(null), { enableHighAccuracy: true, timeout: 10000 }) : res(null));
+        if (!pos) throw new Error("Device location is required to record a planned inspection (allow location access or use the mobile app)");
+        payload.inspector_latitude = pos.coords.latitude.toFixed(7); payload.inspector_longitude = pos.coords.longitude.toFixed(7);
+      }
       if (!payload.latitude) delete payload.latitude; if (!payload.longitude) delete payload.longitude;
       for (const k of Object.keys(payload)) if (payload[k] === "" || payload[k] === null) delete payload[k];
       if (id) { const c = await cases.patch(id, payload); if (submit) await cases.action(id, "submit"); return c; }
       return cases.create(payload);
     },
-    onSuccess: (c) => nav(`/cases/${c.id}`), onError: (e) => setErr(errorMessage(e)),
+    onSuccess: (c) => nav(`/cases/${c.id}`), onError: (e: any) => setErr(e?.response ? errorMessage(e) : String(e?.message || e)),
   });
   const filtered = useMemo(() => (vtypes.data || []).filter((v: ViolationType) => (!cat || v.category === cat) && (!q || `${v.code} ${v.title_en} ${v.title_hi}`.toLowerCase().includes(q.toLowerCase()))), [vtypes.data, cat, q]);
   const cats = useMemo(() => Array.from(new Set((vtypes.data || []).map((v) => v.category))), [vtypes.data]);
@@ -51,6 +61,7 @@ export default function NewCasePage() {
     <div className="space-y-4 max-w-6xl">
       <div><h1 className="page-title">{id ? "Edit inspection" : "New inspection"}</h1><p className="page-sub">Record a building violation for review by the Assistant Engineer</p></div>
       {err && <Alert kind="error">{err}</Alert>}
+      {task.data && <Alert kind="info"><b>Planned inspection #{task.data.id}</b> pushed by {task.data.created_by?.name} · {task.data.category_display} · due {task.data.due_at?.slice(0, 10)}. Instructions: {task.data.instructions}. Your device location will be checked against the property (within {task.data.geofence_m} m) when you save.</Alert>}
       <div className="grid lg:grid-cols-2 gap-4">
         <Card title="1. Property">
           <div className="space-y-3">

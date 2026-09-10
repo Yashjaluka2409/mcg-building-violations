@@ -70,6 +70,10 @@ class SummaryView(_Base):
             "stayed_divisional_commissioner": qs.filter(litigation_status="STAYED", litigation_authority="DIVISIONAL_COMMISSIONER").count(),
             "stays_expiring_7d": m.Appeal.objects.filter(case__in=qs, status="STAYED", stay_until__isnull=False, stay_until__lte=(now + timedelta(days=7)).date()).count(),
             "referrals_pending": m.BranchReferral.objects.filter(case__in=qs, status="PENDING").count(),
+            "tasks_open": m.InspectionTask.objects.filter(status__in=["ASSIGNED", "UNASSIGNED", "IN_PROGRESS"]).count(),
+            "tasks_overdue": m.InspectionTask.objects.filter(status__in=["ASSIGNED", "UNASSIGNED", "IN_PROGRESS"], due_at__lt=now).count(),
+            "tasks_violation_found": m.InspectionTask.objects.filter(status="VIOLATION_RECORDED").count(),
+            "tasks_no_violation": m.InspectionTask.objects.filter(status__in=["NO_VIOLATION", "NOT_FOUND"]).count(),
             "referrals_overdue": m.BranchReferral.objects.filter(case__in=qs, status="PENDING", due_at__lt=now).count(),
             "cost_recovery_pending": qs.filter(cost_recovery_status__in=["PENDING", "DEMANDED"]).count(),
         })
@@ -171,14 +175,29 @@ class TrendsView(_Base):
 
 
 class MapView(_Base):
+    """Case pins with status and a short history for pop-ups. ?open=1 open cases only; ?tasks=1 adds planned inspections."""
     def get(self, request):
+        from ..services import access
         qs = _scoped(request).exclude(latitude__isnull=True)
         if request.query_params.get("open") == "1":
             qs = qs.exclude(status__in=OPEN_EXCLUDE)
-        feats = [{"type": "Feature", "geometry": {"type": "Point", "coordinates": [float(c.longitude), float(c.latitude)]},
-                  "properties": {"id": str(c.id), "case_no": c.case_no, "status": c.status, "land_type": c.land_type, "priority": c.priority, "address": c.address_line,
-                                 "ward": c.ward.number if c.ward else None, "sealed": c.sealed, "stop_work": c.stop_work_issued, "compliance_due_at": c.compliance_due_at}}
-                 for c in qs.select_related("ward")[:5000]]
+        n_hist = int(access.get_setting("map_history_events", 6) or 6)
+        feats = []
+        for c in qs.select_related("ward", "reported_by", "assigned_jc").prefetch_related("events", "violations__violation_type")[:5000]:
+            hist = [{"at": e.at, "action": e.action, "to": e.to_status, "actor": e.actor_role, "remarks": (e.remarks or "")[:120]} for e in list(c.events.all())[-n_hist:]]
+            feats.append({"type": "Feature", "geometry": {"type": "Point", "coordinates": [float(c.longitude), float(c.latitude)]},
+                          "properties": {"kind": "case", "id": str(c.id), "case_no": c.case_no, "status": c.status, "status_label": c.get_status_display(), "land_type": c.land_type, "priority": c.priority, "address": c.address_line,
+                                         "pid": c.pid, "owner": c.owner_name, "ward": c.ward.number if c.ward else None, "sealed": c.sealed, "stop_work": c.stop_work_issued, "litigation": c.litigation_status, "stay_until": c.stay_until,
+                                         "violations": [v.violation_type_id for v in c.violations.all()], "scn_issued_at": c.scn_issued_at, "order_issued_at": c.order_issued_at, "compliance_due_at": c.compliance_due_at,
+                                         "executed_at": c.executed_at, "updated_at": c.updated_at, "history": hist}})
+        if request.query_params.get("tasks") == "1":
+            tq = m.InspectionTask.objects.exclude(latitude__isnull=True).select_related("assigned_to")
+            if request.query_params.get("open") == "1":
+                tq = tq.filter(status__in=["ASSIGNED", "UNASSIGNED", "IN_PROGRESS"])
+            for t in tq[:3000]:
+                feats.append({"type": "Feature", "geometry": {"type": "Point", "coordinates": [float(t.longitude), float(t.latitude)]},
+                              "properties": {"kind": "task", "id": t.id, "pid": t.pid, "address": t.address, "status": t.status, "status_label": t.get_status_display(), "category": t.category, "due_at": t.due_at,
+                                             "assigned_to": t.assigned_to.bvms_profile.display_name if t.assigned_to and hasattr(t.assigned_to, "bvms_profile") else None}})
         return Response({"type": "FeatureCollection", "features": feats})
 
 

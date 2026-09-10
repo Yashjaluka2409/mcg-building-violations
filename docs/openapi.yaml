@@ -1166,6 +1166,8 @@ paths:
   /building-violations/api/dashboards/map/:
     get:
       operationId: building_violations_api_dashboards_map_retrieve
+      description: Case pins with status and a short history for pop-ups. ?open=1
+        open cases only; ?tasks=1 adds planned inspections.
       tags:
       - building-violations
       security:
@@ -1461,9 +1463,47 @@ paths:
     get:
       operationId: building_violations_api_gis_land_layers_list
       description: |-
-        Upload a GeoJSON FeatureCollection (WGS84) of government land parcels. KML/Shapefile should be
-        converted to GeoJSON in QGIS (Layer > Export > Save Features As > GeoJSON, CRS EPSG:4326).
+        GIS lab: upload a government-land layer (GeoJSON / KML / KMZ / zipped shapefile, WGS84).
+        Re-uploading with the same `layer_key` creates a new version and retires the old parcels.
       parameters:
+      - in: query
+        name: active
+        schema:
+          type: boolean
+      - in: query
+        name: agency
+        schema:
+          type: string
+          enum:
+          - DEFENCE
+          - FOREST
+          - GMDA
+          - HSVP
+          - IRRIGATION
+          - MCG
+          - NHAI
+          - OTHER
+          - PANCHAYAT
+          - PWD
+          - RAILWAYS
+          - STATE_GOVT
+        description: |-
+          * `MCG` - Municipal Corporation Gurugram
+          * `HSVP` - Haryana Shahari Vikas Pradhikaran
+          * `GMDA` - Gurugram Metropolitan Development Authority
+          * `STATE_GOVT` - State Government (other departments)
+          * `PWD` - PWD (B&R)
+          * `IRRIGATION` - Irrigation & Water Resources
+          * `FOREST` - Forest Department
+          * `PANCHAYAT` - Gram Panchayat / Shamlat Deh
+          * `RAILWAYS` - Railways
+          * `NHAI` - NHAI
+          * `DEFENCE` - Defence
+          * `OTHER` - Other
+      - in: query
+        name: layer_key
+        schema:
+          type: string
       - name: ordering
         required: false
         in: query
@@ -1502,8 +1542,8 @@ paths:
     post:
       operationId: building_violations_api_gis_land_layers_create
       description: |-
-        Upload a GeoJSON FeatureCollection (WGS84) of government land parcels. KML/Shapefile should be
-        converted to GeoJSON in QGIS (Layer > Export > Save Features As > GeoJSON, CRS EPSG:4326).
+        GIS lab: upload a government-land layer (GeoJSON / KML / KMZ / zipped shapefile, WGS84).
+        Re-uploading with the same `layer_key` creates a new version and retires the old parcels.
       tags:
       - building-violations
       requestBody:
@@ -1528,8 +1568,8 @@ paths:
     get:
       operationId: building_violations_api_gis_land_layers_retrieve
       description: |-
-        Upload a GeoJSON FeatureCollection (WGS84) of government land parcels. KML/Shapefile should be
-        converted to GeoJSON in QGIS (Layer > Export > Save Features As > GeoJSON, CRS EPSG:4326).
+        GIS lab: upload a government-land layer (GeoJSON / KML / KMZ / zipped shapefile, WGS84).
+        Re-uploading with the same `layer_key` creates a new version and retires the old parcels.
       parameters:
       - in: path
         name: id
@@ -1539,38 +1579,6 @@ paths:
         required: true
       tags:
       - building-violations
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LandLayerUpload'
-          description: ''
-    put:
-      operationId: building_violations_api_gis_land_layers_update
-      description: |-
-        Upload a GeoJSON FeatureCollection (WGS84) of government land parcels. KML/Shapefile should be
-        converted to GeoJSON in QGIS (Layer > Export > Save Features As > GeoJSON, CRS EPSG:4326).
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this land layer upload.
-        required: true
-      tags:
-      - building-violations
-      requestBody:
-        content:
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/LandLayerUpload'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/LandLayerUpload'
-        required: true
       security:
       - jwtAuth: []
       responses:
@@ -1583,8 +1591,8 @@ paths:
     patch:
       operationId: building_violations_api_gis_land_layers_partial_update
       description: |-
-        Upload a GeoJSON FeatureCollection (WGS84) of government land parcels. KML/Shapefile should be
-        converted to GeoJSON in QGIS (Layer > Export > Save Features As > GeoJSON, CRS EPSG:4326).
+        GIS lab: upload a government-land layer (GeoJSON / KML / KMZ / zipped shapefile, WGS84).
+        Re-uploading with the same `layer_key` creates a new version and retires the old parcels.
       parameters:
       - in: path
         name: id
@@ -1614,8 +1622,8 @@ paths:
     delete:
       operationId: building_violations_api_gis_land_layers_destroy
       description: |-
-        Upload a GeoJSON FeatureCollection (WGS84) of government land parcels. KML/Shapefile should be
-        converted to GeoJSON in QGIS (Layer > Export > Save Features As > GeoJSON, CRS EPSG:4326).
+        GIS lab: upload a government-land layer (GeoJSON / KML / KMZ / zipped shapefile, WGS84).
+        Re-uploading with the same `layer_key` creates a new version and retires the old parcels.
       parameters:
       - in: path
         name: id
@@ -1630,6 +1638,428 @@ paths:
       responses:
         '204':
           description: No response body
+  /building-violations/api/gis/land-layers/{id}/reactivate/:
+    post:
+      operationId: building_violations_api_gis_land_layers_reactivate_create
+      description: |-
+        GIS lab: upload a government-land layer (GeoJSON / KML / KMZ / zipped shapefile, WGS84).
+        Re-uploading with the same `layer_key` creates a new version and retires the old parcels.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this land layer upload.
+        required: true
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LandLayerUpload'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LandLayerUpload'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LandLayerUpload'
+          description: ''
+  /building-violations/api/inspections/batches/:
+    get:
+      operationId: building_violations_api_inspections_batches_list
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedInspectionBatchList'
+          description: ''
+  /building-violations/api/inspections/batches/{id}/:
+    get:
+      operationId: building_violations_api_inspections_batches_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this inspection batch.
+        required: true
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InspectionBatch'
+          description: ''
+  /building-violations/api/inspections/tasks/:
+    get:
+      operationId: building_violations_api_inspections_tasks_list
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedInspectionTaskList'
+          description: ''
+    post:
+      operationId: building_violations_api_inspections_tasks_create
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InspectionTask'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/InspectionTask'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/InspectionTask'
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InspectionTask'
+          description: ''
+  /building-violations/api/inspections/tasks/{id}/:
+    get:
+      operationId: building_violations_api_inspections_tasks_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InspectionTask'
+          description: ''
+    patch:
+      operationId: building_violations_api_inspections_tasks_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedInspectionTask'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedInspectionTask'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedInspectionTask'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InspectionTask'
+          description: ''
+  /building-violations/api/inspections/tasks/{id}/assign/:
+    post:
+      operationId: building_violations_api_inspections_tasks_assign_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InspectionTask'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/InspectionTask'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/InspectionTask'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InspectionTask'
+          description: ''
+  /building-violations/api/inspections/tasks/{id}/cancel/:
+    post:
+      operationId: building_violations_api_inspections_tasks_cancel_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InspectionTask'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/InspectionTask'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/InspectionTask'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InspectionTask'
+          description: ''
+  /building-violations/api/inspections/tasks/{id}/close/:
+    post:
+      operationId: building_violations_api_inspections_tasks_close_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InspectionTask'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/InspectionTask'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/InspectionTask'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InspectionTask'
+          description: ''
+  /building-violations/api/inspections/tasks/{id}/distance/:
+    get:
+      operationId: building_violations_api_inspections_tasks_distance_retrieve
+      description: 'Client pre-check: ?lat&lng -> {distance_m, geofence_m, within}.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InspectionTask'
+          description: ''
+  /building-violations/api/inspections/tasks/{id}/start/:
+    post:
+      operationId: building_violations_api_inspections_tasks_start_create
+      description: 'Field officer on site. Body: {latitude, longitude, accuracy_m}.
+        400 if outside the geofence.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InspectionTask'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/InspectionTask'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/InspectionTask'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InspectionTask'
+          description: ''
+  /building-violations/api/inspections/tasks/bulk_upload/:
+    post:
+      operationId: building_violations_api_inspections_tasks_bulk_upload_create
+      description: 'multipart: file (CSV/XLSX with the template columns), title, category,
+        instructions, due_days, assign_to (user id, optional), lookup_pid (1/0).'
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InspectionTask'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/InspectionTask'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/InspectionTask'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InspectionTask'
+          description: ''
+  /building-violations/api/inspections/tasks/counts/:
+    get:
+      operationId: building_violations_api_inspections_tasks_counts_retrieve
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InspectionTask'
+          description: ''
+  /building-violations/api/inspections/tasks/geojson/:
+    get:
+      operationId: building_violations_api_inspections_tasks_geojson_retrieve
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InspectionTask'
+          description: ''
+  /building-violations/api/inspections/tasks/template/:
+    get:
+      operationId: building_violations_api_inspections_tasks_template_retrieve
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InspectionTask'
+          description: ''
   /building-violations/api/masters/divisions/:
     get:
       operationId: building_violations_api_masters_divisions_list
@@ -2832,6 +3262,7 @@ paths:
           - RESPONSE
           - SANCTION_DOC
           - STAY_ORDER
+          - TASK_EVIDENCE
         description: |-
           * `INSPECTION` - Inspection evidence
           * `NOTICE_DELIVERY` - Proof of delivery of notice
@@ -2844,6 +3275,7 @@ paths:
           * `STAY_ORDER` - Stay / interim order of the appellate authority or court
           * `COURT_ORDER` - Final order / judgment
           * `SANCTION_DOC` - Sanction / licence document
+          * `TASK_EVIDENCE` - Planned-inspection evidence (no violation / not found)
           * `BRANCH_REFERRAL` - Document sent with a branch referral
           * `BRANCH_RESPONSE` - Branch response / report
           * `OTHER` - Other
@@ -2880,6 +3312,10 @@ paths:
         description: A search term.
         schema:
           type: string
+      - in: query
+        name: task
+        schema:
+          type: integer
       tags:
       - building-violations
       security:
@@ -3292,6 +3728,7 @@ paths:
           - BRANCH_OFFICER
           - COMMISSIONER
           - FIELD_STAFF
+          - GIS_LAB
           - JC
           - JC_CLERK
           - JE
@@ -3307,6 +3744,7 @@ paths:
           * `COMMISSIONER` - Commissioner
           * `FIELD_STAFF` - Enforcement / demolition squad
           * `BRANCH_OFFICER` - Branch officer (Planning / Revenue / Legal ...) - consulted on cases
+          * `GIS_LAB` - GIS lab - maintains government-land and ward layers
           * `ADMIN` - Module administrator
           * `VIEWER` - Read-only (MIS)
       - name: search
@@ -4359,6 +4797,19 @@ components:
         inspected_at:
           type: string
           format: date-time
+        task:
+          type: integer
+          nullable: true
+        inspector_latitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,7})?$
+          nullable: true
+        inspector_longitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,7})?$
+          nullable: true
         violations:
           type: array
           items:
@@ -4519,24 +4970,6 @@ components:
           default: false
       required:
       - code
-    CategoryEnum:
-      enum:
-      - GOVT_LAND
-      - PRIVATE_LAND_NO_SANCTION
-      - DEVIATION_FROM_SANCTION
-      - STREET_ENCROACHMENT
-      - MISUSE_CHANGE_OF_USE
-      - DANGEROUS_UNFIT
-      - PROCEDURAL_NON_COMPLIANCE
-      type: string
-      description: |-
-        * `GOVT_LAND` - Government / Corporation land
-        * `PRIVATE_LAND_NO_SANCTION` - Private land - no sanction
-        * `DEVIATION_FROM_SANCTION` - Deviation from sanction
-        * `STREET_ENCROACHMENT` - Street encroachment
-        * `MISUSE_CHANGE_OF_USE` - Misuse / change of use
-        * `DANGEROUS_UNFIT` - Dangerous / unfit
-        * `PROCEDURAL_NON_COMPLIANCE` - Non-compliance with orders
     ConstructionStageEnum:
       enum:
       - PLINTH
@@ -4560,6 +4993,7 @@ components:
       - COMMISSIONER
       - FIELD_STAFF
       - BRANCH_OFFICER
+      - GIS_LAB
       - ADMIN
       - VIEWER
       type: string
@@ -4573,6 +5007,7 @@ components:
         * `COMMISSIONER` - Commissioner
         * `FIELD_STAFF` - Enforcement / demolition squad
         * `BRANCH_OFFICER` - Branch officer (Planning / Revenue / Legal ...) - consulted on cases
+        * `GIS_LAB` - GIS lab - maintains government-land and ward layers
         * `ADMIN` - Module administrator
         * `VIEWER` - Read-only (MIS)
     Division:
@@ -4674,6 +5109,16 @@ components:
       - recorded_by
       - updated_at
       - verified_by
+    FileFormatEnum:
+      enum:
+      - GEOJSON
+      - KML
+      - SHP_ZIP
+      type: string
+      description: |-
+        * `GEOJSON` - GeoJSON
+        * `KML` - KML / KMZ
+        * `SHP_ZIP` - Zipped shapefile
     GovtLandParcel:
       type: object
       properties:
@@ -4772,6 +5217,247 @@ components:
       - presiding
       - scheduled_at
       - updated_at
+    InspectionBatch:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          maxLength: 200
+        category:
+          type: string
+          maxLength: 40
+        created_by:
+          allOf:
+          - $ref: '#/components/schemas/UserLite'
+          readOnly: true
+        instructions:
+          type: string
+        due_at:
+          type: string
+          format: date-time
+          nullable: true
+        total:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        errors: {}
+        progress:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - created_by
+      - id
+      - progress
+      - title
+    InspectionTask:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        batch:
+          type: integer
+          nullable: true
+        batch_title:
+          type: string
+          readOnly: true
+        category:
+          $ref: '#/components/schemas/InspectionTaskCategoryEnum'
+        category_display:
+          type: string
+          readOnly: true
+        pid:
+          type: string
+          maxLength: 40
+        pid_snapshot: {}
+        address:
+          type: string
+        owner_name:
+          type: string
+          maxLength: 200
+        owner_mobile:
+          type: string
+          maxLength: 15
+        latitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,7})?$
+          nullable: true
+        longitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,7})?$
+          nullable: true
+        ward:
+          type: integer
+          nullable: true
+        ward_number:
+          type: integer
+          readOnly: true
+        zone:
+          type: integer
+          nullable: true
+        zone_code:
+          type: string
+          readOnly: true
+        instructions:
+          type: string
+          description: What the field officer must check
+        priority:
+          type: string
+          maxLength: 10
+        created_by:
+          allOf:
+          - $ref: '#/components/schemas/UserLite'
+          readOnly: true
+        assigned_to:
+          allOf:
+          - $ref: '#/components/schemas/UserLite'
+          readOnly: true
+        assigned_at:
+          type: string
+          format: date-time
+          nullable: true
+        due_at:
+          type: string
+          format: date-time
+          nullable: true
+        status:
+          $ref: '#/components/schemas/InspectionTaskStatusEnum'
+        status_display:
+          type: string
+          readOnly: true
+        related_case:
+          type: string
+          format: uuid
+          nullable: true
+          description: For re-inspection tasks
+        related_case_no:
+          type: string
+          readOnly: true
+        started_at:
+          type: string
+          format: date-time
+          nullable: true
+        start_latitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,7})?$
+          nullable: true
+        start_longitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,7})?$
+          nullable: true
+        start_distance_m:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        outcome_remarks:
+          type: string
+        geofence_m:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          description: Officer must be within this many metres of the point to start
+        case_no:
+          type: string
+          readOnly: true
+        case_id:
+          type: string
+          format: uuid
+          readOnly: true
+        case_status:
+          type: string
+          readOnly: true
+        is_overdue:
+          type: string
+          readOnly: true
+        media:
+          type: array
+          items:
+            $ref: '#/components/schemas/MediaAttachment'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - assigned_to
+      - batch_title
+      - case_id
+      - case_no
+      - case_status
+      - category_display
+      - created_at
+      - created_by
+      - id
+      - is_overdue
+      - media
+      - related_case_no
+      - status_display
+      - updated_at
+      - ward_number
+      - zone_code
+    InspectionTaskCategoryEnum:
+      enum:
+      - VERIFICATION
+      - PG_HOSTEL
+      - COMPLAINT
+      - DRONE_FLAG
+      - COURT_DIRECTION
+      - SANCTION_FOLLOWUP
+      - GOVT_LAND
+      - RE_INSPECTION
+      - OTHER
+      type: string
+      description: |-
+        * `VERIFICATION` - Routine verification
+        * `PG_HOSTEL` - Paying guest / hostel check
+        * `COMPLAINT` - Complaint verification
+        * `DRONE_FLAG` - Drone / satellite change detection
+        * `COURT_DIRECTION` - Court / appellate direction
+        * `SANCTION_FOLLOWUP` - Sanctioned plan follow-up (DPC / completion)
+        * `GOVT_LAND` - Government land watch
+        * `RE_INSPECTION` - Re-inspection of an existing case
+        * `OTHER` - Other
+    InspectionTaskStatusEnum:
+      enum:
+      - ASSIGNED
+      - UNASSIGNED
+      - IN_PROGRESS
+      - VIOLATION_RECORDED
+      - NO_VIOLATION
+      - NOT_FOUND
+      - CANCELLED
+      type: string
+      description: |-
+        * `ASSIGNED` - Assigned
+        * `UNASSIGNED` - Awaiting assignment
+        * `IN_PROGRESS` - Inspection started on site
+        * `VIOLATION_RECORDED` - Violation recorded (case created)
+        * `NO_VIOLATION` - Inspected - no violation
+        * `NOT_FOUND` - Property not traceable
+        * `CANCELLED` - Cancelled
     KindEnum:
       enum:
       - INSPECTION
@@ -4785,6 +5471,7 @@ components:
       - STAY_ORDER
       - COURT_ORDER
       - SANCTION_DOC
+      - TASK_EVIDENCE
       - BRANCH_REFERRAL
       - BRANCH_RESPONSE
       - OTHER
@@ -4801,6 +5488,7 @@ components:
         * `STAY_ORDER` - Stay / interim order of the appellate authority or court
         * `COURT_ORDER` - Final order / judgment
         * `SANCTION_DOC` - Sanction / licence document
+        * `TASK_EVIDENCE` - Planned-inspection evidence (no violation / not found)
         * `BRANCH_REFERRAL` - Document sent with a branch referral
         * `BRANCH_RESPONSE` - Branch response / report
         * `OTHER` - Other
@@ -4813,32 +5501,76 @@ components:
         name:
           type: string
           maxLength: 200
+        layer_key:
+          type: string
+          description: Stable id of the layer, e.g. mcg-green-belts; re-uploads with
+            the same key replace the old version
+          maxLength: 80
+          pattern: ^[-a-zA-Z0-9_]+$
+        version:
+          type: integer
+          readOnly: true
+        replaces:
+          type: integer
+          readOnly: true
+          nullable: true
         agency:
           $ref: '#/components/schemas/AgencyEnum'
         source_file:
           type: string
           format: uri
+        file_format:
+          allOf:
+          - $ref: '#/components/schemas/FileFormatEnum'
+          readOnly: true
+        source:
+          type: string
+          description: Revenue record / survey / drone / DTP layout ...
+          maxLength: 200
+        survey_date:
+          type: string
+          format: date
+          nullable: true
         feature_count:
           type: integer
           readOnly: true
-        uploaded_by:
+        skipped_count:
           type: integer
           readOnly: true
-          nullable: true
+        uploaded_by:
+          allOf:
+          - $ref: '#/components/schemas/UserLite'
+          readOnly: true
         remarks:
           type: string
+        active:
+          type: boolean
+          readOnly: true
+        import_log:
+          type: string
+          readOnly: true
+        active_parcels:
+          type: string
+          readOnly: true
         created_at:
           type: string
           format: date-time
           readOnly: true
       required:
+      - active
+      - active_parcels
       - agency
       - created_at
       - feature_count
+      - file_format
       - id
+      - import_log
       - name
+      - replaces
+      - skipped_count
       - source_file
       - uploaded_by
+      - version
     LandTypeEnum:
       enum:
       - GOVT_MCG
@@ -5404,6 +6136,52 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/GovtLandParcel'
+    PaginatedInspectionBatchList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/InspectionBatch'
+    PaginatedInspectionTaskList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/InspectionTask'
     PaginatedLandLayerUploadList:
       type: object
       required:
@@ -5648,6 +6426,149 @@ components:
           type: string
           format: date-time
           readOnly: true
+    PatchedInspectionTask:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        batch:
+          type: integer
+          nullable: true
+        batch_title:
+          type: string
+          readOnly: true
+        category:
+          $ref: '#/components/schemas/InspectionTaskCategoryEnum'
+        category_display:
+          type: string
+          readOnly: true
+        pid:
+          type: string
+          maxLength: 40
+        pid_snapshot: {}
+        address:
+          type: string
+        owner_name:
+          type: string
+          maxLength: 200
+        owner_mobile:
+          type: string
+          maxLength: 15
+        latitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,7})?$
+          nullable: true
+        longitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,7})?$
+          nullable: true
+        ward:
+          type: integer
+          nullable: true
+        ward_number:
+          type: integer
+          readOnly: true
+        zone:
+          type: integer
+          nullable: true
+        zone_code:
+          type: string
+          readOnly: true
+        instructions:
+          type: string
+          description: What the field officer must check
+        priority:
+          type: string
+          maxLength: 10
+        created_by:
+          allOf:
+          - $ref: '#/components/schemas/UserLite'
+          readOnly: true
+        assigned_to:
+          allOf:
+          - $ref: '#/components/schemas/UserLite'
+          readOnly: true
+        assigned_at:
+          type: string
+          format: date-time
+          nullable: true
+        due_at:
+          type: string
+          format: date-time
+          nullable: true
+        status:
+          $ref: '#/components/schemas/InspectionTaskStatusEnum'
+        status_display:
+          type: string
+          readOnly: true
+        related_case:
+          type: string
+          format: uuid
+          nullable: true
+          description: For re-inspection tasks
+        related_case_no:
+          type: string
+          readOnly: true
+        started_at:
+          type: string
+          format: date-time
+          nullable: true
+        start_latitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,7})?$
+          nullable: true
+        start_longitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,7})?$
+          nullable: true
+        start_distance_m:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        outcome_remarks:
+          type: string
+        geofence_m:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          description: Officer must be within this many metres of the point to start
+        case_no:
+          type: string
+          readOnly: true
+        case_id:
+          type: string
+          format: uuid
+          readOnly: true
+        case_status:
+          type: string
+          readOnly: true
+        is_overdue:
+          type: string
+          readOnly: true
+        media:
+          type: array
+          items:
+            $ref: '#/components/schemas/MediaAttachment'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
     PatchedLandLayerUpload:
       type: object
       properties:
@@ -5657,20 +6578,57 @@ components:
         name:
           type: string
           maxLength: 200
+        layer_key:
+          type: string
+          description: Stable id of the layer, e.g. mcg-green-belts; re-uploads with
+            the same key replace the old version
+          maxLength: 80
+          pattern: ^[-a-zA-Z0-9_]+$
+        version:
+          type: integer
+          readOnly: true
+        replaces:
+          type: integer
+          readOnly: true
+          nullable: true
         agency:
           $ref: '#/components/schemas/AgencyEnum'
         source_file:
           type: string
           format: uri
+        file_format:
+          allOf:
+          - $ref: '#/components/schemas/FileFormatEnum'
+          readOnly: true
+        source:
+          type: string
+          description: Revenue record / survey / drone / DTP layout ...
+          maxLength: 200
+        survey_date:
+          type: string
+          format: date
+          nullable: true
         feature_count:
           type: integer
           readOnly: true
-        uploaded_by:
+        skipped_count:
           type: integer
           readOnly: true
-          nullable: true
+        uploaded_by:
+          allOf:
+          - $ref: '#/components/schemas/UserLite'
+          readOnly: true
         remarks:
           type: string
+        active:
+          type: boolean
+          readOnly: true
+        import_log:
+          type: string
+          readOnly: true
+        active_parcels:
+          type: string
+          readOnly: true
         created_at:
           type: string
           format: date-time
@@ -6340,6 +7298,25 @@ components:
         referrals:
           type: string
           readOnly: true
+        task_summary:
+          type: string
+          readOnly: true
+        inspector_latitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,7})?$
+          nullable: true
+          description: Officer's device location at the time of recording
+        inspector_longitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,7})?$
+          nullable: true
+        inspector_distance_m:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
         available_actions:
           type: string
           readOnly: true
@@ -6353,7 +7330,7 @@ components:
           type: string
           maxLength: 10
         category:
-          $ref: '#/components/schemas/CategoryEnum'
+          $ref: '#/components/schemas/ViolationTypeCategoryEnum'
         title_en:
           type: string
           maxLength: 250
@@ -7118,6 +8095,25 @@ components:
         referrals:
           type: string
           readOnly: true
+        task_summary:
+          type: string
+          readOnly: true
+        inspector_latitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,7})?$
+          nullable: true
+          description: Officer's device location at the time of recording
+        inspector_longitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,7})?$
+          nullable: true
+        inspector_distance_m:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
         available_actions:
           type: string
           readOnly: true
@@ -7149,6 +8145,7 @@ components:
       - responses
       - sanctioned_plan
       - status_display
+      - task_summary
       - thumbnail
       - updated_at
       - violation_codes
@@ -7321,7 +8318,7 @@ components:
           type: string
           maxLength: 10
         category:
-          $ref: '#/components/schemas/CategoryEnum'
+          $ref: '#/components/schemas/ViolationTypeCategoryEnum'
         title_en:
           type: string
           maxLength: 250
@@ -7388,6 +8385,24 @@ components:
       - category
       - code
       - title_en
+    ViolationTypeCategoryEnum:
+      enum:
+      - GOVT_LAND
+      - PRIVATE_LAND_NO_SANCTION
+      - DEVIATION_FROM_SANCTION
+      - STREET_ENCROACHMENT
+      - MISUSE_CHANGE_OF_USE
+      - DANGEROUS_UNFIT
+      - PROCEDURAL_NON_COMPLIANCE
+      type: string
+      description: |-
+        * `GOVT_LAND` - Government / Corporation land
+        * `PRIVATE_LAND_NO_SANCTION` - Private land - no sanction
+        * `DEVIATION_FROM_SANCTION` - Deviation from sanction
+        * `STREET_ENCROACHMENT` - Street encroachment
+        * `MISUSE_CHANGE_OF_USE` - Misuse / change of use
+        * `DANGEROUS_UNFIT` - Dangerous / unfit
+        * `PROCEDURAL_NON_COMPLIANCE` - Non-compliance with orders
     Ward:
       type: object
       properties:

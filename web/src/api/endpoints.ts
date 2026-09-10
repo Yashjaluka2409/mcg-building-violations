@@ -1,5 +1,5 @@
 import { API_BASE, api } from "./client";
-import type { AdminLog, Appeal, Branch, CaseDetail, CaseListItem, GovtParcel, LegalSection, Me, Media, Notice, Notification, OrderType, Paginated, PermMatrix, Referral, RulesMatrix, SanctionedPlan, ViolationType, Ward, WorkflowSetting, Zone } from "./types";
+import type { AdminLog, Appeal, Branch, CaseDetail, CaseListItem, GovtParcel, InspectionBatch, InspectionTask, LandLayer, LegalSection, Me, Media, Notice, Notification, OrderType, Paginated, PermMatrix, Referral, RulesMatrix, SanctionedPlan, ViolationType, Ward, WorkflowSetting, Zone } from "./types";
 
 export const auth = {
   requestOtp: (mobile: string) => api.post("/auth/otp/request/", { mobile }).then((r) => r.data),
@@ -20,7 +20,24 @@ export const property = {
   lookupPid: (pid: string) => api.get(`/property/pid/${encodeURIComponent(pid)}/`).then((r) => r.data),
   checkPoint: (lat: number, lng: number) => api.get("/gis/check-point/", { params: { lat, lng } }).then((r) => r.data as { land_type: string; parcels: GovtParcel[]; ward: Ward | null }),
   govtLandGeoJson: (bbox?: string) => api.get("/gis/govt-land/geojson/", { params: bbox ? { bbox } : {} }).then((r) => r.data),
-  uploadLandLayer: (fd: FormData) => api.post("/gis/land-layers/", fd, { headers: { "Content-Type": "multipart/form-data" } }).then((r) => r.data),
+  uploadLandLayer: (fd: FormData) => api.post<LandLayer>("/gis/land-layers/", fd, { headers: { "Content-Type": "multipart/form-data" } }).then((r) => r.data),
+  landLayers: () => api.get<Paginated<LandLayer>>("/gis/land-layers/", { params: { page_size: 200 } }).then((r) => r.data),
+  retireLayer: (id: number) => api.delete(`/gis/land-layers/${id}/`).then((r) => r.data),
+  reactivateLayer: (id: number) => api.post<LandLayer>(`/gis/land-layers/${id}/reactivate/`).then((r) => r.data),
+};
+export const tasks = {
+  list: (params: Record<string, unknown>) => api.get<Paginated<InspectionTask>>("/inspections/tasks/", { params }).then((r) => r.data),
+  get: (id: number) => api.get<InspectionTask>(`/inspections/tasks/${id}/`).then((r) => r.data),
+  counts: () => api.get("/inspections/tasks/counts/").then((r) => r.data as Record<string, number>),
+  create: (d: Record<string, unknown>) => api.post<InspectionTask>("/inspections/tasks/", d).then((r) => r.data),
+  assign: (id: number, assigned_to: number, remarks = "") => api.post<InspectionTask>(`/inspections/tasks/${id}/assign/`, { assigned_to, remarks }).then((r) => r.data),
+  start: (id: number, latitude: number, longitude: number, accuracy_m?: number) => api.post<InspectionTask>(`/inspections/tasks/${id}/start/`, { latitude, longitude, accuracy_m }).then((r) => r.data),
+  distance: (id: number, lat: number, lng: number) => api.get(`/inspections/tasks/${id}/distance/`, { params: { lat, lng } }).then((r) => r.data as { distance_m: number | null; geofence_m: number; within: boolean }),
+  close: (id: number, d: Record<string, unknown>) => api.post<InspectionTask>(`/inspections/tasks/${id}/close/`, d).then((r) => r.data),
+  cancel: (id: number, remarks = "") => api.post<InspectionTask>(`/inspections/tasks/${id}/cancel/`, { remarks }).then((r) => r.data),
+  geojson: (params?: Record<string, unknown>) => api.get("/inspections/tasks/geojson/", { params }).then((r) => r.data),
+  bulkUpload: (fd: FormData) => api.post<InspectionBatch>("/inspections/tasks/bulk_upload/", fd, { headers: { "Content-Type": "multipart/form-data" } }).then((r) => r.data),
+  batches: () => api.get<Paginated<InspectionBatch>>("/inspections/batches/", { params: { page_size: 50 } }).then((r) => r.data),
 };
 export const plans = {
   list: (params: Record<string, unknown>) => api.get<Paginated<SanctionedPlan>>("/sanctioned-plans/", { params }).then((r) => r.data),

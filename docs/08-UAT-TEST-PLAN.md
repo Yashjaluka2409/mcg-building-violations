@@ -1,9 +1,10 @@
 # 08 - UAT test plan
 
-Automated: `cd backend && python manage.py test building_violations` (10 tests: full private-land
+Automated: `cd backend && python manage.py test building_violations` (15 tests: full private-land
 flow, Corporation-land s.408A flow, interim stop-work/sealing, API round-trip incl. PDF and QR, branch
 referral with hold, admin rule switch-off, AE-stage setting, permission override, jurisdiction change +
-bulk re-assignment, stay requiring uploaded order + clock resumption).
+bulk re-assignment, stay requiring uploaded order + clock resumption, geofenced planned inspections, bulk PID push, no-violation
+closure with on-site photo, GIS-lab KML upload with versioning and projected-shapefile rejection, map payloads with status/history).
 
 ## Manual scenarios (with demo logins, OTP 123456)
 
@@ -40,3 +41,8 @@ bulk re-assignment, stay requiring uploaded order + clock resumption).
 | 29 | Jurisdiction change + re-assignment | Officers → AE → Jurisdiction → zones/wards; Administration → Re-assign cases → ward → new AE | Cases move; REASSIGNED events; audit log |
 | 30 | High Court stay | JC → Litigation → Record appeal → High Court, stay ticked without order | Refused; upload stay order → case APPEAL_STAY, header shows STAY badge, field app warns |
 | 31 | Stay expiry | Set stay till tomorrow → run deadline sweep | JC/JE reminded; update appeal "stay vacated" → compliance clock resumes |
+| 32 | GIS lab uploads a layer | Login 9000000014 → Government land → upload .kml / .geojson / zipped .shp with layer key | Parcels appear; version increments on re-upload; UTM shapefile rejected with EPSG:4326 message |
+| 33 | Map shows live status | Issue SCN on a case → Enforcement map | Pin colour changes; clicking the pin shows the history; clicking the green-belt polygon lists its cases |
+| 34 | JC pushes PGs | Login 9000000003 → Planned inspections → Bulk push with the CSV template (PG_HOSTEL) | Tasks created, auto-assigned to the ward JE, JE notified |
+| 35 | Geofence | JE app → Planned inspections → Start while > 100 m away | Refused with distance; within 100 m start succeeds and the inspection form opens prefilled |
+| 36 | No violation on site | JE → task → No violation without photo | Refused; with geotagged photo the task closes NO_VIOLATION and the JC is notified |

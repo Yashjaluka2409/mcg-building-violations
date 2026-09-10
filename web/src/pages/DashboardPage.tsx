@@ -55,6 +55,9 @@ export default function DashboardPage() {
             <KPI label="SLA breached (open)" value={num(s.sla_breached_open)} icon={<AlertTriangle className="h-5 w-5" />} tone="danger" onClick={() => go({ sla_breached: "true" })} />
             <KPI label="Closed / dropped / regularised" value={`${num(s.closed)} / ${num(s.dropped)} / ${num(s.regularised)}`} icon={<ShieldAlert className="h-5 w-5" />} tone="success" />
             <KPI label="Demolition cost booked" value={inr(s.demolition_cost_inr)} sub={`${num(s.cost_recovery_pending)} recoveries pending`} icon={<TrendingUp className="h-5 w-5" />} tone="accent" />
+            <KPI label="Planned inspections open" value={num(s.tasks_open)} sub={`${num(s.tasks_overdue)} overdue · ${num(s.tasks_violation_found)} violations found · ${num(s.tasks_no_violation)} clear`} icon={<CalendarClock className="h-5 w-5" />} tone="secondary" onClick={() => nav("/tasks")} />
+            <KPI label="Stayed by courts" value={`${num(s.stayed_high_court)} HC / ${num(s.stayed_supreme_court)} SC / ${num(s.stayed_divisional_commissioner)} DC`} sub={`${num(s.litigation_pending)} appeals pending · ${num(s.stays_expiring_7d)} stays expiring in 7 d`} icon={<Scale className="h-5 w-5" />} tone="primary" onClick={() => go({ litigation_status: "STAYED" })} />
+            <KPI label="Branch referrals pending" value={num(s.referrals_pending)} sub={`${num(s.referrals_overdue)} overdue`} icon={<Bell className="h-5 w-5" />} tone="accent" onClick={() => nav("/referrals")} />
           </div>
           {(s.signature_failed > 0 || s.sms_failed > 0) && <div className="rounded-lg border border-warning-100 bg-warning-50 text-warning-600 px-3 py-2 text-sm flex items-center gap-2"><Bell className="h-4 w-4" />{s.signature_failed} notice(s) could not be digitally signed and {s.sms_failed} SMS dispatch(es) failed - check the signer / SMS gateway configuration.</div>}
           <div className="grid lg:grid-cols-3 gap-4">
@@ -115,7 +118,7 @@ export default function DashboardPage() {
               </div>
             </Card>
           </div>
-          <Card title="Open cases map" actions={<button className="btn-ghost text-xs" onClick={() => nav("/map")}>Open full map</button>}><MapView points={points.data} fit height="380px" onPointClick={(p) => nav(`/cases/${p.id}`)} /></Card>
+          <Card title="Open cases map" actions={<button className="btn-ghost text-xs" onClick={() => nav("/map")}>Open full map</button>}><MapView points={points.data} fit legend height="380px" onOpenCase={(id) => nav(`/cases/${id}`)} /></Card>
         </>
       )}
     </div>

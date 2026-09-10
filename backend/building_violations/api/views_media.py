@@ -21,7 +21,7 @@ class MediaViewSet(viewsets.ModelViewSet):
     permission_classes = [HasOfficerProfile]
     parser_classes = [MultiPartParser, FormParser]
     queryset = MediaAttachment.objects.select_related("uploaded_by")
-    filterset_fields = ("case", "kind", "notice", "sanctioned_plan")
+    filterset_fields = ("case", "kind", "notice", "sanctioned_plan", "task")
     http_method_names = ["get", "post", "delete", "head", "options"]
 
     def create(self, request, *args, **kwargs):
@@ -34,7 +34,7 @@ class MediaViewSet(viewsets.ModelViewSet):
         if media_type == "OTHER":
             return Response({"detail": f"Unsupported file type .{ext}"}, status=400)
         att = MediaAttachment(
-            case=d.get("case"), notice=d.get("notice"), sanctioned_plan=d.get("sanctioned_plan"), kind=d["kind"], media_type=media_type, file=f,
+            case=d.get("case"), notice=d.get("notice"), sanctioned_plan=d.get("sanctioned_plan"), task=d.get("task"), kind=d["kind"], media_type=media_type, file=f,
             original_name=f.name[:255], latitude=d.get("latitude"), longitude=d.get("longitude"), accuracy_m=d.get("accuracy_m"), altitude_m=d.get("altitude_m"),
             captured_at=d.get("captured_at") or timezone.now(), device_id=d.get("device_id") or request.headers.get("X-Device-Id", ""), caption=d.get("caption", ""),
             uploaded_by=request.user)

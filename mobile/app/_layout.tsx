@@ -20,6 +20,7 @@ export default function RootLayout() {
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="inspection/new" />
           <Stack.Screen name="case/[id]" />
+          <Stack.Screen name="tasks/index" />
         </Stack>
       </QueryClientProvider>
     </SafeAreaProvider>

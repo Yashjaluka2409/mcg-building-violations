@@ -12,15 +12,15 @@ import { colors } from "@/theme";
 export default function MapScreen() {
   const r = useRouter();
   const land = useQuery({ queryKey: ["govt-land"], queryFn: () => property.govtLand() });
-  const pts = useQuery({ queryKey: ["map-points"], queryFn: () => api.get("/dashboards/map/", { params: { open: 1 } }).then((x) => x.data) });
+  const pts = useQuery({ queryKey: ["map-points"], queryFn: () => api.get("/dashboards/map/", { params: { open: 1, tasks: 1 } }).then((x) => x.data), refetchInterval: 60_000 });
   const [sel, setSel] = useState<any>(null);
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <Header title="Field Map" subtitle="Government land & violation cases" />
       <Card style={{ flex: 1, padding: 8 }}>
-        <CardTitle>Government land layer</CardTitle>
-        <Muted>Tap a case marker to open it. Coloured polygons are MCG / HSVP / GMDA / State land.</Muted>
-        <View style={{ flex: 1, marginTop: 8, borderRadius: 12, overflow: "hidden" }}><LeafletMap govtLand={land.data} points={pts.data} onPointPress={(p) => { setSel(p); r.push(`/case/${p.id}`); }} /></View>
+        <CardTitle>Enforcement map</CardTitle>
+        <Muted>Pins are coloured by case status - tap for the history. Red-filled polygons are government land with open encroachment cases; ◆ = planned inspections.</Muted>
+        <View style={{ flex: 1, marginTop: 8, borderRadius: 12, overflow: "hidden" }}><LeafletMap govtLand={land.data} points={pts.data} onPointPress={(p) => { setSel(p); if (p.id && String(p.id).length > 10) r.push(`/case/${p.id}`); else r.push("/tasks"); }} /></View>
         {sel && <Text style={{ marginTop: 6, color: colors.muted }}>{sel.case_no} · {sel.address}</Text>}
       </Card>
     </View>

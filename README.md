@@ -31,7 +31,7 @@ cd mobile && npm install && npx expo start      # scan the QR with Expo Go, or `
 Demo logins (OTP is `123456` in DEBUG mode): JE `9000000001`, AE `9000000002`, JC `9000000003`,
 JC clerk `9000000004`, XEN `9000000005`, field squad `9000000006`, Additional Commissioner
 `9000000007`, module admin `9000000009` (Django admin password `mcgadmin`), Planning Branch
-`9000000011`, Revenue Branch `9000000012`, Legal Branch `9000000013`.
+`9000000011`, Revenue Branch `9000000012`, Legal Branch `9000000013`, GIS lab `9000000014`.
 
 Hindi PDFs need Pango on the host (`brew install pango` on macOS, `apt install libpango-1.0-0
 libpangoft2-1.0-0` on Ubuntu); without it the reportlab fallback produces English-only PDFs.
@@ -58,6 +58,13 @@ libpangoft2-1.0-0` on Ubuntu); without it the reportlab fallback produces Englis
 * **Litigation** - appeals before the Divisional Commissioner, Commissioner, civil court, High Court,
   Supreme Court or NGT; stays are recorded only with the stay order uploaded; stay expiry reminders;
   litigation register.
+* **GIS-lab government-land database** - versioned layers uploaded as GeoJSON, KML/KMZ or zipped
+  shapefile (EPSG:4326); parcels with open encroachment cases show red on the map.
+* **Live enforcement map** - pins coloured by status; clicking a pin or a land parcel shows the case
+  history; planned inspections shown as diamonds; refreshes every minute (web and app).
+* **Planned inspections** - JC/AE push PIDs or map points to JEs, singly or in bulk (e.g. all PGs
+  from the PID database); the app allows the inspection to start only within 100 m of the property
+  (server-enforced geofence) and closes each task as violation recorded / no violation / not found.
 * **Administration** - workflow rules (who may do what at each stage), routing switches, role
   permissions with per-officer overrides, jurisdictions (zones/wards/divisions/supervisor/branch),
   bulk re-assignment, SLA and order periods, branches - all data-driven, every change logged with the

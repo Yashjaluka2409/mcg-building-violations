@@ -101,6 +101,7 @@ class Role(models.TextChoices):
     COMMISSIONER = "COMMISSIONER", "Commissioner"
     FIELD_STAFF = "FIELD_STAFF", "Enforcement / demolition squad"
     BRANCH_OFFICER = "BRANCH_OFFICER", "Branch officer (Planning / Revenue / Legal ...) - consulted on cases"
+    GIS_LAB = "GIS_LAB", "GIS lab - maintains government-land and ward layers"
     ADMIN = "ADMIN", "Module administrator"
     VIEWER = "VIEWER", "Read-only (MIS)"
 
@@ -291,15 +292,35 @@ class LandOwningAgency(models.TextChoices):
 
 
 class LandLayerUpload(TimeStamped):
+    """One upload of a government-land layer by the GIS lab (GeoJSON / KML / zipped shapefile, WGS84).
+    Uploading again with the same `layer_key` creates a new version and retires the previous parcels."""
+    class Format(models.TextChoices):
+        GEOJSON = "GEOJSON", "GeoJSON"
+        KML = "KML", "KML / KMZ"
+        SHP_ZIP = "SHP_ZIP", "Zipped shapefile"
+
     name = models.CharField(max_length=200)
+    layer_key = models.SlugField(max_length=80, db_index=True, default="", help_text="Stable id of the layer, e.g. mcg-green-belts; re-uploads with the same key replace the old version")
+    version = models.PositiveIntegerField(default=1)
+    replaces = models.ForeignKey("self", null=True, blank=True, on_delete=models.SET_NULL, related_name="replaced_by")
     agency = models.CharField(max_length=20, choices=LandOwningAgency.choices)
     source_file = models.FileField(upload_to="bvms/land-layers/")
+    file_format = models.CharField(max_length=10, choices=Format.choices, default=Format.GEOJSON)
+    source = models.CharField(max_length=200, blank=True, default="", help_text="Revenue record / survey / drone / DTP layout ...")
+    survey_date = models.DateField(null=True, blank=True)
     feature_count = models.PositiveIntegerField(default=0)
+    skipped_count = models.PositiveIntegerField(default=0)
     uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL)
-    remarks = models.TextField(blank=True)
+    remarks = models.TextField(blank=True, default="")
+    active = models.BooleanField(default=True)
+    import_log = models.TextField(blank=True, default="")
 
     class Meta:
         db_table = "bvms_land_layer_upload"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.layer_key} v{self.version}"
 
 
 class GovtLandParcel(TimeStamped):
@@ -314,6 +335,7 @@ class GovtLandParcel(TimeStamped):
     bbox = models.JSONField(default=list, help_text="[minx, miny, maxx, maxy] for quick filtering")
     properties = models.JSONField(default=dict, blank=True)
     layer_upload = models.ForeignKey(LandLayerUpload, null=True, blank=True, on_delete=models.SET_NULL, related_name="parcels")
+    layer_key = models.SlugField(max_length=80, blank=True, default="", db_index=True)
     active = models.BooleanField(default=True)
 
     class Meta:
@@ -393,6 +415,7 @@ class MediaKind(models.TextChoices):
     STAY_ORDER = "STAY_ORDER", "Stay / interim order of the appellate authority or court"
     COURT_ORDER = "COURT_ORDER", "Final order / judgment"
     SANCTION_DOC = "SANCTION_DOC", "Sanction / licence document"
+    TASK_EVIDENCE = "TASK_EVIDENCE", "Planned-inspection evidence (no violation / not found)"
     BRANCH_REFERRAL = "BRANCH_REFERRAL", "Document sent with a branch referral"
     BRANCH_RESPONSE = "BRANCH_RESPONSE", "Branch response / report"
     OTHER = "OTHER", "Other"
@@ -401,6 +424,7 @@ class MediaKind(models.TextChoices):
 class MediaAttachment(TimeStamped):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     case = models.ForeignKey("ViolationCase", null=True, blank=True, on_delete=models.CASCADE, related_name="media")
+    task = models.ForeignKey("InspectionTask", null=True, blank=True, on_delete=models.SET_NULL, related_name="media")
     notice = models.ForeignKey("Notice", null=True, blank=True, on_delete=models.SET_NULL, related_name="media")
     sanctioned_plan = models.ForeignKey(SanctionedPlan, null=True, blank=True, on_delete=models.CASCADE, related_name="documents")
     kind = models.CharField(max_length=20, choices=MediaKind.choices, default=MediaKind.INSPECTION)
@@ -545,6 +569,12 @@ class ViolationCase(TimeStamped):
     compliance_due_at = models.DateTimeField(null=True, blank=True)
     executed_at = models.DateTimeField(null=True, blank=True)
     closed_at = models.DateTimeField(null=True, blank=True)
+
+    # ---- planned inspection (if the case was created from a task pushed by the JC) ----
+    task = models.OneToOneField("InspectionTask", null=True, blank=True, on_delete=models.SET_NULL, related_name="case")
+    inspector_latitude = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True, help_text="Officer's device location at the time of recording")
+    inspector_longitude = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True)
+    inspector_distance_m = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
     # ---- litigation flag (mirrors the latest Appeal so lists / dashboards can filter) ----
     litigation_status = models.CharField(max_length=20, default="NONE", db_index=True)   # NONE | APPEAL_PENDING | STAYED | DECIDED
@@ -991,3 +1021,79 @@ class AdminAuditLog(models.Model):
     class Meta:
         db_table = "bvms_admin_audit_log"
         ordering = ["-at"]
+
+
+# ============================================================================
+# 9. Planned inspections (JC pushes PIDs / map points to the field)
+# ============================================================================
+class InspectionBatch(TimeStamped):
+    """A bulk push of properties for verification, e.g. 'all PGs in the PID database, Zone 2'."""
+    title = models.CharField(max_length=200)
+    category = models.CharField(max_length=40, default="VERIFICATION")
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="+")
+    source_file = models.FileField(upload_to="bvms/inspection-batches/", null=True, blank=True)
+    instructions = models.TextField(blank=True)
+    due_at = models.DateTimeField(null=True, blank=True)
+    total = models.PositiveIntegerField(default=0)
+    errors = models.JSONField(default=list, blank=True)
+
+    class Meta:
+        db_table = "bvms_inspection_batch"
+        ordering = ["-created_at"]
+
+
+class InspectionTask(TimeStamped):
+    class Status(models.TextChoices):
+        ASSIGNED = "ASSIGNED", "Assigned"
+        UNASSIGNED = "UNASSIGNED", "Awaiting assignment"
+        IN_PROGRESS = "IN_PROGRESS", "Inspection started on site"
+        VIOLATION_RECORDED = "VIOLATION_RECORDED", "Violation recorded (case created)"
+        NO_VIOLATION = "NO_VIOLATION", "Inspected - no violation"
+        NOT_FOUND = "NOT_FOUND", "Property not traceable"
+        CANCELLED = "CANCELLED", "Cancelled"
+
+    class Category(models.TextChoices):
+        VERIFICATION = "VERIFICATION", "Routine verification"
+        PG_HOSTEL = "PG_HOSTEL", "Paying guest / hostel check"
+        COMPLAINT = "COMPLAINT", "Complaint verification"
+        DRONE_FLAG = "DRONE_FLAG", "Drone / satellite change detection"
+        COURT_DIRECTION = "COURT_DIRECTION", "Court / appellate direction"
+        SANCTION_FOLLOWUP = "SANCTION_FOLLOWUP", "Sanctioned plan follow-up (DPC / completion)"
+        GOVT_LAND = "GOVT_LAND", "Government land watch"
+        RE_INSPECTION = "RE_INSPECTION", "Re-inspection of an existing case"
+        OTHER = "OTHER", "Other"
+
+    batch = models.ForeignKey(InspectionBatch, null=True, blank=True, on_delete=models.SET_NULL, related_name="tasks")
+    category = models.CharField(max_length=24, choices=Category.choices, default=Category.VERIFICATION)
+    pid = models.CharField(max_length=40, blank=True, db_index=True)
+    pid_snapshot = models.JSONField(default=dict, blank=True)
+    address = models.TextField(blank=True)
+    owner_name = models.CharField(max_length=200, blank=True)
+    owner_mobile = models.CharField(max_length=15, blank=True)
+    latitude = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True)
+    ward = models.ForeignKey(Ward, null=True, blank=True, on_delete=models.SET_NULL, related_name="tasks")
+    zone = models.ForeignKey(Zone, null=True, blank=True, on_delete=models.SET_NULL, related_name="tasks")
+    instructions = models.TextField(blank=True, help_text="What the field officer must check")
+    priority = models.CharField(max_length=10, default="NORMAL")
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="bvms_tasks_created")
+    assigned_to = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="bvms_tasks")
+    assigned_at = models.DateTimeField(null=True, blank=True)
+    due_at = models.DateTimeField(null=True, blank=True)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.UNASSIGNED, db_index=True)
+    related_case = models.ForeignKey(ViolationCase, null=True, blank=True, on_delete=models.SET_NULL, related_name="follow_up_tasks", help_text="For re-inspection tasks")
+    started_at = models.DateTimeField(null=True, blank=True)
+    start_latitude = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True)
+    start_longitude = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True)
+    start_distance_m = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    outcome_remarks = models.TextField(blank=True)
+    geofence_m = models.PositiveIntegerField(default=100, help_text="Officer must be within this many metres of the point to start")
+
+    class Meta:
+        db_table = "bvms_inspection_task"
+        ordering = ["-created_at"]
+        indexes = [models.Index(fields=["assigned_to", "status"]), models.Index(fields=["status", "zone"])]
+
+    def __str__(self):
+        return f"Task {self.id} {self.pid or self.address[:30]}"
