@@ -24,3 +24,10 @@ mobile/.env
 # Generated
 backend/building_violations/keys/*.p12
 backend/building_violations/keys/*.pem
+
+# live sandbox state (never commit)
+sandbox/*.log
+sandbox/PUBLIC_URL
+sandbox/LINKS.txt
+sandbox/qr-*.png
+backend/.seeded

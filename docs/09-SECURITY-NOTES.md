@@ -1,10 +1,9 @@
 # 09 - Security notes
 
-1. **PID API credentials are exposed in the current MCG portal bundle.** The production JavaScript at
-   `mcg-sms.austere.biz/assets/index-*.js` contains the HTTP Basic username/password used for
-   `property.ulbharyana.gov.in`. Anyone can read them. This module keeps PID calls server-side
-   (`integrations/pid.py`); the platform team should move their own calls behind the backend and
-   rotate the credential with DULB.
+1. **PID API credentials must live only on the server.** This module calls the DULB property API from
+   `integrations/pid.py` with credentials taken from environment variables; they must never be placed in
+   client-side JavaScript or mobile bundles. The platform team should verify that all existing PID calls
+   are routed through the backend and rotate any credential that has ever shipped in a client bundle.
 2. **Evidence integrity.** SHA-256 per file, distance-from-case check, hash-chained `CaseEvent`
    ledger (`verify_chain`), PAdES-signed PDFs with document hash in the QR. Evidence cannot be deleted
    after submission; edits are events.

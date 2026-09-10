@@ -36,7 +36,7 @@ touch points; each is a small, well-marked change.
 
 | Concern | File | What to do |
 |---|---|---|
-| PID lookup | `integrations/pid.py` | Either set `PID_API_USER/PASSWORD` (server-side; the credentials are currently embedded in the portal's JavaScript bundle - see 09-SECURITY-NOTES) or set `PID_PLATFORM_PROXY_URL` to the existing backend endpoint, e.g. `https://sms-be.austere.biz/challan/property-details/{pid}`. Adjust `_normalise` if field names differ. |
+| PID lookup | `integrations/pid.py` | Either set `PID_API_USER/PASSWORD` (server-side only - see 09-SECURITY-NOTES) or set `PID_PLATFORM_PROXY_URL` to the existing backend endpoint, e.g. `https://sms-be.austere.biz/challan/property-details/{pid}`. Adjust `_normalise` if field names differ. |
 | SMS | `integrations/sms.py` | `SMS_GATEWAY=http`, `SMS_HTTP_URL`, auth header, DLT template ids; adapt `HttpSMSGateway.build_request` to the provider's JSON. |
 | Digital signature | `services/signing.py` | `SIGNER=local` with the MCG Document Signer certificate (.p12) for server signing; `SIGNER=pkcs11` for a USB DSC on the signing host; `SIGNER=esign` - implement `ESignSigner.sign` against the ASP (C-DAC/NSDL/eMudhra) contract. |
 | Push notifications | `services/notify.py` | `Notification` rows are created; wire `notify_user` to the platform's FCM sender to push to the app. |

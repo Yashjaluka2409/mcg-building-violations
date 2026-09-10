@@ -7,8 +7,7 @@ Two modes:
   * direct   - call the DULB API with credentials from settings (BVMS_PID_API.USER/PASSWORD)
   * proxy    - call the platform's own endpoint (e.g. sms-be /challan/property-details/{pid})
                so credentials stay in one place (BVMS_PID_API.PLATFORM_PROXY_URL)
-SECURITY NOTE: the platform's web bundle currently embeds the DULB Basic-auth credentials in
-client-side JavaScript. This module keeps them server-side only.
+SECURITY NOTE: credentials are read from settings/environment and are never sent to clients.
 """
 from __future__ import annotations
 
