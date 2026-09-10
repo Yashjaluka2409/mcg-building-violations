@@ -1,4 +1,5 @@
-Web portal (any browser/phone): https://loan-americans-advert-blocked.trycloudflare.com/building-violations/
-Mobile app in Expo Go: 
-GitHub: https://github.com/Yashjaluka2409/mcg-building-violations
-OTP for all demo logins: 123456
+Web portal (any browser / phone): https://loan-americans-advert-blocked.trycloudflare.com/building-violations/
+Mobile app in Expo Go (install Expo Go, then open this link or scan sandbox/qr-expo-go.png): exp://yb8b1ia-anonymous-8081.exp.direct
+GitHub (private): https://github.com/Yashjaluka2409/mcg-building-violations
+OTP for every demo login: 123456
+Demo logins: JE 9000000001 | AE 9000000002 | JC 9000000003 | JC clerk 9000000004 | XEN 9000000005 | Field squad 9000000006 | Addl. Commissioner 9000000007 | Admin 9000000009 | Planning 9000000011 | Revenue 9000000012 | Legal 9000000013 | GIS lab 9000000014
