@@ -1,0 +1,31 @@
+# 08 - UAT test plan
+
+Automated: `cd backend && python manage.py test building_violations` (4 tests: full private-land
+flow, Corporation-land s.408A flow, interim stop-work/sealing, API round-trip incl. PDF and QR).
+
+## Manual scenarios (with demo logins, OTP 123456)
+
+| # | Scenario | Steps | Expected |
+|---|---|---|---|
+| 1 | JE records a violation with PID | App/portal → New inspection → PID GGN012345 → Fetch → violations DV-03, DV-04 → photo → Submit | Owner/mobile auto-filled, sanctioned plan shown, case in PENDING_AE, AE notified |
+| 2 | Government land auto-detection | New inspection at 28.4700, 77.0455 (demo green belt) | Land type = MCG land, parcel named, GL-01 suggested |
+| 3 | AE returns | AE inbox → case → Return to JE with reasons | Status RETURNED_TO_JE, JE notified, reasons in timeline |
+| 4 | AE forwards | AE → Forward to JC with recommendation | PENDING_JC, JC notified |
+| 5 | JC issues SCN | JC → Issue notice → SCN_261, 7 days, hearing date → Issue & sign | Notice numbered MCG/BV/SCN/…, PDF bilingual with QR, signed, SMS console line, status SCN_ISSUED |
+| 6 | Statutory minimum | JC → SCN_408A with 3 days | Rejected: minimum 7 days |
+| 7 | Delivery proof | Field → Record delivery → Affixation → photo far from site | Rejected (geotag mismatch); photo at site accepted, status SCN_SERVED, reply due date computed from service |
+| 8 | Clerk uploads reply | Clerk login → Upload reply | RESPONSE_PENDING_JC directly (no AE hop) |
+| 9 | JE uploads reply | JE → Upload reply | RESPONSE_PENDING_AE → AE comments → JC |
+| 10 | No reply | Set reply due in the past (admin) → run `deadline_sweep` | NO_RESPONSE, JC notified |
+| 11 | Hearing | JC → Fix hearing → Record hearing (HEARD) | RESPONSE_PENDING_JC with proceedings |
+| 12 | Demolition order | JC → Pass final order → DEMOLITION_ORDER_261, 15 days, reasons | ORDER_ISSUED, decision DEMOLITION, PDF cites s.261(1)/(6), appeal to Divisional Commissioner |
+| 13 | Order served, clock | Field → Record delivery (in person) | ORDER_SERVED, "Comply by" +15 days |
+| 14 | Stay | JC → Record appeal (stay till date) | APPEAL_STAY; decide appeal DISMISSED → ORDER_SERVED with fresh period |
+| 15 | Execution due | Expire compliance date → sweep | EXECUTION_DUE, squad notified |
+| 16 | Execution proof | Field → Record demolition → 2 photos + video at site, cost 45,000 | EXECUTED, cost booked, recovery PENDING |
+| 17 | Close | JC → Verify & close | CLOSED; audit chain intact |
+| 18 | QR verification | Scan QR / open verify URL | Public page shows genuine, hash match, status |
+| 19 | Sealing | JC → Issue notice → SEALING_263A (interim) | Case flagged Sealed; order PDF cites s.263A(2)-(4) |
+| 20 | Dashboards & reports | Dashboard filters by zone; Reports → case-register → Excel | Numbers reconcile with case list; file downloads |
+| 21 | Sanctioned plan bulk upload | Plans → template → fill 2 rows → upload | created/updated counts; auto-link on next inspection with that PID |
+| 22 | Offline (app) | Airplane mode → New inspection → Submit | "Saved offline"; sync from Home uploads media then case |

@@ -1,0 +1,5 @@
+{% extends "notices/base.html" %}
+{% block body %}
+<p>WHEREAS on inspection of the above property it has been found that the erection / work / use described above is in contravention of the provisions cited against each violation.</p>
+<p>NOW THEREFORE the undersigned, in exercise of the powers conferred under {{ order_type.statute }} s.{{ order_type.section }}, issues this {{ order_type.kind|lower }} as set out in the operative part below.</p>
+{% endblock %}

@@ -1,0 +1,99 @@
+{% load static %}<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>{{ notice.notice_no }}</title>
+<style>
+{{ font_css|safe }}
+@page { size: A4; margin: 18mm 16mm 22mm 16mm;
+  @bottom-left { content: "{{ notice.notice_no }} | Verify: {{ verify_url }}"; font-size: 7.5pt; color: #555; font-family: 'NotoSans', sans-serif; }
+  @bottom-right { content: "Page " counter(page) " of " counter(pages); font-size: 7.5pt; color: #555; font-family: 'NotoSans', sans-serif; } }
+body { font-family: 'NotoSans', 'NotoDev', Arial, sans-serif; font-size: 10.5pt; color: #111827; line-height: 1.42; }
+.hi { font-family: 'NotoDev', 'NotoSans', sans-serif; }
+.letterhead { display: flex; align-items: center; justify-content: space-between; border-bottom: 3px solid #782669; padding-bottom: 6px; margin-bottom: 8px; }
+.letterhead .org { text-align: center; flex: 1; }
+.letterhead .org .en { font-size: 15pt; font-weight: 700; color: #4a153f; letter-spacing: .3px; }
+.letterhead .org .hi { font-size: 12pt; font-weight: 700; color: #4a153f; }
+.letterhead .org .addr { font-size: 8.5pt; color: #4b5563; }
+.qrbox { text-align: center; width: 92px; }
+.qrbox img { width: 86px; height: 86px; }
+.qrbox .code { font-size: 7pt; letter-spacing: .5px; color: #374151; font-family: monospace; }
+.meta { display: flex; justify-content: space-between; font-size: 9.5pt; margin: 6px 0 10px; }
+.meta b { color: #4a153f; }
+h1.title { text-align: center; font-size: 12.5pt; text-transform: uppercase; margin: 8px 0 2px; color: #4a153f; }
+h1.title .hi { display: block; text-transform: none; font-size: 11.5pt; }
+.badge { display: inline-block; background: #f2e7ed; color: #4a153f; border: 1px solid #ddbee2; padding: 1px 6px; border-radius: 4px; font-size: 8.5pt; }
+table.kv { width: 100%; border-collapse: collapse; margin: 6px 0; font-size: 9.5pt; }
+table.kv td { border: 1px solid #d1d5db; padding: 3px 6px; vertical-align: top; }
+table.kv td.k { width: 30%; background: #f9f5f7; font-weight: 600; }
+table.viol { width: 100%; border-collapse: collapse; margin: 6px 0; font-size: 9pt; }
+table.viol th { background: #782669; color: #fff; padding: 4px 6px; text-align: left; font-weight: 600; }
+table.viol td { border: 1px solid #d1d5db; padding: 4px 6px; vertical-align: top; }
+p { margin: 5px 0; text-align: justify; }
+ol { margin: 4px 0 4px 18px; padding: 0; } li { margin: 2px 0; }
+.operative { border-left: 4px solid #782669; background: #fbf7fa; padding: 6px 10px; margin: 8px 0; }
+.sign { margin-top: 26px; display: flex; justify-content: space-between; }
+.sign .block { text-align: center; font-size: 9.5pt; width: 60%; }
+.sign .block .name { font-weight: 700; margin-top: 30px; }
+.small { font-size: 8.5pt; color: #374151; }
+.legal { font-size: 8pt; color: #374151; border-top: 1px dashed #9ca3af; margin-top: 10px; padding-top: 4px; }
+.legal h4 { margin: 2px 0; font-size: 8.5pt; color: #4a153f; }
+.copy { font-size: 8.5pt; margin-top: 8px; }
+.page-break { page-break-before: always; }
+</style>
+</head>
+<body>
+<div class="letterhead">
+  <div style="width:92px;"></div>
+  <div class="org">
+    <div class="hi">{{ corp.NAME_HI }}</div>
+    <div class="en">{{ corp.NAME_EN }}</div>
+    <div class="addr">{{ corp.ADDRESS }} | Helpline {{ corp.HELPLINE }} | www.mcg.gov.in</div>
+    <div class="addr">Building Violation Management System</div>
+  </div>
+  <div class="qrbox"><img src="data:image/png;base64,{{ qr_b64 }}" alt="QR"><div class="code">{{ notice.verification_code }}</div></div>
+</div>
+<div class="meta">
+  <div><b>No.</b> {{ notice.notice_no }}<br><b>Case</b> {{ case.case_no }}</div>
+  <div><b>Dated</b> {{ issued_local|date:"d-m-Y" }}<br><b>Zone/Ward</b> {{ case.zone.code|default:"-" }} / {{ case.ward.number|default:"-" }}</div>
+  <div><b>{{ order_type.statute }}</b> s.{{ order_type.section }}<br><span class="badge">{{ order_type.kind }}</span></div>
+</div>
+<h1 class="title">{% block title_en %}{{ order_type.title_en }}{% endblock %}<span class="hi">{% block title_hi %}{{ order_type.title_hi }}{% endblock %}</span></h1>
+
+<table class="kv">
+  <tr><td class="k">To / सेवा में</td><td>{{ notice.addressee_name }}<br>{{ notice.addressee_address|linebreaksbr }}{% if notice.addressee_mobiles %}<br>Mobile: {{ notice.addressee_mobiles|join:", " }}{% endif %}</td></tr>
+  <tr><td class="k">Property / संपत्ति</td><td>{% if case.pid %}PID <b>{{ case.pid }}</b>, {% endif %}{{ case.address_line }}{% if case.locality %}, {{ case.locality }}{% endif %}{% if case.sector %}, {{ case.sector }}{% endif %}{% if case.village_colony %}, {{ case.village_colony }}{% endif %}{% if case.latitude %}<br><span class="small">Location: {{ case.latitude }}, {{ case.longitude }} ({{ case.get_land_type_display }})</span>{% endif %}</td></tr>
+  {% if sanctioned_plan %}<tr><td class="k">Sanctioned plan</td><td>{{ sanctioned_plan.plan_no }} dated {{ sanctioned_plan.sanctioned_on|date:"d-m-Y" }}{% if sanctioned_plan.licence_no %}; Licence {{ sanctioned_plan.licence_no }}{% endif %}</td></tr>{% endif %}
+  <tr><td class="k">Inspection / निरीक्षण</td><td>{{ case.inspected_at|date:"d-m-Y H:i" }} by the field team of the Corporation; construction stage: {{ case.get_construction_stage_display }}{% if case.storeys %}; storeys: {{ case.storeys }}{% endif %}{% if case.covered_area_sqm %}; covered area approx. {{ case.covered_area_sqm }} sq m{% endif %}</td></tr>
+</table>
+
+<table class="viol">
+  <tr><th style="width:8%">Code</th><th style="width:42%">Violation / उल्लंघन</th><th>Contravention of / प्रावधान</th></tr>
+  {% for v in violations %}<tr><td>{{ v.violation_type.code }}</td><td>{{ v.violation_type.title_en }}<br><span class="hi">{{ v.violation_type.title_hi }}</span>{% if v.remarks %}<br><span class="small">{{ v.remarks }}</span>{% endif %}</td><td class="small">{{ v.violation_type.contravention_of }}</td></tr>{% endfor %}
+</table>
+
+<p><b>Observations / निरीक्षण टिप्पणी:</b> {{ case.description }}</p>
+{% if case.measurements %}<p class="small"><b>Measurements:</b> {% for k, val in case.measurements.items %}{{ k }}: {{ val }}; {% endfor %}</p>{% endif %}
+
+{% block body %}{% endblock %}
+
+{% if notice.operative_text_en %}<div class="operative">{{ notice.operative_text_en|linebreaksbr }}{% if notice.operative_text_hi %}<div class="hi">{{ notice.operative_text_hi|linebreaksbr }}</div>{% endif %}</div>{% endif %}
+
+<div class="sign">
+  <div class="small" style="width:38%">
+    <b>Verification:</b> Scan the QR code or visit<br>{{ verify_url }}<br>Document hash (SHA-256): {{ notice.document_hash|slice:":32" }}…<br>
+    This document is digitally signed under the Information Technology Act, 2000 and is valid without a physical signature (s.402, HMC Act 1994).
+  </div>
+  <div class="block">
+    <div class="name">{{ issuer_name }}</div>
+    <div>{{ issuer.designation|default:"Joint Commissioner" }}</div>
+    <div>{{ corp.NAME_EN }}</div>
+    {% if delegation and delegation.no %}<div class="small">Exercising powers of the Commissioner delegated vide order No. {{ delegation.no }}{% if delegation.date %} dated {{ delegation.date|date:"d-m-Y" }}{% endif %} u/s 401(2), HMC Act 1994</div>{% endif %}
+  </div>
+</div>
+
+<div class="copy"><b>Copy to:</b> (1) Junior Engineer / field team for service and report (2) Assistant Engineer, Zone {{ case.zone.code|default:"-" }} (3) Case file {{ case.case_no }}{% block extra_copies %}{% endblock %}</div>
+
+{% if legal_sections %}<div class="legal"><h4>Statutory provisions referred to / संदर्भित वैधानिक प्रावधान</h4>
+{% for s in legal_sections %}<p><b>{{ s.statute.title }}, s.{{ s.section }} - {{ s.heading }}:</b> {{ s.text|truncatechars:900 }}</p>{% endfor %}</div>{% endif %}
+</body></html>

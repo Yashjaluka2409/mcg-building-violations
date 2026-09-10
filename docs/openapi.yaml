@@ -1,0 +1,6510 @@
+openapi: 3.0.3
+info:
+  title: MCG Building Violation Management System API
+  version: 1.0.0
+  description: REST API consumed by the MCG web portal module and the MCG HARYANA
+    mobile app (building-violations module).
+paths:
+  /building-violations/api/auth/otp/request/:
+    post:
+      operationId: building_violations_api_auth_otp_request_create
+      tags:
+      - building-violations
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /building-violations/api/auth/otp/verify/:
+    post:
+      operationId: building_violations_api_auth_otp_verify_create
+      tags:
+      - building-violations
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /building-violations/api/auth/token/refresh/:
+    post:
+      operationId: building_violations_api_auth_token_refresh_create
+      description: |-
+        Takes a refresh type JSON web token and returns an access type JSON web
+        token if the refresh token is valid.
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenRefresh'
+          description: ''
+  /building-violations/api/cases/:
+    get:
+      operationId: building_violations_api_cases_list
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedViolationCaseListList'
+          description: ''
+    post:
+      operationId: building_violations_api_cases_create
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CaseCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CaseCreate'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseCreate'
+          description: ''
+  /building-violations/api/cases/{id}/:
+    get:
+      operationId: building_violations_api_cases_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ViolationCaseDetail'
+          description: ''
+    patch:
+      operationId: building_violations_api_cases_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedViolationCaseDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedViolationCaseDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedViolationCaseDetail'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ViolationCaseDetail'
+          description: ''
+  /building-violations/api/cases/{id}/ae_forward/:
+    post:
+      operationId: building_violations_api_cases_ae_forward_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ViolationCaseDetail'
+          description: ''
+  /building-violations/api/cases/{id}/ae_forward_response/:
+    post:
+      operationId: building_violations_api_cases_ae_forward_response_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ViolationCaseDetail'
+          description: ''
+  /building-violations/api/cases/{id}/ae_return/:
+    post:
+      operationId: building_violations_api_cases_ae_return_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ViolationCaseDetail'
+          description: ''
+  /building-violations/api/cases/{id}/close/:
+    post:
+      operationId: building_violations_api_cases_close_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ViolationCaseDetail'
+          description: ''
+  /building-violations/api/cases/{id}/decide_appeal/:
+    post:
+      operationId: building_violations_api_cases_decide_appeal_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ViolationCaseDetail'
+          description: ''
+  /building-violations/api/cases/{id}/drop/:
+    post:
+      operationId: building_violations_api_cases_drop_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ViolationCaseDetail'
+          description: ''
+  /building-violations/api/cases/{id}/issue_notice/:
+    post:
+      operationId: building_violations_api_cases_issue_notice_create
+      description: JC issues any notice/order/memo (SCN, stop-work, sealing, demolition
+        order, referral ...).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ViolationCaseDetail'
+          description: ''
+  /building-violations/api/cases/{id}/notices/:
+    get:
+      operationId: building_violations_api_cases_notices_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ViolationCaseDetail'
+          description: ''
+  /building-violations/api/cases/{id}/record_appeal/:
+    post:
+      operationId: building_violations_api_cases_record_appeal_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ViolationCaseDetail'
+          description: ''
+  /building-violations/api/cases/{id}/record_execution/:
+    post:
+      operationId: building_violations_api_cases_record_execution_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ViolationCaseDetail'
+          description: ''
+  /building-violations/api/cases/{id}/record_hearing/:
+    post:
+      operationId: building_violations_api_cases_record_hearing_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ViolationCaseDetail'
+          description: ''
+  /building-violations/api/cases/{id}/record_response/:
+    post:
+      operationId: building_violations_api_cases_record_response_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ViolationCaseDetail'
+          description: ''
+  /building-violations/api/cases/{id}/record_service/:
+    post:
+      operationId: building_violations_api_cases_record_service_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ViolationCaseDetail'
+          description: ''
+  /building-violations/api/cases/{id}/reopen/:
+    post:
+      operationId: building_violations_api_cases_reopen_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ViolationCaseDetail'
+          description: ''
+  /building-violations/api/cases/{id}/schedule_hearing/:
+    post:
+      operationId: building_violations_api_cases_schedule_hearing_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ViolationCaseDetail'
+          description: ''
+  /building-violations/api/cases/{id}/submit/:
+    post:
+      operationId: building_violations_api_cases_submit_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ViolationCaseDetail'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ViolationCaseDetail'
+          description: ''
+  /building-violations/api/cases/{id}/timeline/:
+    get:
+      operationId: building_violations_api_cases_timeline_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ViolationCaseDetail'
+          description: ''
+  /building-violations/api/cases/counts/:
+    get:
+      operationId: building_violations_api_cases_counts_retrieve
+      description: Badge counts for the inbox / home screen.
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ViolationCaseDetail'
+          description: ''
+  /building-violations/api/dashboards/ageing/:
+    get:
+      operationId: building_violations_api_dashboards_ageing_retrieve
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /building-violations/api/dashboards/by-area/:
+    get:
+      operationId: building_violations_api_dashboards_by_area_retrieve
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /building-violations/api/dashboards/deadlines/:
+    get:
+      operationId: building_violations_api_dashboards_deadlines_retrieve
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /building-violations/api/dashboards/funnel/:
+    get:
+      operationId: building_violations_api_dashboards_funnel_retrieve
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /building-violations/api/dashboards/map/:
+    get:
+      operationId: building_violations_api_dashboards_map_retrieve
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /building-violations/api/dashboards/officers/:
+    get:
+      operationId: building_violations_api_dashboards_officers_retrieve
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /building-violations/api/dashboards/sla/:
+    get:
+      operationId: building_violations_api_dashboards_sla_retrieve
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /building-violations/api/dashboards/summary/:
+    get:
+      operationId: building_violations_api_dashboards_summary_retrieve
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /building-violations/api/dashboards/trends/:
+    get:
+      operationId: building_violations_api_dashboards_trends_retrieve
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /building-violations/api/dashboards/violation-mix/:
+    get:
+      operationId: building_violations_api_dashboards_violation_mix_retrieve
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /building-violations/api/gis/check-point/:
+    get:
+      operationId: building_violations_api_gis_check_point_retrieve
+      description: 'Given a point: government-land parcels containing it, ward, nearby
+        sanctioned plans.'
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /building-violations/api/gis/govt-land/:
+    get:
+      operationId: building_violations_api_gis_govt_land_list
+      parameters:
+      - in: query
+        name: active
+        schema:
+          type: boolean
+      - in: query
+        name: agency
+        schema:
+          type: string
+          enum:
+          - DEFENCE
+          - FOREST
+          - GMDA
+          - HSVP
+          - IRRIGATION
+          - MCG
+          - NHAI
+          - OTHER
+          - PANCHAYAT
+          - PWD
+          - RAILWAYS
+          - STATE_GOVT
+        description: |-
+          * `MCG` - Municipal Corporation Gurugram
+          * `HSVP` - Haryana Shahari Vikas Pradhikaran
+          * `GMDA` - Gurugram Metropolitan Development Authority
+          * `STATE_GOVT` - State Government (other departments)
+          * `PWD` - PWD (B&R)
+          * `IRRIGATION` - Irrigation & Water Resources
+          * `FOREST` - Forest Department
+          * `PANCHAYAT` - Gram Panchayat / Shamlat Deh
+          * `RAILWAYS` - Railways
+          * `NHAI` - NHAI
+          * `DEFENCE` - Defence
+          * `OTHER` - Other
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: village
+        schema:
+          type: string
+      - in: query
+        name: ward
+        schema:
+          type: integer
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedGovtLandParcelList'
+          description: ''
+    post:
+      operationId: building_violations_api_gis_govt_land_create
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GovtLandParcel'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/GovtLandParcel'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/GovtLandParcel'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GovtLandParcel'
+          description: ''
+  /building-violations/api/gis/govt-land/{id}/:
+    get:
+      operationId: building_violations_api_gis_govt_land_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this govt land parcel.
+        required: true
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GovtLandParcel'
+          description: ''
+    put:
+      operationId: building_violations_api_gis_govt_land_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this govt land parcel.
+        required: true
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GovtLandParcel'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/GovtLandParcel'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/GovtLandParcel'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GovtLandParcel'
+          description: ''
+    patch:
+      operationId: building_violations_api_gis_govt_land_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this govt land parcel.
+        required: true
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedGovtLandParcel'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedGovtLandParcel'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedGovtLandParcel'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GovtLandParcel'
+          description: ''
+    delete:
+      operationId: building_violations_api_gis_govt_land_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this govt land parcel.
+        required: true
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /building-violations/api/gis/govt-land/geojson/:
+    get:
+      operationId: building_violations_api_gis_govt_land_geojson_retrieve
+      description: GeoJSON FeatureCollection; optional ?bbox=minx,miny,maxx,maxy for
+        map viewport loading.
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GovtLandParcel'
+          description: ''
+  /building-violations/api/gis/land-layers/:
+    get:
+      operationId: building_violations_api_gis_land_layers_list
+      description: |-
+        Upload a GeoJSON FeatureCollection (WGS84) of government land parcels. KML/Shapefile should be
+        converted to GeoJSON in QGIS (Layer > Export > Save Features As > GeoJSON, CRS EPSG:4326).
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedLandLayerUploadList'
+          description: ''
+    post:
+      operationId: building_violations_api_gis_land_layers_create
+      description: |-
+        Upload a GeoJSON FeatureCollection (WGS84) of government land parcels. KML/Shapefile should be
+        converted to GeoJSON in QGIS (Layer > Export > Save Features As > GeoJSON, CRS EPSG:4326).
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LandLayerUpload'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LandLayerUpload'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LandLayerUpload'
+          description: ''
+  /building-violations/api/gis/land-layers/{id}/:
+    get:
+      operationId: building_violations_api_gis_land_layers_retrieve
+      description: |-
+        Upload a GeoJSON FeatureCollection (WGS84) of government land parcels. KML/Shapefile should be
+        converted to GeoJSON in QGIS (Layer > Export > Save Features As > GeoJSON, CRS EPSG:4326).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this land layer upload.
+        required: true
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LandLayerUpload'
+          description: ''
+    put:
+      operationId: building_violations_api_gis_land_layers_update
+      description: |-
+        Upload a GeoJSON FeatureCollection (WGS84) of government land parcels. KML/Shapefile should be
+        converted to GeoJSON in QGIS (Layer > Export > Save Features As > GeoJSON, CRS EPSG:4326).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this land layer upload.
+        required: true
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LandLayerUpload'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LandLayerUpload'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LandLayerUpload'
+          description: ''
+    patch:
+      operationId: building_violations_api_gis_land_layers_partial_update
+      description: |-
+        Upload a GeoJSON FeatureCollection (WGS84) of government land parcels. KML/Shapefile should be
+        converted to GeoJSON in QGIS (Layer > Export > Save Features As > GeoJSON, CRS EPSG:4326).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this land layer upload.
+        required: true
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedLandLayerUpload'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedLandLayerUpload'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LandLayerUpload'
+          description: ''
+    delete:
+      operationId: building_violations_api_gis_land_layers_destroy
+      description: |-
+        Upload a GeoJSON FeatureCollection (WGS84) of government land parcels. KML/Shapefile should be
+        converted to GeoJSON in QGIS (Layer > Export > Save Features As > GeoJSON, CRS EPSG:4326).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this land layer upload.
+        required: true
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /building-violations/api/masters/divisions/:
+    get:
+      operationId: building_violations_api_masters_divisions_list
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Division'
+          description: ''
+    post:
+      operationId: building_violations_api_masters_divisions_create
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Division'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Division'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Division'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Division'
+          description: ''
+  /building-violations/api/masters/divisions/{id}/:
+    get:
+      operationId: building_violations_api_masters_divisions_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this division.
+        required: true
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Division'
+          description: ''
+    put:
+      operationId: building_violations_api_masters_divisions_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this division.
+        required: true
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Division'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Division'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Division'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Division'
+          description: ''
+    patch:
+      operationId: building_violations_api_masters_divisions_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this division.
+        required: true
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedDivision'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedDivision'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedDivision'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Division'
+          description: ''
+    delete:
+      operationId: building_violations_api_masters_divisions_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this division.
+        required: true
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /building-violations/api/masters/legal-sections/:
+    get:
+      operationId: building_violations_api_masters_legal_sections_list
+      parameters:
+      - in: query
+        name: kind
+        schema:
+          type: string
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: statute
+        schema:
+          type: string
+      - in: query
+        name: verify
+        schema:
+          type: boolean
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LegalSection'
+          description: ''
+    post:
+      operationId: building_violations_api_masters_legal_sections_create
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LegalSection'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LegalSection'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LegalSection'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LegalSection'
+          description: ''
+  /building-violations/api/masters/legal-sections/{id}/:
+    get:
+      operationId: building_violations_api_masters_legal_sections_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this legal section.
+        required: true
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LegalSection'
+          description: ''
+    put:
+      operationId: building_violations_api_masters_legal_sections_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this legal section.
+        required: true
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LegalSection'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LegalSection'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LegalSection'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LegalSection'
+          description: ''
+    patch:
+      operationId: building_violations_api_masters_legal_sections_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this legal section.
+        required: true
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedLegalSection'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedLegalSection'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedLegalSection'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LegalSection'
+          description: ''
+    delete:
+      operationId: building_violations_api_masters_legal_sections_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this legal section.
+        required: true
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /building-violations/api/masters/legal-sections/statutes/:
+    get:
+      operationId: building_violations_api_masters_legal_sections_statutes_retrieve
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LegalSection'
+          description: ''
+  /building-violations/api/masters/order-types/:
+    get:
+      operationId: building_violations_api_masters_order_types_list
+      parameters:
+      - in: query
+        name: active
+        schema:
+          type: boolean
+      - in: query
+        name: kind
+        schema:
+          type: string
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OrderType'
+          description: ''
+    post:
+      operationId: building_violations_api_masters_order_types_create
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderType'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OrderType'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OrderType'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderType'
+          description: ''
+  /building-violations/api/masters/order-types/{code}/:
+    get:
+      operationId: building_violations_api_masters_order_types_retrieve
+      parameters:
+      - in: path
+        name: code
+        schema:
+          type: string
+        description: A unique value identifying this order type.
+        required: true
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderType'
+          description: ''
+    put:
+      operationId: building_violations_api_masters_order_types_update
+      parameters:
+      - in: path
+        name: code
+        schema:
+          type: string
+        description: A unique value identifying this order type.
+        required: true
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderType'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OrderType'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OrderType'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderType'
+          description: ''
+    patch:
+      operationId: building_violations_api_masters_order_types_partial_update
+      parameters:
+      - in: path
+        name: code
+        schema:
+          type: string
+        description: A unique value identifying this order type.
+        required: true
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedOrderType'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedOrderType'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedOrderType'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderType'
+          description: ''
+    delete:
+      operationId: building_violations_api_masters_order_types_destroy
+      parameters:
+      - in: path
+        name: code
+        schema:
+          type: string
+        description: A unique value identifying this order type.
+        required: true
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /building-violations/api/masters/sla/:
+    get:
+      operationId: building_violations_api_masters_sla_list
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SLAConfig'
+          description: ''
+    post:
+      operationId: building_violations_api_masters_sla_create
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SLAConfig'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SLAConfig'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SLAConfig'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SLAConfig'
+          description: ''
+  /building-violations/api/masters/sla/{id}/:
+    get:
+      operationId: building_violations_api_masters_sla_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this sla config.
+        required: true
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SLAConfig'
+          description: ''
+    put:
+      operationId: building_violations_api_masters_sla_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this sla config.
+        required: true
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SLAConfig'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SLAConfig'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SLAConfig'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SLAConfig'
+          description: ''
+    patch:
+      operationId: building_violations_api_masters_sla_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this sla config.
+        required: true
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSLAConfig'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSLAConfig'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSLAConfig'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SLAConfig'
+          description: ''
+    delete:
+      operationId: building_violations_api_masters_sla_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this sla config.
+        required: true
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /building-violations/api/masters/violation-types/:
+    get:
+      operationId: building_violations_api_masters_violation_types_list
+      parameters:
+      - in: query
+        name: action_path
+        schema:
+          type: string
+      - in: query
+        name: active
+        schema:
+          type: boolean
+      - in: query
+        name: category
+        schema:
+          type: string
+          enum:
+          - DANGEROUS_UNFIT
+          - DEVIATION_FROM_SANCTION
+          - GOVT_LAND
+          - MISUSE_CHANGE_OF_USE
+          - PRIVATE_LAND_NO_SANCTION
+          - PROCEDURAL_NON_COMPLIANCE
+          - STREET_ENCROACHMENT
+        description: |-
+          * `GOVT_LAND` - Government / Corporation land
+          * `PRIVATE_LAND_NO_SANCTION` - Private land - no sanction
+          * `DEVIATION_FROM_SANCTION` - Deviation from sanction
+          * `STREET_ENCROACHMENT` - Street encroachment
+          * `MISUSE_CHANGE_OF_USE` - Misuse / change of use
+          * `DANGEROUS_UNFIT` - Dangerous / unfit
+          * `PROCEDURAL_NON_COMPLIANCE` - Non-compliance with orders
+      - in: query
+        name: compoundable
+        schema:
+          type: string
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: severity
+        schema:
+          type: string
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ViolationType'
+          description: ''
+    post:
+      operationId: building_violations_api_masters_violation_types_create
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ViolationType'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ViolationType'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ViolationType'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ViolationType'
+          description: ''
+  /building-violations/api/masters/violation-types/{code}/:
+    get:
+      operationId: building_violations_api_masters_violation_types_retrieve
+      parameters:
+      - in: path
+        name: code
+        schema:
+          type: string
+        description: A unique value identifying this violation type.
+        required: true
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ViolationType'
+          description: ''
+    put:
+      operationId: building_violations_api_masters_violation_types_update
+      parameters:
+      - in: path
+        name: code
+        schema:
+          type: string
+        description: A unique value identifying this violation type.
+        required: true
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ViolationType'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ViolationType'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ViolationType'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ViolationType'
+          description: ''
+    patch:
+      operationId: building_violations_api_masters_violation_types_partial_update
+      parameters:
+      - in: path
+        name: code
+        schema:
+          type: string
+        description: A unique value identifying this violation type.
+        required: true
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedViolationType'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedViolationType'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedViolationType'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ViolationType'
+          description: ''
+    delete:
+      operationId: building_violations_api_masters_violation_types_destroy
+      parameters:
+      - in: path
+        name: code
+        schema:
+          type: string
+        description: A unique value identifying this violation type.
+        required: true
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /building-violations/api/masters/wards/:
+    get:
+      operationId: building_violations_api_masters_wards_list
+      parameters:
+      - in: query
+        name: division
+        schema:
+          type: integer
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: zone
+        schema:
+          type: integer
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Ward'
+          description: ''
+    post:
+      operationId: building_violations_api_masters_wards_create
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Ward'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Ward'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Ward'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ward'
+          description: ''
+  /building-violations/api/masters/wards/{id}/:
+    get:
+      operationId: building_violations_api_masters_wards_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this ward.
+        required: true
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ward'
+          description: ''
+    put:
+      operationId: building_violations_api_masters_wards_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this ward.
+        required: true
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Ward'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Ward'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Ward'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ward'
+          description: ''
+    patch:
+      operationId: building_violations_api_masters_wards_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this ward.
+        required: true
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedWard'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedWard'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedWard'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ward'
+          description: ''
+    delete:
+      operationId: building_violations_api_masters_wards_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this ward.
+        required: true
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /building-violations/api/masters/wards/geojson/:
+    get:
+      operationId: building_violations_api_masters_wards_geojson_retrieve
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ward'
+          description: ''
+  /building-violations/api/masters/zones/:
+    get:
+      operationId: building_violations_api_masters_zones_list
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Zone'
+          description: ''
+    post:
+      operationId: building_violations_api_masters_zones_create
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Zone'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Zone'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Zone'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Zone'
+          description: ''
+  /building-violations/api/masters/zones/{id}/:
+    get:
+      operationId: building_violations_api_masters_zones_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this zone.
+        required: true
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Zone'
+          description: ''
+    put:
+      operationId: building_violations_api_masters_zones_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this zone.
+        required: true
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Zone'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Zone'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Zone'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Zone'
+          description: ''
+    patch:
+      operationId: building_violations_api_masters_zones_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this zone.
+        required: true
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedZone'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedZone'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedZone'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Zone'
+          description: ''
+    delete:
+      operationId: building_violations_api_masters_zones_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this zone.
+        required: true
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /building-violations/api/media/:
+    get:
+      operationId: building_violations_api_media_list
+      description: |-
+        POST multipart {file, kind, case?, latitude, longitude, accuracy_m, captured_at, device_id, caption}.
+        The mobile app captures photos/videos in-app and posts the GPS fix read at capture time; the server
+        stores the fix, hashes the file and (when a case is given) computes the distance to the case point.
+      parameters:
+      - in: query
+        name: case
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: kind
+        schema:
+          type: string
+          enum:
+          - APPEAL
+          - COMPLIANCE
+          - EXECUTION
+          - HEARING
+          - INSPECTION
+          - NOTICE_DELIVERY
+          - ORDER_DELIVERY
+          - OTHER
+          - RESPONSE
+          - SANCTION_DOC
+        description: |-
+          * `INSPECTION` - Inspection evidence
+          * `NOTICE_DELIVERY` - Proof of delivery of notice
+          * `ORDER_DELIVERY` - Proof of delivery of order
+          * `RESPONSE` - Response / reply document
+          * `HEARING` - Hearing record
+          * `EXECUTION` - Demolition / sealing evidence
+          * `COMPLIANCE` - Self-compliance evidence
+          * `APPEAL` - Appeal / court order
+          * `SANCTION_DOC` - Sanction / licence document
+          * `OTHER` - Other
+      - in: query
+        name: notice
+        schema:
+          type: string
+          format: uuid
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: sanctioned_plan
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedMediaAttachmentList'
+          description: ''
+    post:
+      operationId: building_violations_api_media_create
+      description: |-
+        POST multipart {file, kind, case?, latitude, longitude, accuracy_m, captured_at, device_id, caption}.
+        The mobile app captures photos/videos in-app and posts the GPS fix read at capture time; the server
+        stores the fix, hashes the file and (when a case is given) computes the distance to the case point.
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MediaAttachment'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MediaAttachment'
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MediaAttachment'
+          description: ''
+  /building-violations/api/media/{id}/:
+    get:
+      operationId: building_violations_api_media_retrieve
+      description: |-
+        POST multipart {file, kind, case?, latitude, longitude, accuracy_m, captured_at, device_id, caption}.
+        The mobile app captures photos/videos in-app and posts the GPS fix read at capture time; the server
+        stores the fix, hashes the file and (when a case is given) computes the distance to the case point.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this media attachment.
+        required: true
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MediaAttachment'
+          description: ''
+    delete:
+      operationId: building_violations_api_media_destroy
+      description: |-
+        POST multipart {file, kind, case?, latitude, longitude, accuracy_m, captured_at, device_id, caption}.
+        The mobile app captures photos/videos in-app and posts the GPS fix read at capture time; the server
+        stores the fix, hashes the file and (when a case is given) computes the distance to the case point.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this media attachment.
+        required: true
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /building-violations/api/notices/:
+    get:
+      operationId: building_violations_api_notices_list
+      parameters:
+      - in: query
+        name: case
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: is_final_order
+        schema:
+          type: boolean
+      - in: query
+        name: kind
+        schema:
+          type: string
+      - in: query
+        name: order_type
+        schema:
+          type: string
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: served_mode
+        schema:
+          type: string
+          enum:
+          - AFFIXATION
+          - BEAT_OF_DRUM
+          - EMAIL
+          - IN_PERSON
+          - POST
+          - SMS
+          - WHATSAPP
+        description: |-
+          * `SMS` - SMS to registered mobile
+          * `IN_PERSON` - Delivered in person
+          * `AFFIXATION` - Affixed on premises
+          * `POST` - Registered post / speed post
+          * `EMAIL` - E-mail
+          * `WHATSAPP` - WhatsApp
+          * `BEAT_OF_DRUM` - Beat of drum / public announcement
+      - in: query
+        name: signature_status
+        schema:
+          type: string
+          enum:
+          - FAILED
+          - SIGNED
+          - UNSIGNED
+        description: |-
+          * `UNSIGNED` - Unsigned
+          * `SIGNED` - Digitally signed
+          * `FAILED` - Signing failed
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedNoticeList'
+          description: ''
+  /building-violations/api/notices/{id}/:
+    get:
+      operationId: building_violations_api_notices_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this notice.
+        required: true
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notice'
+          description: ''
+  /building-violations/api/notices/{id}/pdf/:
+    get:
+      operationId: building_violations_api_notices_pdf_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this notice.
+        required: true
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notice'
+          description: ''
+  /building-violations/api/notices/{id}/resend_sms/:
+    post:
+      operationId: building_violations_api_notices_resend_sms_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this notice.
+        required: true
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Notice'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Notice'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Notice'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notice'
+          description: ''
+  /building-violations/api/notices/{id}/resign/:
+    post:
+      operationId: building_violations_api_notices_resign_create
+      description: Re-run signing (e.g. after the DSC/eSign backend was configured).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this notice.
+        required: true
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Notice'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Notice'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Notice'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notice'
+          description: ''
+  /building-violations/api/notifications/:
+    get:
+      operationId: building_violations_api_notifications_list
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedNotificationList'
+          description: ''
+  /building-violations/api/notifications/{id}/:
+    get:
+      operationId: building_violations_api_notifications_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+          description: ''
+  /building-violations/api/notifications/mark_read/:
+    post:
+      operationId: building_violations_api_notifications_mark_read_create
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Notification'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Notification'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Notification'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+          description: ''
+  /building-violations/api/officers/:
+    get:
+      operationId: building_violations_api_officers_list
+      description: Officer directory. Admin creates JE/AE/JC/clerk logins; JC can
+        create its own clerk sub-login.
+      parameters:
+      - in: query
+        name: active
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: role
+        schema:
+          type: string
+          enum:
+          - ADDL_COMMISSIONER
+          - ADMIN
+          - AE
+          - COMMISSIONER
+          - FIELD_STAFF
+          - JC
+          - JC_CLERK
+          - JE
+          - VIEWER
+          - XEN
+        description: |-
+          * `JE` - Junior Engineer (field)
+          * `AE` - Assistant Engineer
+          * `XEN` - Executive Engineer
+          * `JC` - Joint Commissioner
+          * `JC_CLERK` - JC office clerk (response upload only)
+          * `ADDL_COMMISSIONER` - Additional Commissioner
+          * `COMMISSIONER` - Commissioner
+          * `FIELD_STAFF` - Enforcement / demolition squad
+          * `ADMIN` - Module administrator
+          * `VIEWER` - Read-only (MIS)
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: zones
+        schema:
+          type: array
+          items:
+            type: integer
+        explode: true
+        style: form
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedOfficerProfileList'
+          description: ''
+    post:
+      operationId: building_violations_api_officers_create
+      description: Officer directory. Admin creates JE/AE/JC/clerk logins; JC can
+        create its own clerk sub-login.
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OfficerProfile'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OfficerProfile'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OfficerProfile'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OfficerProfile'
+          description: ''
+  /building-violations/api/officers/{id}/:
+    get:
+      operationId: building_violations_api_officers_retrieve
+      description: Officer directory. Admin creates JE/AE/JC/clerk logins; JC can
+        create its own clerk sub-login.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this officer profile.
+        required: true
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OfficerProfile'
+          description: ''
+    put:
+      operationId: building_violations_api_officers_update
+      description: Officer directory. Admin creates JE/AE/JC/clerk logins; JC can
+        create its own clerk sub-login.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this officer profile.
+        required: true
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OfficerProfile'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OfficerProfile'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OfficerProfile'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OfficerProfile'
+          description: ''
+    patch:
+      operationId: building_violations_api_officers_partial_update
+      description: Officer directory. Admin creates JE/AE/JC/clerk logins; JC can
+        create its own clerk sub-login.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this officer profile.
+        required: true
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedOfficerProfile'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedOfficerProfile'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedOfficerProfile'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OfficerProfile'
+          description: ''
+    delete:
+      operationId: building_violations_api_officers_destroy
+      description: Officer directory. Admin creates JE/AE/JC/clerk logins; JC can
+        create its own clerk sub-login.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this officer profile.
+        required: true
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /building-violations/api/officers/dropdown/:
+    get:
+      operationId: building_violations_api_officers_dropdown_retrieve
+      description: Officer directory. Admin creates JE/AE/JC/clerk logins; JC can
+        create its own clerk sub-login.
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OfficerProfile'
+          description: ''
+  /building-violations/api/property/nearby/:
+    get:
+      operationId: building_violations_api_property_nearby_retrieve
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /building-violations/api/property/pid/{pid}/:
+    get:
+      operationId: building_violations_api_property_pid_retrieve
+      parameters:
+      - in: path
+        name: pid
+        schema:
+          type: string
+        required: true
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /building-violations/api/reports/:
+    get:
+      operationId: building_violations_api_reports_retrieve
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /building-violations/api/reports/{name}/:
+    get:
+      operationId: building_violations_api_reports_retrieve_2
+      parameters:
+      - in: path
+        name: name
+        schema:
+          type: string
+        required: true
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /building-violations/api/sanctioned-plans/:
+    get:
+      operationId: building_violations_api_sanctioned_plans_list
+      parameters:
+      - in: query
+        name: land_use
+        schema:
+          type: string
+      - in: query
+        name: licence_authority
+        schema:
+          type: string
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: source
+        schema:
+          type: string
+          enum:
+          - BULK_UPLOAD
+          - MANUAL
+          - PLATFORM_SYNC
+        description: |-
+          * `MANUAL` - Entered manually
+          * `BULK_UPLOAD` - Excel/CSV upload
+          * `PLATFORM_SYNC` - Synced from MCG building-plan module
+      - in: query
+        name: status
+        schema:
+          type: string
+      - in: query
+        name: ward
+        schema:
+          type: integer
+      - in: query
+        name: zone
+        schema:
+          type: integer
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedSanctionedPlanList'
+          description: ''
+    post:
+      operationId: building_violations_api_sanctioned_plans_create
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SanctionedPlan'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SanctionedPlan'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SanctionedPlan'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SanctionedPlan'
+          description: ''
+  /building-violations/api/sanctioned-plans/{id}/:
+    get:
+      operationId: building_violations_api_sanctioned_plans_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this sanctioned plan.
+        required: true
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SanctionedPlan'
+          description: ''
+    put:
+      operationId: building_violations_api_sanctioned_plans_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this sanctioned plan.
+        required: true
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SanctionedPlan'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SanctionedPlan'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SanctionedPlan'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SanctionedPlan'
+          description: ''
+    patch:
+      operationId: building_violations_api_sanctioned_plans_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this sanctioned plan.
+        required: true
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSanctionedPlan'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSanctionedPlan'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSanctionedPlan'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SanctionedPlan'
+          description: ''
+    delete:
+      operationId: building_violations_api_sanctioned_plans_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this sanctioned plan.
+        required: true
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /building-violations/api/sanctioned-plans/bulk_upload/:
+    post:
+      operationId: building_violations_api_sanctioned_plans_bulk_upload_create
+      tags:
+      - building-violations
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SanctionedPlan'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SanctionedPlan'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SanctionedPlan'
+          description: ''
+  /building-violations/api/sanctioned-plans/by-pid/{pid}/:
+    get:
+      operationId: building_violations_api_sanctioned_plans_by_pid_retrieve
+      parameters:
+      - in: path
+        name: pid
+        schema:
+          type: string
+          pattern: ^[^/]+$
+        required: true
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SanctionedPlan'
+          description: ''
+  /building-violations/api/sanctioned-plans/template/:
+    get:
+      operationId: building_violations_api_sanctioned_plans_template_retrieve
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SanctionedPlan'
+          description: ''
+  /building-violations/api/users/me/:
+    get:
+      operationId: building_violations_api_users_me_retrieve
+      tags:
+      - building-violations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /building-violations/public/verify/{code}/:
+    get:
+      operationId: building_violations_public_verify_retrieve
+      description: |-
+        Public page behind the QR code: confirms that a notice number/verification code is genuine and
+        shows its status. No personal data beyond what is printed on the notice.
+      parameters:
+      - in: path
+        name: code
+        schema:
+          type: string
+        required: true
+      tags:
+      - building-violations
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
+components:
+  schemas:
+    ActionEnum:
+      enum:
+      - DEMOLITION
+      - PARTIAL_DEMOLITION
+      - SEALING
+      - DESEALING
+      - EVICTION
+      - REMOVAL
+      - ALTERATION
+      type: string
+      description: |-
+        * `DEMOLITION` - Demolition
+        * `PARTIAL_DEMOLITION` - Partial demolition
+        * `SEALING` - Sealing
+        * `DESEALING` - De-sealing
+        * `EVICTION` - Eviction / possession taken
+        * `REMOVAL` - Removal of encroachment
+        * `ALTERATION` - Alteration carried out
+    AgencyEnum:
+      enum:
+      - MCG
+      - HSVP
+      - GMDA
+      - STATE_GOVT
+      - PWD
+      - IRRIGATION
+      - FOREST
+      - PANCHAYAT
+      - RAILWAYS
+      - NHAI
+      - DEFENCE
+      - OTHER
+      type: string
+      description: |-
+        * `MCG` - Municipal Corporation Gurugram
+        * `HSVP` - Haryana Shahari Vikas Pradhikaran
+        * `GMDA` - Gurugram Metropolitan Development Authority
+        * `STATE_GOVT` - State Government (other departments)
+        * `PWD` - PWD (B&R)
+        * `IRRIGATION` - Irrigation & Water Resources
+        * `FOREST` - Forest Department
+        * `PANCHAYAT` - Gram Panchayat / Shamlat Deh
+        * `RAILWAYS` - Railways
+        * `NHAI` - NHAI
+        * `DEFENCE` - Defence
+        * `OTHER` - Other
+    Appeal:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        recorded_by:
+          allOf:
+          - $ref: '#/components/schemas/UserLite'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        filed_on:
+          type: string
+          format: date
+        authority:
+          type: string
+          maxLength: 200
+        appeal_no:
+          type: string
+          maxLength: 80
+        status:
+          type: string
+          maxLength: 16
+        stay_granted:
+          type: boolean
+        stay_until:
+          type: string
+          format: date
+          nullable: true
+        conditions:
+          type: string
+        decided_on:
+          type: string
+          format: date
+          nullable: true
+        decision_summary:
+          type: string
+        case:
+          type: string
+          format: uuid
+        order:
+          type: string
+          format: uuid
+          nullable: true
+      required:
+      - authority
+      - case
+      - created_at
+      - filed_on
+      - id
+      - recorded_by
+      - updated_at
+    BlankEnum:
+      enum:
+      - ''
+    CaseCreate:
+      type: object
+      properties:
+        source:
+          type: string
+          default: FIELD_INSPECTION
+        complaint_ref:
+          type: string
+        priority:
+          allOf:
+          - $ref: '#/components/schemas/PriorityEnum'
+          default: NORMAL
+        pid:
+          type: string
+        pid_snapshot: {}
+        pid_linked_mobile:
+          type: string
+        alternate_mobile:
+          type: string
+        address_line:
+          type: string
+        locality:
+          type: string
+        sector:
+          type: string
+        village_colony:
+          type: string
+        pincode:
+          type: string
+        ward:
+          type: integer
+          nullable: true
+        zone:
+          type: integer
+          nullable: true
+        division:
+          type: integer
+          nullable: true
+        latitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,7})?$
+          nullable: true
+        longitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,7})?$
+          nullable: true
+        location_accuracy_m:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,2})?$
+          nullable: true
+        land_type:
+          allOf:
+          - $ref: '#/components/schemas/LandTypeEnum'
+          default: UNKNOWN
+        sanctioned_plan:
+          type: integer
+          nullable: true
+        owner_name:
+          type: string
+        owner_father_name:
+          type: string
+        occupier_name:
+          type: string
+        builder_name:
+          type: string
+        person_on_site:
+          type: string
+        construction_stage:
+          allOf:
+          - $ref: '#/components/schemas/ConstructionStageEnum'
+          default: UNDER_CONSTRUCTION
+        plot_area_sqm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          nullable: true
+        covered_area_sqm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          nullable: true
+        storeys:
+          type: string
+        height_m:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,2})?$
+          nullable: true
+        use_observed:
+          type: string
+        description:
+          type: string
+        measurements: {}
+        inspected_at:
+          type: string
+          format: date-time
+        violations:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseViolationInput'
+        media_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        submit:
+          type: boolean
+          default: false
+      required:
+      - address_line
+      - description
+      - violations
+    CaseEvent:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        at:
+          type: string
+          format: date-time
+        actor:
+          allOf:
+          - $ref: '#/components/schemas/UserLite'
+          readOnly: true
+        actor_role:
+          type: string
+          maxLength: 24
+        action:
+          type: string
+          maxLength: 40
+        from_status:
+          type: string
+          maxLength: 30
+        to_status:
+          type: string
+          maxLength: 30
+        remarks:
+          type: string
+        payload: {}
+        latitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,7})?$
+          nullable: true
+        longitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,7})?$
+          nullable: true
+        hash:
+          type: string
+          maxLength: 64
+        prev_hash:
+          type: string
+          maxLength: 64
+      required:
+      - action
+      - actor
+      - id
+    CaseResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        uploaded_by:
+          allOf:
+          - $ref: '#/components/schemas/UserLite'
+          readOnly: true
+        notice_no:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        received_on:
+          type: string
+          format: date
+        received_via:
+          $ref: '#/components/schemas/ReceivedViaEnum'
+        submitted_by_name:
+          type: string
+          maxLength: 200
+        summary:
+          type: string
+        requests_hearing:
+          type: boolean
+        is_within_time:
+          type: boolean
+        ae_comments:
+          type: string
+        ae_commented_at:
+          type: string
+          format: date-time
+          nullable: true
+        jc_remarks:
+          type: string
+        case:
+          type: string
+          format: uuid
+        notice:
+          type: string
+          format: uuid
+          nullable: true
+      required:
+      - case
+      - created_at
+      - id
+      - notice_no
+      - received_on
+      - received_via
+      - summary
+      - updated_at
+      - uploaded_by
+    CaseViolation:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        code:
+          type: string
+          readOnly: true
+        violation_type:
+          allOf:
+          - $ref: '#/components/schemas/ViolationType'
+          readOnly: true
+        details:
+          description: permitted / actual measurements, floors etc.
+        remarks:
+          type: string
+        is_primary:
+          type: boolean
+      required:
+      - code
+      - id
+      - violation_type
+    CaseViolationInput:
+      type: object
+      properties:
+        code:
+          type: string
+        details: {}
+        remarks:
+          type: string
+        is_primary:
+          type: boolean
+          default: false
+      required:
+      - code
+    CategoryEnum:
+      enum:
+      - GOVT_LAND
+      - PRIVATE_LAND_NO_SANCTION
+      - DEVIATION_FROM_SANCTION
+      - STREET_ENCROACHMENT
+      - MISUSE_CHANGE_OF_USE
+      - DANGEROUS_UNFIT
+      - PROCEDURAL_NON_COMPLIANCE
+      type: string
+      description: |-
+        * `GOVT_LAND` - Government / Corporation land
+        * `PRIVATE_LAND_NO_SANCTION` - Private land - no sanction
+        * `DEVIATION_FROM_SANCTION` - Deviation from sanction
+        * `STREET_ENCROACHMENT` - Street encroachment
+        * `MISUSE_CHANGE_OF_USE` - Misuse / change of use
+        * `DANGEROUS_UNFIT` - Dangerous / unfit
+        * `PROCEDURAL_NON_COMPLIANCE` - Non-compliance with orders
+    ConstructionStageEnum:
+      enum:
+      - PLINTH
+      - UNDER_CONSTRUCTION
+      - COMPLETED
+      - OCCUPIED
+      type: string
+      description: |-
+        * `PLINTH` - Plinth / foundation
+        * `UNDER_CONSTRUCTION` - Under construction
+        * `COMPLETED` - Completed
+        * `OCCUPIED` - Completed and occupied
+    CurrentOwnerRoleEnum:
+      enum:
+      - JE
+      - AE
+      - XEN
+      - JC
+      - JC_CLERK
+      - ADDL_COMMISSIONER
+      - COMMISSIONER
+      - FIELD_STAFF
+      - ADMIN
+      - VIEWER
+      type: string
+      description: |-
+        * `JE` - Junior Engineer (field)
+        * `AE` - Assistant Engineer
+        * `XEN` - Executive Engineer
+        * `JC` - Joint Commissioner
+        * `JC_CLERK` - JC office clerk (response upload only)
+        * `ADDL_COMMISSIONER` - Additional Commissioner
+        * `COMMISSIONER` - Commissioner
+        * `FIELD_STAFF` - Enforcement / demolition squad
+        * `ADMIN` - Module administrator
+        * `VIEWER` - Read-only (MIS)
+    Division:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        code:
+          type: string
+          maxLength: 10
+        zone:
+          type: integer
+        name_en:
+          type: string
+          maxLength: 80
+        active:
+          type: boolean
+      required:
+      - code
+      - id
+      - zone
+    ExecutionRecord:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        recorded_by:
+          allOf:
+          - $ref: '#/components/schemas/UserLite'
+          readOnly: true
+        verified_by:
+          allOf:
+          - $ref: '#/components/schemas/UserLite'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        action:
+          $ref: '#/components/schemas/ActionEnum'
+        mode:
+          $ref: '#/components/schemas/ModeEnum'
+        executed_on:
+          type: string
+          format: date-time
+        squad_incharge:
+          type: string
+          maxLength: 200
+        police_assistance:
+          type: boolean
+        police_station:
+          type: string
+          maxLength: 120
+        duty_magistrate:
+          type: string
+          maxLength: 200
+        machinery_used:
+          type: string
+          maxLength: 300
+        area_demolished_sqm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          nullable: true
+        seal_memo_no:
+          type: string
+          maxLength: 60
+        cost_incurred_inr:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          nullable: true
+        remarks:
+          type: string
+        verified_at:
+          type: string
+          format: date-time
+          nullable: true
+        case:
+          type: string
+          format: uuid
+        order:
+          type: string
+          format: uuid
+          nullable: true
+      required:
+      - action
+      - case
+      - created_at
+      - executed_on
+      - id
+      - mode
+      - recorded_by
+      - updated_at
+      - verified_by
+    GovtLandParcel:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 200
+        agency:
+          $ref: '#/components/schemas/AgencyEnum'
+        land_use:
+          type: string
+          maxLength: 120
+        village:
+          type: string
+          maxLength: 120
+        khasra_no:
+          type: string
+          maxLength: 120
+        area_sqm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          nullable: true
+        ward:
+          type: integer
+          nullable: true
+        geometry:
+          description: GeoJSON Polygon / MultiPolygon (WGS84)
+        bbox:
+          readOnly: true
+          description: '[minx, miny, maxx, maxy] for quick filtering'
+        properties: {}
+        active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - bbox
+      - created_at
+      - geometry
+      - id
+    Hearing:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        presiding:
+          allOf:
+          - $ref: '#/components/schemas/UserLite'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        scheduled_at:
+          type: string
+          format: date-time
+        venue:
+          type: string
+          maxLength: 200
+        held_at:
+          type: string
+          format: date-time
+          nullable: true
+        attendees:
+          type: string
+        proceedings:
+          type: string
+        outcome:
+          type: string
+          maxLength: 30
+        next_date:
+          type: string
+          format: date-time
+          nullable: true
+        case:
+          type: string
+          format: uuid
+        notice:
+          type: string
+          format: uuid
+          nullable: true
+      required:
+      - case
+      - created_at
+      - id
+      - presiding
+      - scheduled_at
+      - updated_at
+    KindEnum:
+      enum:
+      - INSPECTION
+      - NOTICE_DELIVERY
+      - ORDER_DELIVERY
+      - RESPONSE
+      - HEARING
+      - EXECUTION
+      - COMPLIANCE
+      - APPEAL
+      - SANCTION_DOC
+      - OTHER
+      type: string
+      description: |-
+        * `INSPECTION` - Inspection evidence
+        * `NOTICE_DELIVERY` - Proof of delivery of notice
+        * `ORDER_DELIVERY` - Proof of delivery of order
+        * `RESPONSE` - Response / reply document
+        * `HEARING` - Hearing record
+        * `EXECUTION` - Demolition / sealing evidence
+        * `COMPLIANCE` - Self-compliance evidence
+        * `APPEAL` - Appeal / court order
+        * `SANCTION_DOC` - Sanction / licence document
+        * `OTHER` - Other
+    LandLayerUpload:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 200
+        agency:
+          $ref: '#/components/schemas/AgencyEnum'
+        source_file:
+          type: string
+          format: uri
+        feature_count:
+          type: integer
+          readOnly: true
+        uploaded_by:
+          type: integer
+          readOnly: true
+          nullable: true
+        remarks:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - agency
+      - created_at
+      - feature_count
+      - id
+      - name
+      - source_file
+      - uploaded_by
+    LandTypeEnum:
+      enum:
+      - GOVT_MCG
+      - GOVT_STATE
+      - PRIVATE
+      - UNKNOWN
+      type: string
+      description: |-
+        * `GOVT_MCG` - Land vested in MCG
+        * `GOVT_STATE` - State Govt / other public land
+        * `PRIVATE` - Private land
+        * `UNKNOWN` - Not yet determined
+    LegalSection:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        statute:
+          type: string
+        statute_title:
+          type: string
+          readOnly: true
+        section:
+          type: string
+          maxLength: 30
+        heading:
+          type: string
+          maxLength: 300
+        kind:
+          type: string
+          maxLength: 20
+        text:
+          type: string
+        schedule_fine_inr:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+        schedule_daily_fine_inr:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+        verify:
+          type: boolean
+          description: Text extracted from scan - to be verified against Gazette
+        notes:
+          type: string
+      required:
+      - heading
+      - id
+      - section
+      - statute
+      - statute_title
+      - text
+    MediaAttachment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        case:
+          type: string
+          format: uuid
+          nullable: true
+        notice:
+          type: string
+          format: uuid
+          nullable: true
+        kind:
+          $ref: '#/components/schemas/KindEnum'
+        media_type:
+          type: string
+          maxLength: 10
+        url:
+          type: string
+          readOnly: true
+        original_name:
+          type: string
+          maxLength: 255
+        size_bytes:
+          type: integer
+          readOnly: true
+        sha256:
+          type: string
+          readOnly: true
+        latitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,7})?$
+          nullable: true
+        longitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,7})?$
+          nullable: true
+        accuracy_m:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,2})?$
+          nullable: true
+        captured_at:
+          type: string
+          format: date-time
+          nullable: true
+        device_id:
+          type: string
+          maxLength: 120
+        distance_from_case_m:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+          nullable: true
+        geotag_verified:
+          type: boolean
+          readOnly: true
+        caption:
+          type: string
+          maxLength: 300
+        uploaded_by:
+          allOf:
+          - $ref: '#/components/schemas/UserLite'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - distance_from_case_m
+      - geotag_verified
+      - id
+      - sha256
+      - size_bytes
+      - uploaded_by
+      - url
+    ModeEnum:
+      enum:
+      - OWNER_SELF
+      - CORPORATION
+      type: string
+      description: |-
+        * `OWNER_SELF` - Complied by owner
+        * `CORPORATION` - Executed by the Corporation
+    Notice:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        case:
+          type: string
+          format: uuid
+        case_no:
+          type: string
+          readOnly: true
+        order_type:
+          allOf:
+          - $ref: '#/components/schemas/OrderType'
+          readOnly: true
+        notice_no:
+          type: string
+          maxLength: 60
+        kind:
+          type: string
+          maxLength: 12
+        issued_by:
+          allOf:
+          - $ref: '#/components/schemas/UserLite'
+          readOnly: true
+        issued_at:
+          type: string
+          format: date-time
+        addressee_name:
+          type: string
+          maxLength: 200
+        addressee_address:
+          type: string
+        addressee_mobiles: {}
+        response_days:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        response_due_at:
+          type: string
+          format: date-time
+          nullable: true
+        compliance_days:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        compliance_due_at:
+          type: string
+          format: date-time
+          nullable: true
+        hearing_at:
+          type: string
+          format: date-time
+          nullable: true
+        hearing_venue:
+          type: string
+          maxLength: 200
+        operative_text_en:
+          type: string
+        operative_text_hi:
+          type: string
+        pdf_url:
+          type: string
+          readOnly: true
+        signed_pdf_url:
+          type: string
+          readOnly: true
+        document_hash:
+          type: string
+          maxLength: 64
+        verification_code:
+          type: string
+          maxLength: 24
+        qr_payload:
+          type: string
+        signature_status:
+          $ref: '#/components/schemas/SignatureStatusEnum'
+        signer_name:
+          type: string
+          maxLength: 200
+        signer_cert_subject:
+          type: string
+          maxLength: 300
+        signed_at:
+          type: string
+          format: date-time
+          nullable: true
+        signature_error:
+          type: string
+        served_at:
+          type: string
+          format: date-time
+          nullable: true
+        served_mode:
+          oneOf:
+          - $ref: '#/components/schemas/ServedModeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        served_by:
+          allOf:
+          - $ref: '#/components/schemas/UserLite'
+          readOnly: true
+        service_remarks:
+          type: string
+        is_final_order:
+          type: boolean
+        dispatches:
+          type: array
+          items:
+            $ref: '#/components/schemas/NoticeDispatch'
+          readOnly: true
+        delivery_media:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - addressee_name
+      - case
+      - case_no
+      - created_at
+      - delivery_media
+      - dispatches
+      - id
+      - issued_by
+      - kind
+      - notice_no
+      - order_type
+      - pdf_url
+      - served_by
+      - signed_pdf_url
+      - verification_code
+    NoticeDispatch:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        channel:
+          type: string
+          maxLength: 10
+        to:
+          type: string
+          maxLength: 120
+        status:
+          type: string
+          maxLength: 12
+        provider_ref:
+          type: string
+          maxLength: 120
+        attempts:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        last_error:
+          type: string
+        sent_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - to
+    Notification:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        case:
+          type: string
+          format: uuid
+          nullable: true
+        case_no:
+          type: string
+          readOnly: true
+        title:
+          type: string
+          maxLength: 200
+        body:
+          type: string
+        level:
+          type: string
+          maxLength: 10
+        read_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - case_no
+      - created_at
+      - id
+      - title
+    OfficerProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        user:
+          allOf:
+          - $ref: '#/components/schemas/UserLite'
+          readOnly: true
+        user_id:
+          type: integer
+          writeOnly: true
+        username:
+          type: string
+          writeOnly: true
+        first_name:
+          type: string
+          writeOnly: true
+        last_name:
+          type: string
+          writeOnly: true
+        display_name:
+          type: string
+          readOnly: true
+        role:
+          $ref: '#/components/schemas/CurrentOwnerRoleEnum'
+        designation:
+          type: string
+          maxLength: 120
+        employee_code:
+          type: string
+          maxLength: 40
+        mobile:
+          type: string
+          maxLength: 15
+        email:
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
+        zones:
+          type: array
+          items:
+            type: integer
+        wards:
+          type: array
+          items:
+            type: integer
+        divisions:
+          type: array
+          items:
+            type: integer
+        reports_to:
+          type: integer
+          nullable: true
+        delegation_order_no:
+          type: string
+          maxLength: 120
+        delegation_order_date:
+          type: string
+          format: date
+          nullable: true
+        parent_profile:
+          type: integer
+          nullable: true
+          description: 'For JC_CLERK: the JC whose office this clerk belongs to'
+        active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - display_name
+      - id
+      - mobile
+      - role
+      - user
+    OrderType:
+      type: object
+      properties:
+        code:
+          type: string
+          maxLength: 40
+        title_en:
+          type: string
+          maxLength: 250
+        title_hi:
+          type: string
+          maxLength: 250
+        statute:
+          type: string
+          maxLength: 20
+        section:
+          type: string
+          maxLength: 30
+        kind:
+          type: string
+          maxLength: 12
+        min_days:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        default_days:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        template:
+          type: string
+          maxLength: 80
+        appeal_days:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+        appeal_to:
+          type: string
+          maxLength: 200
+        body_override_en:
+          type: string
+          description: Admin-editable operative text (optional)
+        body_override_hi:
+          type: string
+        active:
+          type: boolean
+      required:
+      - code
+      - kind
+      - section
+      - statute
+      - template
+      - title_en
+    PaginatedGovtLandParcelList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/GovtLandParcel'
+    PaginatedLandLayerUploadList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/LandLayerUpload'
+    PaginatedMediaAttachmentList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/MediaAttachment'
+    PaginatedNoticeList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Notice'
+    PaginatedNotificationList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Notification'
+    PaginatedOfficerProfileList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/OfficerProfile'
+    PaginatedSanctionedPlanList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/SanctionedPlan'
+    PaginatedViolationCaseListList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ViolationCaseList'
+    PatchedDivision:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        code:
+          type: string
+          maxLength: 10
+        zone:
+          type: integer
+        name_en:
+          type: string
+          maxLength: 80
+        active:
+          type: boolean
+    PatchedGovtLandParcel:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 200
+        agency:
+          $ref: '#/components/schemas/AgencyEnum'
+        land_use:
+          type: string
+          maxLength: 120
+        village:
+          type: string
+          maxLength: 120
+        khasra_no:
+          type: string
+          maxLength: 120
+        area_sqm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          nullable: true
+        ward:
+          type: integer
+          nullable: true
+        geometry:
+          description: GeoJSON Polygon / MultiPolygon (WGS84)
+        bbox:
+          readOnly: true
+          description: '[minx, miny, maxx, maxy] for quick filtering'
+        properties: {}
+        active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedLandLayerUpload:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 200
+        agency:
+          $ref: '#/components/schemas/AgencyEnum'
+        source_file:
+          type: string
+          format: uri
+        feature_count:
+          type: integer
+          readOnly: true
+        uploaded_by:
+          type: integer
+          readOnly: true
+          nullable: true
+        remarks:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedLegalSection:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        statute:
+          type: string
+        statute_title:
+          type: string
+          readOnly: true
+        section:
+          type: string
+          maxLength: 30
+        heading:
+          type: string
+          maxLength: 300
+        kind:
+          type: string
+          maxLength: 20
+        text:
+          type: string
+        schedule_fine_inr:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+        schedule_daily_fine_inr:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+        verify:
+          type: boolean
+          description: Text extracted from scan - to be verified against Gazette
+        notes:
+          type: string
+    PatchedOfficerProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        user:
+          allOf:
+          - $ref: '#/components/schemas/UserLite'
+          readOnly: true
+        user_id:
+          type: integer
+          writeOnly: true
+        username:
+          type: string
+          writeOnly: true
+        first_name:
+          type: string
+          writeOnly: true
+        last_name:
+          type: string
+          writeOnly: true
+        display_name:
+          type: string
+          readOnly: true
+        role:
+          $ref: '#/components/schemas/CurrentOwnerRoleEnum'
+        designation:
+          type: string
+          maxLength: 120
+        employee_code:
+          type: string
+          maxLength: 40
+        mobile:
+          type: string
+          maxLength: 15
+        email:
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
+        zones:
+          type: array
+          items:
+            type: integer
+        wards:
+          type: array
+          items:
+            type: integer
+        divisions:
+          type: array
+          items:
+            type: integer
+        reports_to:
+          type: integer
+          nullable: true
+        delegation_order_no:
+          type: string
+          maxLength: 120
+        delegation_order_date:
+          type: string
+          format: date
+          nullable: true
+        parent_profile:
+          type: integer
+          nullable: true
+          description: 'For JC_CLERK: the JC whose office this clerk belongs to'
+        active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedOrderType:
+      type: object
+      properties:
+        code:
+          type: string
+          maxLength: 40
+        title_en:
+          type: string
+          maxLength: 250
+        title_hi:
+          type: string
+          maxLength: 250
+        statute:
+          type: string
+          maxLength: 20
+        section:
+          type: string
+          maxLength: 30
+        kind:
+          type: string
+          maxLength: 12
+        min_days:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        default_days:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        template:
+          type: string
+          maxLength: 80
+        appeal_days:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+        appeal_to:
+          type: string
+          maxLength: 200
+        body_override_en:
+          type: string
+          description: Admin-editable operative text (optional)
+        body_override_hi:
+          type: string
+        active:
+          type: boolean
+    PatchedSLAConfig:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        stage:
+          type: string
+          maxLength: 40
+        label:
+          type: string
+          maxLength: 120
+        hours:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        escalate_to_role:
+          oneOf:
+          - $ref: '#/components/schemas/CurrentOwnerRoleEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        active:
+          type: boolean
+    PatchedSanctionedPlan:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        ward_number:
+          type: integer
+          readOnly: true
+        documents:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        plan_no:
+          type: string
+          maxLength: 80
+        pid:
+          type: string
+          maxLength: 40
+        address:
+          type: string
+        latitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,7})?$
+          nullable: true
+        longitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,7})?$
+          nullable: true
+        owner_name:
+          type: string
+          maxLength: 200
+        owner_mobile:
+          type: string
+          maxLength: 15
+        plot_area_sqm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          nullable: true
+        land_use:
+          type: string
+          maxLength: 60
+        building_type:
+          type: string
+          maxLength: 80
+        sanctioned_on:
+          type: string
+          format: date
+        valid_till:
+          type: string
+          format: date
+          nullable: true
+        sanction_mode:
+          type: string
+          maxLength: 40
+        permitted_floors:
+          type: string
+          maxLength: 40
+        permitted_ground_coverage_pct:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,2})?$
+          nullable: true
+        permitted_far:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,2})?$
+          nullable: true
+        permitted_height_m:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,2})?$
+          nullable: true
+        setbacks: {}
+        licence_no:
+          type: string
+          maxLength: 80
+        licence_holder:
+          type: string
+          maxLength: 200
+        licence_date:
+          type: string
+          format: date
+          nullable: true
+        licence_valid_till:
+          type: string
+          format: date
+          nullable: true
+        licence_authority:
+          type: string
+          maxLength: 120
+        colony_name:
+          type: string
+          maxLength: 160
+        architect_name:
+          type: string
+          maxLength: 160
+        architect_registration_no:
+          type: string
+          maxLength: 80
+        dpc_certificate_on:
+          type: string
+          format: date
+          nullable: true
+        occupation_certificate_no:
+          type: string
+          maxLength: 80
+        occupation_certificate_on:
+          type: string
+          format: date
+          nullable: true
+        status:
+          type: string
+          maxLength: 20
+        source:
+          allOf:
+          - $ref: '#/components/schemas/SourceEnum'
+          readOnly: true
+        external_ref:
+          type: string
+          maxLength: 120
+        remarks:
+          type: string
+        ward:
+          type: integer
+          nullable: true
+        zone:
+          type: integer
+          nullable: true
+        created_by:
+          type: integer
+          readOnly: true
+          nullable: true
+    PatchedViolationCaseDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        case_no:
+          type: string
+          maxLength: 40
+        status:
+          $ref: '#/components/schemas/StatusEnum'
+        status_display:
+          type: string
+          readOnly: true
+        priority:
+          type: string
+          maxLength: 10
+        source:
+          type: string
+          maxLength: 20
+        pid:
+          type: string
+          description: DULB Property ID
+          maxLength: 40
+        address_line:
+          type: string
+        locality:
+          type: string
+          maxLength: 160
+        sector:
+          type: string
+          maxLength: 60
+        ward:
+          type: integer
+          nullable: true
+        ward_number:
+          type: integer
+          readOnly: true
+        zone:
+          type: integer
+          nullable: true
+        zone_code:
+          type: string
+          readOnly: true
+        latitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,7})?$
+          nullable: true
+        longitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,7})?$
+          nullable: true
+        land_type:
+          $ref: '#/components/schemas/LandTypeEnum'
+        owner_name:
+          type: string
+          maxLength: 200
+        construction_stage:
+          $ref: '#/components/schemas/ConstructionStageEnum'
+        reported_by:
+          allOf:
+          - $ref: '#/components/schemas/UserLite'
+          readOnly: true
+        assigned_ae:
+          allOf:
+          - $ref: '#/components/schemas/UserLite'
+          readOnly: true
+        assigned_jc:
+          allOf:
+          - $ref: '#/components/schemas/UserLite'
+          readOnly: true
+        current_owner_role:
+          $ref: '#/components/schemas/CurrentOwnerRoleEnum'
+        stage_due_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: SLA due time for the current stage
+        sla_breached:
+          type: boolean
+        inspected_at:
+          type: string
+          format: date-time
+        scn_issued_at:
+          type: string
+          format: date-time
+          nullable: true
+        response_due_at:
+          type: string
+          format: date-time
+          nullable: true
+        compliance_due_at:
+          type: string
+          format: date-time
+          nullable: true
+        decision:
+          type: string
+          maxLength: 30
+        stop_work_issued:
+          type: boolean
+        sealed:
+          type: boolean
+        violation_codes:
+          type: string
+          readOnly: true
+        primary_violation:
+          type: string
+          readOnly: true
+        days_in_stage:
+          type: string
+          readOnly: true
+        thumbnail:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        complaint_ref:
+          type: string
+          maxLength: 80
+        pid_snapshot:
+          description: Property record fetched from the PID API at creation
+        pid_linked_mobile:
+          type: string
+          maxLength: 15
+        alternate_mobile:
+          type: string
+          maxLength: 15
+        village_colony:
+          type: string
+          maxLength: 160
+        pincode:
+          type: string
+          maxLength: 6
+        division:
+          type: integer
+          nullable: true
+        location_accuracy_m:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,2})?$
+          nullable: true
+        govt_parcel:
+          allOf:
+          - $ref: '#/components/schemas/GovtLandParcel'
+          readOnly: true
+        sanctioned_plan:
+          allOf:
+          - $ref: '#/components/schemas/SanctionedPlan'
+          readOnly: true
+        owner_father_name:
+          type: string
+          maxLength: 200
+        occupier_name:
+          type: string
+          maxLength: 200
+        builder_name:
+          type: string
+          maxLength: 200
+        person_on_site:
+          type: string
+          maxLength: 200
+        plot_area_sqm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          nullable: true
+        covered_area_sqm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          nullable: true
+        storeys:
+          type: string
+          maxLength: 40
+        height_m:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,2})?$
+          nullable: true
+        use_observed:
+          type: string
+          maxLength: 80
+        description:
+          type: string
+          description: Inspection report / observations
+        measurements:
+          description: Permitted vs actual values
+        submitted_at:
+          type: string
+          format: date-time
+          nullable: true
+        ae_forwarded_at:
+          type: string
+          format: date-time
+          nullable: true
+        jc_received_at:
+          type: string
+          format: date-time
+          nullable: true
+        scn_served_at:
+          type: string
+          format: date-time
+          nullable: true
+        response_received_at:
+          type: string
+          format: date-time
+          nullable: true
+        hearing_at:
+          type: string
+          format: date-time
+          nullable: true
+        decided_at:
+          type: string
+          format: date-time
+          nullable: true
+        order_issued_at:
+          type: string
+          format: date-time
+          nullable: true
+        order_served_at:
+          type: string
+          format: date-time
+          nullable: true
+        executed_at:
+          type: string
+          format: date-time
+          nullable: true
+        closed_at:
+          type: string
+          format: date-time
+          nullable: true
+        decision_reasons:
+          type: string
+        final_order:
+          type: string
+          format: uuid
+          nullable: true
+        closure_reason:
+          type: string
+        demolition_cost_inr:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          nullable: true
+        cost_recovery_status:
+          type: string
+          maxLength: 20
+        violations:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseViolation'
+          readOnly: true
+        media:
+          type: array
+          items:
+            $ref: '#/components/schemas/MediaAttachment'
+          readOnly: true
+        notices:
+          type: array
+          items:
+            $ref: '#/components/schemas/Notice'
+          readOnly: true
+        responses:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseResponse'
+          readOnly: true
+        hearings:
+          type: array
+          items:
+            $ref: '#/components/schemas/Hearing'
+          readOnly: true
+        appeals:
+          type: array
+          items:
+            $ref: '#/components/schemas/Appeal'
+          readOnly: true
+        executions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExecutionRecord'
+          readOnly: true
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseEvent'
+          readOnly: true
+        available_actions:
+          type: string
+          readOnly: true
+        available_order_types:
+          type: string
+          readOnly: true
+    PatchedViolationType:
+      type: object
+      properties:
+        code:
+          type: string
+          maxLength: 10
+        category:
+          $ref: '#/components/schemas/CategoryEnum'
+        title_en:
+          type: string
+          maxLength: 250
+        title_hi:
+          type: string
+          maxLength: 250
+        description:
+          type: string
+        contravention_of:
+          type: string
+          description: Phrase printed in the notice
+        legal_basis: {}
+        action_path:
+          type: string
+          maxLength: 30
+        orders_available: {}
+        scn_response_days_default:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        order_compliance_days_default:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        statutory_minimum_days:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        severity:
+          type: string
+          maxLength: 10
+        compoundable:
+          type: string
+          maxLength: 12
+        evidence_checklist: {}
+        schedule_fine_inr:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+        schedule_daily_fine_inr:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+        appeal:
+          type: string
+        notes:
+          type: string
+        active:
+          type: boolean
+        sort_order:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+    PatchedWard:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        number:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        name_en:
+          type: string
+          maxLength: 120
+        name_hi:
+          type: string
+          maxLength: 120
+        zone:
+          type: integer
+        zone_code:
+          type: string
+          readOnly: true
+        division:
+          type: integer
+          nullable: true
+        active:
+          type: boolean
+    PatchedZone:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        code:
+          type: string
+          maxLength: 10
+        name_en:
+          type: string
+          maxLength: 80
+        name_hi:
+          type: string
+          maxLength: 80
+        active:
+          type: boolean
+    PriorityEnum:
+      enum:
+      - LOW
+      - NORMAL
+      - HIGH
+      - URGENT
+      type: string
+      description: |-
+        * `LOW` - LOW
+        * `NORMAL` - NORMAL
+        * `HIGH` - HIGH
+        * `URGENT` - URGENT
+    ReceivedViaEnum:
+      enum:
+      - JE
+      - JC_CLERK
+      - AE
+      - JC
+      - HEARING
+      - POST
+      type: string
+      description: |-
+        * `JE` - Uploaded by JE (field)
+        * `JC_CLERK` - Uploaded by JC office clerk
+        * `AE` - Uploaded by AE
+        * `JC` - Uploaded by JC
+        * `HEARING` - Submitted at hearing
+        * `POST` - Received by post / dak
+    SLAConfig:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        stage:
+          type: string
+          maxLength: 40
+        label:
+          type: string
+          maxLength: 120
+        hours:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        escalate_to_role:
+          oneOf:
+          - $ref: '#/components/schemas/CurrentOwnerRoleEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        active:
+          type: boolean
+      required:
+      - id
+      - label
+      - stage
+    SanctionedPlan:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        ward_number:
+          type: integer
+          readOnly: true
+        documents:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        plan_no:
+          type: string
+          maxLength: 80
+        pid:
+          type: string
+          maxLength: 40
+        address:
+          type: string
+        latitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,7})?$
+          nullable: true
+        longitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,7})?$
+          nullable: true
+        owner_name:
+          type: string
+          maxLength: 200
+        owner_mobile:
+          type: string
+          maxLength: 15
+        plot_area_sqm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          nullable: true
+        land_use:
+          type: string
+          maxLength: 60
+        building_type:
+          type: string
+          maxLength: 80
+        sanctioned_on:
+          type: string
+          format: date
+        valid_till:
+          type: string
+          format: date
+          nullable: true
+        sanction_mode:
+          type: string
+          maxLength: 40
+        permitted_floors:
+          type: string
+          maxLength: 40
+        permitted_ground_coverage_pct:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,2})?$
+          nullable: true
+        permitted_far:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,2})?$
+          nullable: true
+        permitted_height_m:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,2})?$
+          nullable: true
+        setbacks: {}
+        licence_no:
+          type: string
+          maxLength: 80
+        licence_holder:
+          type: string
+          maxLength: 200
+        licence_date:
+          type: string
+          format: date
+          nullable: true
+        licence_valid_till:
+          type: string
+          format: date
+          nullable: true
+        licence_authority:
+          type: string
+          maxLength: 120
+        colony_name:
+          type: string
+          maxLength: 160
+        architect_name:
+          type: string
+          maxLength: 160
+        architect_registration_no:
+          type: string
+          maxLength: 80
+        dpc_certificate_on:
+          type: string
+          format: date
+          nullable: true
+        occupation_certificate_no:
+          type: string
+          maxLength: 80
+        occupation_certificate_on:
+          type: string
+          format: date
+          nullable: true
+        status:
+          type: string
+          maxLength: 20
+        source:
+          allOf:
+          - $ref: '#/components/schemas/SourceEnum'
+          readOnly: true
+        external_ref:
+          type: string
+          maxLength: 120
+        remarks:
+          type: string
+        ward:
+          type: integer
+          nullable: true
+        zone:
+          type: integer
+          nullable: true
+        created_by:
+          type: integer
+          readOnly: true
+          nullable: true
+      required:
+      - address
+      - created_at
+      - created_by
+      - documents
+      - id
+      - owner_name
+      - plan_no
+      - sanctioned_on
+      - source
+      - updated_at
+      - ward_number
+    ServedModeEnum:
+      enum:
+      - SMS
+      - IN_PERSON
+      - AFFIXATION
+      - POST
+      - EMAIL
+      - WHATSAPP
+      - BEAT_OF_DRUM
+      type: string
+      description: |-
+        * `SMS` - SMS to registered mobile
+        * `IN_PERSON` - Delivered in person
+        * `AFFIXATION` - Affixed on premises
+        * `POST` - Registered post / speed post
+        * `EMAIL` - E-mail
+        * `WHATSAPP` - WhatsApp
+        * `BEAT_OF_DRUM` - Beat of drum / public announcement
+    SignatureStatusEnum:
+      enum:
+      - UNSIGNED
+      - SIGNED
+      - FAILED
+      type: string
+      description: |-
+        * `UNSIGNED` - Unsigned
+        * `SIGNED` - Digitally signed
+        * `FAILED` - Signing failed
+    SourceEnum:
+      enum:
+      - MANUAL
+      - BULK_UPLOAD
+      - PLATFORM_SYNC
+      type: string
+      description: |-
+        * `MANUAL` - Entered manually
+        * `BULK_UPLOAD` - Excel/CSV upload
+        * `PLATFORM_SYNC` - Synced from MCG building-plan module
+    StatusEnum:
+      enum:
+      - DRAFT
+      - PENDING_AE
+      - RETURNED_TO_JE
+      - PENDING_JC
+      - SCN_ISSUED
+      - SCN_SERVED
+      - RESPONSE_RECEIVED
+      - RESPONSE_PENDING_AE
+      - RESPONSE_PENDING_JC
+      - NO_RESPONSE
+      - HEARING_SCHEDULED
+      - ORDER_ISSUED
+      - ORDER_SERVED
+      - APPEAL_STAY
+      - EXECUTION_DUE
+      - COMPLIED
+      - EXECUTED
+      - CLOSED
+      - DROPPED
+      - REGULARISED
+      type: string
+      description: |-
+        * `DRAFT` - Draft (JE)
+        * `PENDING_AE` - Pending with AE
+        * `RETURNED_TO_JE` - Returned to JE for re-inspection
+        * `PENDING_JC` - Pending with JC
+        * `SCN_ISSUED` - Show cause notice issued
+        * `SCN_SERVED` - SCN served - response awaited
+        * `RESPONSE_RECEIVED` - Response received
+        * `RESPONSE_PENDING_AE` - Response with AE for comments
+        * `RESPONSE_PENDING_JC` - Response with JC for decision
+        * `NO_RESPONSE` - No response within time
+        * `HEARING_SCHEDULED` - Hearing scheduled
+        * `ORDER_ISSUED` - Final order issued
+        * `ORDER_SERVED` - Order served - compliance period running
+        * `APPEAL_STAY` - Stayed in appeal
+        * `EXECUTION_DUE` - Compliance period over - execution due
+        * `COMPLIED` - Complied by owner
+        * `EXECUTED` - Demolished / sealed by MCG
+        * `CLOSED` - Closed
+        * `DROPPED` - Dropped - no violation
+        * `REGULARISED` - Regularised / compounded
+    TokenRefresh:
+      type: object
+      properties:
+        access:
+          type: string
+          readOnly: true
+        refresh:
+          type: string
+          writeOnly: true
+      required:
+      - access
+      - refresh
+    UserLite:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        name:
+          type: string
+          readOnly: true
+        role:
+          type: string
+          readOnly: true
+        designation:
+          type: string
+          readOnly: true
+      required:
+      - designation
+      - id
+      - name
+      - role
+      - username
+    ViolationCaseDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        case_no:
+          type: string
+          maxLength: 40
+        status:
+          $ref: '#/components/schemas/StatusEnum'
+        status_display:
+          type: string
+          readOnly: true
+        priority:
+          type: string
+          maxLength: 10
+        source:
+          type: string
+          maxLength: 20
+        pid:
+          type: string
+          description: DULB Property ID
+          maxLength: 40
+        address_line:
+          type: string
+        locality:
+          type: string
+          maxLength: 160
+        sector:
+          type: string
+          maxLength: 60
+        ward:
+          type: integer
+          nullable: true
+        ward_number:
+          type: integer
+          readOnly: true
+        zone:
+          type: integer
+          nullable: true
+        zone_code:
+          type: string
+          readOnly: true
+        latitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,7})?$
+          nullable: true
+        longitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,7})?$
+          nullable: true
+        land_type:
+          $ref: '#/components/schemas/LandTypeEnum'
+        owner_name:
+          type: string
+          maxLength: 200
+        construction_stage:
+          $ref: '#/components/schemas/ConstructionStageEnum'
+        reported_by:
+          allOf:
+          - $ref: '#/components/schemas/UserLite'
+          readOnly: true
+        assigned_ae:
+          allOf:
+          - $ref: '#/components/schemas/UserLite'
+          readOnly: true
+        assigned_jc:
+          allOf:
+          - $ref: '#/components/schemas/UserLite'
+          readOnly: true
+        current_owner_role:
+          $ref: '#/components/schemas/CurrentOwnerRoleEnum'
+        stage_due_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: SLA due time for the current stage
+        sla_breached:
+          type: boolean
+        inspected_at:
+          type: string
+          format: date-time
+        scn_issued_at:
+          type: string
+          format: date-time
+          nullable: true
+        response_due_at:
+          type: string
+          format: date-time
+          nullable: true
+        compliance_due_at:
+          type: string
+          format: date-time
+          nullable: true
+        decision:
+          type: string
+          maxLength: 30
+        stop_work_issued:
+          type: boolean
+        sealed:
+          type: boolean
+        violation_codes:
+          type: string
+          readOnly: true
+        primary_violation:
+          type: string
+          readOnly: true
+        days_in_stage:
+          type: string
+          readOnly: true
+        thumbnail:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        complaint_ref:
+          type: string
+          maxLength: 80
+        pid_snapshot:
+          description: Property record fetched from the PID API at creation
+        pid_linked_mobile:
+          type: string
+          maxLength: 15
+        alternate_mobile:
+          type: string
+          maxLength: 15
+        village_colony:
+          type: string
+          maxLength: 160
+        pincode:
+          type: string
+          maxLength: 6
+        division:
+          type: integer
+          nullable: true
+        location_accuracy_m:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,2})?$
+          nullable: true
+        govt_parcel:
+          allOf:
+          - $ref: '#/components/schemas/GovtLandParcel'
+          readOnly: true
+        sanctioned_plan:
+          allOf:
+          - $ref: '#/components/schemas/SanctionedPlan'
+          readOnly: true
+        owner_father_name:
+          type: string
+          maxLength: 200
+        occupier_name:
+          type: string
+          maxLength: 200
+        builder_name:
+          type: string
+          maxLength: 200
+        person_on_site:
+          type: string
+          maxLength: 200
+        plot_area_sqm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          nullable: true
+        covered_area_sqm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          nullable: true
+        storeys:
+          type: string
+          maxLength: 40
+        height_m:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,2})?$
+          nullable: true
+        use_observed:
+          type: string
+          maxLength: 80
+        description:
+          type: string
+          description: Inspection report / observations
+        measurements:
+          description: Permitted vs actual values
+        submitted_at:
+          type: string
+          format: date-time
+          nullable: true
+        ae_forwarded_at:
+          type: string
+          format: date-time
+          nullable: true
+        jc_received_at:
+          type: string
+          format: date-time
+          nullable: true
+        scn_served_at:
+          type: string
+          format: date-time
+          nullable: true
+        response_received_at:
+          type: string
+          format: date-time
+          nullable: true
+        hearing_at:
+          type: string
+          format: date-time
+          nullable: true
+        decided_at:
+          type: string
+          format: date-time
+          nullable: true
+        order_issued_at:
+          type: string
+          format: date-time
+          nullable: true
+        order_served_at:
+          type: string
+          format: date-time
+          nullable: true
+        executed_at:
+          type: string
+          format: date-time
+          nullable: true
+        closed_at:
+          type: string
+          format: date-time
+          nullable: true
+        decision_reasons:
+          type: string
+        final_order:
+          type: string
+          format: uuid
+          nullable: true
+        closure_reason:
+          type: string
+        demolition_cost_inr:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          nullable: true
+        cost_recovery_status:
+          type: string
+          maxLength: 20
+        violations:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseViolation'
+          readOnly: true
+        media:
+          type: array
+          items:
+            $ref: '#/components/schemas/MediaAttachment'
+          readOnly: true
+        notices:
+          type: array
+          items:
+            $ref: '#/components/schemas/Notice'
+          readOnly: true
+        responses:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseResponse'
+          readOnly: true
+        hearings:
+          type: array
+          items:
+            $ref: '#/components/schemas/Hearing'
+          readOnly: true
+        appeals:
+          type: array
+          items:
+            $ref: '#/components/schemas/Appeal'
+          readOnly: true
+        executions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExecutionRecord'
+          readOnly: true
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseEvent'
+          readOnly: true
+        available_actions:
+          type: string
+          readOnly: true
+        available_order_types:
+          type: string
+          readOnly: true
+      required:
+      - address_line
+      - appeals
+      - assigned_ae
+      - assigned_jc
+      - available_actions
+      - available_order_types
+      - case_no
+      - created_at
+      - days_in_stage
+      - description
+      - events
+      - executions
+      - govt_parcel
+      - hearings
+      - id
+      - media
+      - notices
+      - primary_violation
+      - reported_by
+      - responses
+      - sanctioned_plan
+      - status_display
+      - thumbnail
+      - updated_at
+      - violation_codes
+      - violations
+      - ward_number
+      - zone_code
+    ViolationCaseList:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        case_no:
+          type: string
+          maxLength: 40
+        status:
+          $ref: '#/components/schemas/StatusEnum'
+        status_display:
+          type: string
+          readOnly: true
+        priority:
+          type: string
+          maxLength: 10
+        source:
+          type: string
+          maxLength: 20
+        pid:
+          type: string
+          description: DULB Property ID
+          maxLength: 40
+        address_line:
+          type: string
+        locality:
+          type: string
+          maxLength: 160
+        sector:
+          type: string
+          maxLength: 60
+        ward:
+          type: integer
+          nullable: true
+        ward_number:
+          type: integer
+          readOnly: true
+        zone:
+          type: integer
+          nullable: true
+        zone_code:
+          type: string
+          readOnly: true
+        latitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,7})?$
+          nullable: true
+        longitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,7})?$
+          nullable: true
+        land_type:
+          $ref: '#/components/schemas/LandTypeEnum'
+        owner_name:
+          type: string
+          maxLength: 200
+        construction_stage:
+          $ref: '#/components/schemas/ConstructionStageEnum'
+        reported_by:
+          allOf:
+          - $ref: '#/components/schemas/UserLite'
+          readOnly: true
+        assigned_ae:
+          allOf:
+          - $ref: '#/components/schemas/UserLite'
+          readOnly: true
+        assigned_jc:
+          allOf:
+          - $ref: '#/components/schemas/UserLite'
+          readOnly: true
+        current_owner_role:
+          $ref: '#/components/schemas/CurrentOwnerRoleEnum'
+        stage_due_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: SLA due time for the current stage
+        sla_breached:
+          type: boolean
+        inspected_at:
+          type: string
+          format: date-time
+        scn_issued_at:
+          type: string
+          format: date-time
+          nullable: true
+        response_due_at:
+          type: string
+          format: date-time
+          nullable: true
+        compliance_due_at:
+          type: string
+          format: date-time
+          nullable: true
+        decision:
+          type: string
+          maxLength: 30
+        stop_work_issued:
+          type: boolean
+        sealed:
+          type: boolean
+        violation_codes:
+          type: string
+          readOnly: true
+        primary_violation:
+          type: string
+          readOnly: true
+        days_in_stage:
+          type: string
+          readOnly: true
+        thumbnail:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - address_line
+      - assigned_ae
+      - assigned_jc
+      - case_no
+      - created_at
+      - days_in_stage
+      - id
+      - primary_violation
+      - reported_by
+      - status_display
+      - thumbnail
+      - updated_at
+      - violation_codes
+      - ward_number
+      - zone_code
+    ViolationType:
+      type: object
+      properties:
+        code:
+          type: string
+          maxLength: 10
+        category:
+          $ref: '#/components/schemas/CategoryEnum'
+        title_en:
+          type: string
+          maxLength: 250
+        title_hi:
+          type: string
+          maxLength: 250
+        description:
+          type: string
+        contravention_of:
+          type: string
+          description: Phrase printed in the notice
+        legal_basis: {}
+        action_path:
+          type: string
+          maxLength: 30
+        orders_available: {}
+        scn_response_days_default:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        order_compliance_days_default:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        statutory_minimum_days:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        severity:
+          type: string
+          maxLength: 10
+        compoundable:
+          type: string
+          maxLength: 12
+        evidence_checklist: {}
+        schedule_fine_inr:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+        schedule_daily_fine_inr:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+        appeal:
+          type: string
+        notes:
+          type: string
+        active:
+          type: boolean
+        sort_order:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+      required:
+      - action_path
+      - category
+      - code
+      - title_en
+    Ward:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        number:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        name_en:
+          type: string
+          maxLength: 120
+        name_hi:
+          type: string
+          maxLength: 120
+        zone:
+          type: integer
+        zone_code:
+          type: string
+          readOnly: true
+        division:
+          type: integer
+          nullable: true
+        active:
+          type: boolean
+      required:
+      - id
+      - number
+      - zone
+      - zone_code
+    Zone:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        code:
+          type: string
+          maxLength: 10
+        name_en:
+          type: string
+          maxLength: 80
+        name_hi:
+          type: string
+          maxLength: 80
+        active:
+          type: boolean
+      required:
+      - code
+      - id
+      - name_en
+  securitySchemes:
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

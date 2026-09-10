@@ -1,0 +1,8 @@
+{% extends "notices/base.html" %}
+{% block title_en %}Referral for eviction from public premises under the Haryana Public Premises and Land (Eviction and Rent Recovery) Act, 1972{% endblock %}
+{% block body %}
+<p><b>To: The Collector / Deputy Commissioner, Gurugram</b> (through the Sub-Divisional Magistrate concerned)</p>
+<p>The property described above has been found on inspection to be in unauthorised occupation within the meaning of section 3 of the Haryana Public Premises and Land (Eviction and Rent Recovery) Act, 1972, being land belonging to {% if case.govt_parcel %}{{ case.govt_parcel.get_agency_display }}{% else %}the State Government / a public authority{% endif %}, on which the unauthorised construction described above has been raised. The Corporation has initiated proceedings under sections 261/262 of the Haryana Municipal Corporation Act, 1994 in respect of the building.</p>
+<p>It is requested that proceedings for eviction be initiated under sections 4 and 5 of the 1972 Act (show cause notice of not less than ten days; eviction order; possession after thirty days) and damages assessed under section 7, and that this office be informed of the reference number for linking in the Building Violation Management System.</p>
+<p>Enclosures: inspection report with geotagged photographs; land-record / GIS extract; copy of the show cause notice issued by the Corporation.</p>
+{% endblock %}

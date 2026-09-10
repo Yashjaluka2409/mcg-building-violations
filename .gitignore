@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.sqlite3
+backend/media/
+backend/staticfiles/
+backend/.env
+# Node
+node_modules/
+dist/
+build/
+.expo/
+.expo-shared/
+web/.env
+web/.env.local
+mobile/.env
+# OS / editors
+.DS_Store
+.idea/
+.vscode/
+*.log
+# Generated
+backend/building_violations/keys/*.p12
+backend/building_violations/keys/*.pem

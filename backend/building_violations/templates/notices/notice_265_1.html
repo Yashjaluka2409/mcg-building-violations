@@ -1,0 +1,8 @@
+{% extends "notices/base.html" %}
+{% block body %}
+<p>WHEREAS it has been found that the building / land described above is being used for a purpose other than the sanctioned / permitted use ({{ case.use_observed|default:"as noted above" }}) without the written permission of the Commissioner, in contravention of section 265(1)(b) of the Haryana Municipal Corporation Act, 1994 and Codes 4.12 and 6.1 of the Haryana Building Code, 2017;</p>
+<div class="operative">
+<p><b>NOW THEREFORE</b> you are hereby called upon to <b>discontinue the unauthorised use forthwith and to show cause within {{ notice.response_days }} days (on or before {{ response_due_local|date:"d-m-Y" }})</b> why the occupation certificate should not be revoked (HBC 2017, Code 4.12), the premises sealed under section 263A and prosecution launched under section 380 of the Act (fine up to Rs 1,000 and Rs 100 per day of continuing contravention).</p>
+<p class="hi">धारा 265(1)(ख) के अंतर्गत आपको निर्देश दिया जाता है कि अनधिकृत उपयोग तत्काल बंद करें तथा {{ notice.response_days }} दिनों के भीतर ({{ response_due_local|date:"d-m-Y" }} तक) कारण बताएँ कि अधिभोग प्रमाण-पत्र क्यों न निरस्त किया जाए, परिसर क्यों न सील किया जाए और अभियोजन क्यों न किया जाए।</p>
+</div>
+{% endblock %}

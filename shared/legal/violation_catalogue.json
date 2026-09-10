@@ -1,0 +1,2235 @@
+{
+  "meta": {
+    "generated_at": "2026-09-10T16:41:19.466983+00:00",
+    "generator": "shared/legal/generate_catalogue.py",
+    "disclaimer": "Statutory text was extracted from scanned PDFs and cleaned by hand. Records marked verify=true must be checked against the official Gazette by the Legal Branch of MCG before the notices are used in court proceedings."
+  },
+  "categories": {
+    "GOVT_LAND": {
+      "en": "Construction / encroachment on Government or Corporation land",
+      "hi": "सरकारी / निगम भूमि पर निर्माण / अतिक्रमण"
+    },
+    "PRIVATE_LAND_NO_SANCTION": {
+      "en": "Unauthorised construction on private land (no sanction)",
+      "hi": "निजी भूमि पर अनधिकृत निर्माण (बिना स्वीकृति)"
+    },
+    "DEVIATION_FROM_SANCTION": {
+      "en": "Deviation from sanctioned building plan",
+      "hi": "स्वीकृत भवन योजना से विचलन"
+    },
+    "STREET_ENCROACHMENT": {
+      "en": "Encroachment on streets / footpaths",
+      "hi": "सड़क / फुटपाथ पर अतिक्रमण"
+    },
+    "MISUSE_CHANGE_OF_USE": {
+      "en": "Misuse / change of use / occupation without OC",
+      "hi": "दुरुपयोग / उपयोग परिवर्तन / ओ.सी. के बिना अधिभोग"
+    },
+    "DANGEROUS_UNFIT": {
+      "en": "Dangerous / unfit buildings",
+      "hi": "खतरनाक / अनुपयुक्त भवन"
+    },
+    "PROCEDURAL_NON_COMPLIANCE": {
+      "en": "Non-compliance with notices and orders",
+      "hi": "नोटिस और आदेशों का पालन न करना"
+    }
+  },
+  "order_types": {
+    "SCN_261": {
+      "title_en": "Show Cause Notice under section 261(1) proviso (why the unauthorised erection/work should not be demolished)",
+      "title_hi": "धारा 261(1) के परंतुक के अंतर्गत कारण बताओ नोटिस",
+      "statute": "HMCA1994",
+      "section": "261(1)",
+      "kind": "NOTICE",
+      "min_days": 0,
+      "default_days": 7,
+      "template": "scn_261.html"
+    },
+    "SCN_408A": {
+      "title_en": "Show Cause Notice under section 408A(1) (unauthorised occupation of Corporation land)",
+      "title_hi": "धारा 408A(1) के अंतर्गत कारण बताओ नोटिस",
+      "statute": "HMCA1994",
+      "section": "408A(1)",
+      "kind": "NOTICE",
+      "min_days": 7,
+      "default_days": 7,
+      "template": "scn_408a.html"
+    },
+    "SCN_284": {
+      "title_en": "Show Cause Notice under section 284(1) (building unfit for human habitation)",
+      "title_hi": "धारा 284(1) के अंतर्गत कारण बताओ नोटिस",
+      "statute": "HMCA1994",
+      "section": "284",
+      "kind": "NOTICE",
+      "min_days": 0,
+      "default_days": 30,
+      "template": "scn_284.html"
+    },
+    "SCN_256_CANCELLATION": {
+      "title_en": "Show Cause Notice under section 256 (cancellation of sanction obtained by misrepresentation)",
+      "title_hi": "धारा 256 के अंतर्गत कारण बताओ नोटिस (स्वीकृति निरस्तीकरण)",
+      "statute": "HMCA1994",
+      "section": "256",
+      "kind": "NOTICE",
+      "min_days": 0,
+      "default_days": 7,
+      "template": "scn_256.html"
+    },
+    "ALTERATION_NOTICE_263": {
+      "title_en": "Notice under section 263(1) requiring alteration of work / show cause",
+      "title_hi": "धारा 263(1) के अंतर्गत कार्य में परिवर्तन हेतु नोटिस",
+      "statute": "HMCA1994",
+      "section": "263",
+      "kind": "NOTICE",
+      "min_days": 0,
+      "default_days": 7,
+      "template": "notice_263.html"
+    },
+    "REMOVAL_NOTICE_235": {
+      "title_en": "Notice under section 235(2) to remove projection / structure from street",
+      "title_hi": "धारा 235(2) के अंतर्गत सड़क से प्रक्षेपण / संरचना हटाने का नोटिस",
+      "statute": "HMCA1994",
+      "section": "235(2)",
+      "kind": "NOTICE",
+      "min_days": 0,
+      "default_days": 3,
+      "template": "notice_235.html"
+    },
+    "MISUSE_NOTICE_265": {
+      "title_en": "Notice under section 265(1) to discontinue unauthorised use / change of use",
+      "title_hi": "धारा 265(1) के अंतर्गत अनधिकृत उपयोग बंद करने का नोटिस",
+      "statute": "HMCA1994",
+      "section": "265(1)",
+      "kind": "NOTICE",
+      "min_days": 0,
+      "default_days": 7,
+      "template": "notice_265_1.html"
+    },
+    "OC_NOTICE_264": {
+      "title_en": "Notice under section 264(2) - occupation without completion / occupation certificate",
+      "title_hi": "धारा 264(2) के अंतर्गत नोटिस - अधिभोग प्रमाण-पत्र के बिना अधिभोग",
+      "statute": "HMCA1994",
+      "section": "264",
+      "kind": "NOTICE",
+      "min_days": 0,
+      "default_days": 7,
+      "template": "notice_264.html"
+    },
+    "STOP_WORK_262": {
+      "title_en": "Stop-Work Order under section 262(1)",
+      "title_hi": "धारा 262(1) के अंतर्गत कार्य-रोक आदेश",
+      "statute": "HMCA1994",
+      "section": "262(1)",
+      "kind": "ORDER",
+      "min_days": 0,
+      "default_days": 0,
+      "template": "order_stop_work_262.html"
+    },
+    "SEALING_263A": {
+      "title_en": "Sealing Order under section 263A(1)",
+      "title_hi": "धारा 263A(1) के अंतर्गत सीलिंग आदेश",
+      "statute": "HMCA1994",
+      "section": "263A(1)",
+      "kind": "ORDER",
+      "min_days": 0,
+      "default_days": 0,
+      "template": "order_sealing_263a.html",
+      "appeal_days": 7,
+      "appeal_to": "Divisional Commissioner, Gurugram"
+    },
+    "RESEALING_263A": {
+      "title_en": "Re-sealing memo under section 263A",
+      "title_hi": "धारा 263A के अंतर्गत पुनः सीलिंग ज्ञापन",
+      "statute": "HMCA1994",
+      "section": "263A(3)",
+      "kind": "ORDER",
+      "min_days": 0,
+      "default_days": 0,
+      "template": "order_sealing_263a.html"
+    },
+    "DEMOLITION_ORDER_261": {
+      "title_en": "Demolition Order under section 261(1)",
+      "title_hi": "धारा 261(1) के अंतर्गत ध्वस्तीकरण आदेश",
+      "statute": "HMCA1994",
+      "section": "261(1)",
+      "kind": "ORDER",
+      "min_days": 3,
+      "default_days": 15,
+      "template": "order_demolition_261.html",
+      "appeal_days": null,
+      "appeal_to": "Divisional Commissioner, Gurugram (within the period specified in this order)"
+    },
+    "EVICTION_DEMOLITION_ORDER_408A": {
+      "title_en": "Order under section 408A(2) to vacate / demolish / restore Corporation land",
+      "title_hi": "धारा 408A(2) के अंतर्गत निगम भूमि खाली / ध्वस्त / पुनर्स्थापित करने का आदेश",
+      "statute": "HMCA1994",
+      "section": "408A(2)",
+      "kind": "ORDER",
+      "min_days": 7,
+      "default_days": 7,
+      "template": "order_408a.html",
+      "appeal_days": 7,
+      "appeal_to": "Commissioner, Municipal Corporation Gurugram"
+    },
+    "DEMOLITION_ORDER_284": {
+      "title_en": "Demolition Order under section 284(3) (unfit building)",
+      "title_hi": "धारा 284(3) के अंतर्गत ध्वस्तीकरण आदेश",
+      "statute": "HMCA1994",
+      "section": "284",
+      "kind": "ORDER",
+      "min_days": 30,
+      "default_days": 30,
+      "template": "order_demolition_284.html"
+    },
+    "DANGEROUS_BUILDING_ORDER_265": {
+      "title_en": "Order under section 265(2) to demolish / secure / repair dangerous building",
+      "title_hi": "धारा 265(2) के अंतर्गत खतरनाक भवन को ध्वस्त / सुरक्षित / मरम्मत करने का आदेश",
+      "statute": "HMCA1994",
+      "section": "265(2)-(6)",
+      "kind": "ORDER",
+      "min_days": 0,
+      "default_days": 7,
+      "template": "order_265_2.html"
+    },
+    "VACATE_ORDER_266": {
+      "title_en": "Order under section 266(1) to vacate building",
+      "title_hi": "धारा 266(1) के अंतर्गत भवन खाली करने का आदेश",
+      "statute": "HMCA1994",
+      "section": "266",
+      "kind": "ORDER",
+      "min_days": 0,
+      "default_days": 7,
+      "template": "order_vacate_266.html"
+    },
+    "IMMEDIATE_ACTION_265_4": {
+      "title_en": "Memo of immediate action under section 265(4) (imminent danger)",
+      "title_hi": "धारा 265(4) के अंतर्गत तत्काल कार्रवाई ज्ञापन",
+      "statute": "HMCA1994",
+      "section": "265(2)-(6)",
+      "kind": "MEMO",
+      "min_days": 0,
+      "default_days": 0,
+      "template": "memo_265_4.html"
+    },
+    "SUMMARY_REMOVAL_240": {
+      "title_en": "Summary removal memo under section 240 / 243(3)",
+      "title_hi": "धारा 240 / 243(3) के अंतर्गत सारांश हटाव ज्ञापन",
+      "statute": "HMCA1994",
+      "section": "240",
+      "kind": "MEMO",
+      "min_days": 0,
+      "default_days": 0,
+      "template": "memo_240.html"
+    },
+    "POLICE_REQUISITION_262_2": {
+      "title_en": "Requisition to Police under section 262(2)",
+      "title_hi": "धारा 262(2) के अंतर्गत पुलिस को अधियाचन",
+      "statute": "HMCA1994",
+      "section": "262(2)",
+      "kind": "MEMO",
+      "min_days": 0,
+      "default_days": 0,
+      "template": "memo_police_262_2.html"
+    },
+    "WATCH_DEPUTATION_262_3": {
+      "title_en": "Order deputing watch under section 262(3)",
+      "title_hi": "धारा 262(3) के अंतर्गत निगरानी हेतु प्रतिनियुक्ति आदेश",
+      "statute": "HMCA1994",
+      "section": "262(3)",
+      "kind": "MEMO",
+      "min_days": 0,
+      "default_days": 0,
+      "template": "memo_watch_262_3.html"
+    },
+    "OC_REVOCATION_HBC_4_12": {
+      "title_en": "Order revoking Occupation Certificate (HBC 2017 Code 4.12)",
+      "title_hi": "अधिभोग प्रमाण-पत्र निरस्तीकरण आदेश (एच.बी.सी. 2017 कोड 4.12)",
+      "statute": "HBC2017",
+      "section": "4.12",
+      "kind": "ORDER",
+      "min_days": 0,
+      "default_days": 0,
+      "template": "order_oc_revocation.html"
+    },
+    "REFERRAL_TO_COLLECTOR_HPPA": {
+      "title_en": "Referral to the Collector for eviction under sections 4-5 of the HPP Act, 1972",
+      "title_hi": "एच.पी.पी. अधिनियम 1972 की धारा 4-5 के अंतर्गत बेदखली हेतु कलेक्टर को संदर्भ",
+      "statute": "HPPA1972",
+      "section": "4",
+      "kind": "REFERRAL",
+      "min_days": 0,
+      "default_days": 0,
+      "template": "referral_collector.html"
+    },
+    "REFERRAL_TO_DTCP": {
+      "title_en": "Referral to District Town Planner (Enforcement) under the 1963 Act",
+      "title_hi": "1963 अधिनियम के अंतर्गत जिला नगर योजनाकार (प्रवर्तन) को संदर्भ",
+      "statute": "PSRCA1963",
+      "section": "12(2)-(3)",
+      "kind": "REFERRAL",
+      "min_days": 0,
+      "default_days": 0,
+      "template": "referral_dtcp.html"
+    },
+    "EXECUTION_BY_CORPORATION": {
+      "title_en": "Execution memo - demolition / sealing carried out by the Corporation (s.261(6) / 408A(3) / 263A(2)(c))",
+      "title_hi": "निष्पादन ज्ञापन - निगम द्वारा ध्वस्तीकरण / सीलिंग",
+      "statute": "HMCA1994",
+      "section": "261(6)",
+      "kind": "MEMO",
+      "min_days": 0,
+      "default_days": 0,
+      "template": "memo_execution.html"
+    },
+    "COST_RECOVERY": {
+      "title_en": "Demand for recovery of demolition cost as arrears of tax / land revenue",
+      "title_hi": "ध्वस्तीकरण लागत की कर / भू-राजस्व के बकाया के रूप में वसूली हेतु माँग",
+      "statute": "HMCA1994",
+      "section": "261(6)",
+      "kind": "MEMO",
+      "min_days": 0,
+      "default_days": 30,
+      "template": "memo_cost_recovery.html"
+    },
+    "PROSECUTION_380": {
+      "title_en": "Complaint for prosecution under section 380 / 386",
+      "title_hi": "धारा 380 / 386 के अंतर्गत अभियोजन हेतु शिकायत",
+      "statute": "HMCA1994",
+      "section": "380",
+      "kind": "MEMO",
+      "min_days": 0,
+      "default_days": 0,
+      "template": "memo_prosecution.html"
+    },
+    "POLICE_COMPLAINT": {
+      "title_en": "Complaint to Police (BNS 2023 / obstruction / seal breach)",
+      "title_hi": "पुलिस को शिकायत",
+      "statute": "BNS2023",
+      "section": "223",
+      "kind": "MEMO",
+      "min_days": 0,
+      "default_days": 0,
+      "template": "memo_police_complaint.html"
+    },
+    "RE_AFFIXATION": {
+      "title_en": "Re-affixation memo (s.407)",
+      "title_hi": "पुनः चस्पा ज्ञापन (धारा 407)",
+      "statute": "HMCA1994",
+      "section": "407",
+      "kind": "MEMO",
+      "min_days": 0,
+      "default_days": 0,
+      "template": "memo_reaffix.html"
+    }
+  },
+  "violations": [
+    {
+      "code": "GL-01",
+      "category": "GOVT_LAND",
+      "title_en": "Unauthorised construction / occupation on land vested in the Municipal Corporation",
+      "title_hi": "नगर निगम में निहित भूमि पर अनधिकृत निर्माण / कब्ज़ा",
+      "description": "Any building, boundary wall, shed, hut, platform or structure raised on land vested in the Corporation (parks, green belts, community sites, road land, drain land, municipal plots, village common land vested after inclusion) without allotment, lease or permission.",
+      "legal_basis": [
+        {
+          "statute": "HMCA1994",
+          "section": "408"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "408A(1)"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "408A(2)"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "408A(3)"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "408A(4)"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "254(2)(e)"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "250"
+        }
+      ],
+      "contravention_of": "Sections 408 and 408A of the Haryana Municipal Corporation Act, 1994 (unauthorised occupation of / encroachment on land vested in the Corporation)",
+      "action_path": "HMCA_408A",
+      "orders_available": [
+        "SCN_408A",
+        "EVICTION_DEMOLITION_ORDER_408A",
+        "STOP_WORK_262",
+        "SEALING_263A"
+      ],
+      "scn_response_days_default": 7,
+      "order_compliance_days_default": 7,
+      "statutory_minimum_days": 7,
+      "severity": "CRITICAL",
+      "compoundable": "NO",
+      "evidence_checklist": [
+        "Geotagged photographs of the structure from the street (front, both sides)",
+        "Geotagged close-up of the violating portion",
+        "Short video walk-through (max 60 s)",
+        "Site plan / sketch with measurements",
+        "PID or address, owner/occupier name and mobile",
+        "Name of person supervising construction on site",
+        "Screenshot of the government-land layer showing the point inside the parcel",
+        "Khasra/parcel number from the land record layer",
+        "Photograph of any boundary pillars / demarcation"
+      ],
+      "schedule_fine_inr": 500,
+      "schedule_daily_fine_inr": null,
+      "appeal": "Commissioner, within 7 days of the order (s.408B)",
+      "notes": "Competent authority is the Joint Commissioner (s.2(4A)). Notice may be served by post, in person or by affixation / beat of drum (s.408A(1)). Cost of demolition recoverable as arrears of land revenue.",
+      "active": true
+    },
+    {
+      "code": "GL-02",
+      "category": "GOVT_LAND",
+      "title_en": "Encroachment / unauthorised construction on State Government land or other public premises",
+      "title_hi": "राज्य सरकार की भूमि / अन्य सार्वजनिक परिसर पर अतिक्रमण / अनधिकृत निर्माण",
+      "description": "Construction on land belonging to the State Government or a Government department/board/corporation (e.g., HSVP, GMDA, PWD, Irrigation, Forest, Panchayat land not vested in MCG). MCG records the violation, issues stop-work / demolition proceedings for the building under the HMC Act and refers eviction to the Collector under the Public Premises Act.",
+      "legal_basis": [
+        {
+          "statute": "HPPA1972",
+          "section": "3"
+        },
+        {
+          "statute": "HPPA1972",
+          "section": "4"
+        },
+        {
+          "statute": "HPPA1972",
+          "section": "5"
+        },
+        {
+          "statute": "HPPA1972",
+          "section": "7(2)-(3)"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "254(2)(e)"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "250"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "261(1)"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "262(1)"
+        }
+      ],
+      "contravention_of": "Section 3 of the Haryana Public Premises and Land (Eviction and Rent Recovery) Act, 1972 read with sections 250 and 254(2)(e) of the Haryana Municipal Corporation Act, 1994",
+      "action_path": "HPPA_4_5",
+      "orders_available": [
+        "SCN_261",
+        "STOP_WORK_262",
+        "DEMOLITION_ORDER_261",
+        "SEALING_263A",
+        "REFERRAL_TO_COLLECTOR_HPPA"
+      ],
+      "scn_response_days_default": 10,
+      "order_compliance_days_default": 15,
+      "statutory_minimum_days": 10,
+      "severity": "CRITICAL",
+      "compoundable": "NO",
+      "evidence_checklist": [
+        "Geotagged photographs of the structure from the street (front, both sides)",
+        "Geotagged close-up of the violating portion",
+        "Short video walk-through (max 60 s)",
+        "Site plan / sketch with measurements",
+        "PID or address, owner/occupier name and mobile",
+        "Name of person supervising construction on site",
+        "Screenshot of the government-land layer showing the point inside the parcel",
+        "Khasra/parcel number from the land record layer",
+        "Photograph of any boundary pillars / demarcation",
+        "Letter / e-mail to the land-owning department and the Collector (DC) office"
+      ],
+      "schedule_fine_inr": 5000,
+      "schedule_daily_fine_inr": 500,
+      "appeal": "Appeal under s.9 HPPA 1972",
+      "notes": "Eviction under HPPA is by the Collector (DC/SDM). The system generates the referral letter and tracks the DC-office reference; the building itself is proceeded against under s.261 (no sanction possible on Government land, s.254(2)(e)).",
+      "active": true
+    },
+    {
+      "code": "GL-03",
+      "category": "STREET_ENCROACHMENT",
+      "title_en": "Structure / fixture erected on public street, footpath or road land",
+      "title_hi": "सार्वजनिक सड़क, फुटपाथ या रोड-लैंड पर संरचना / फिक्सचर का निर्माण",
+      "description": "Walls, fences, rails, posts, steps, ramps, booths, kiosks, sheds or any permanent or temporary structure or fixture erected on any street or footpath, or over a drain, channel or well in a street, forming an obstruction or encroachment.",
+      "legal_basis": [
+        {
+          "statute": "HMCA1994",
+          "section": "238(1)"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "235(1)"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "235(2)"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "240"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "216"
+        }
+      ],
+      "contravention_of": "Sections 235 and 238(1) of the Haryana Municipal Corporation Act, 1994",
+      "action_path": "HMCA_235_238",
+      "orders_available": [
+        "REMOVAL_NOTICE_235",
+        "SUMMARY_REMOVAL_240",
+        "SCN_261",
+        "DEMOLITION_ORDER_261"
+      ],
+      "scn_response_days_default": 3,
+      "order_compliance_days_default": 3,
+      "statutory_minimum_days": 0,
+      "severity": "HIGH",
+      "compoundable": "NO",
+      "evidence_checklist": [
+        "Geotagged photographs of the structure from the street (front, both sides)",
+        "Geotagged close-up of the violating portion",
+        "Short video walk-through (max 60 s)",
+        "Site plan / sketch with measurements",
+        "PID or address, owner/occupier name and mobile",
+        "Name of person supervising construction on site",
+        "Measurement of the encroached width of the street/footpath",
+        "Road/street name and right-of-way width"
+      ],
+      "schedule_fine_inr": 1000,
+      "schedule_daily_fine_inr": 100,
+      "appeal": "Notice under s.235(2); summary removal u/s 240/243(3)",
+      "notes": null,
+      "active": true
+    },
+    {
+      "code": "GL-04",
+      "category": "STREET_ENCROACHMENT",
+      "title_en": "Construction within the regular line of a street / building line",
+      "title_hi": "सड़क की नियमित रेखा / भवन रेखा के भीतर निर्माण",
+      "description": "Any portion of a building erected, re-erected or added within the regular line of a public street or the building line fixed by the Corporation, or in contravention of a sanctioned scheme/plan.",
+      "legal_basis": [
+        {
+          "statute": "HMCA1994",
+          "section": "224"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "258(2)"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "252(1)(e)"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "261(1)"
+        }
+      ],
+      "contravention_of": "Sections 224/225 and 258(2) of the Haryana Municipal Corporation Act, 1994",
+      "action_path": "HMCA_261",
+      "orders_available": [
+        "SCN_261",
+        "STOP_WORK_262",
+        "DEMOLITION_ORDER_261"
+      ],
+      "scn_response_days_default": 7,
+      "order_compliance_days_default": 15,
+      "statutory_minimum_days": 3,
+      "severity": "HIGH",
+      "compoundable": "NO",
+      "evidence_checklist": [
+        "Geotagged photographs of the structure from the street (front, both sides)",
+        "Geotagged close-up of the violating portion",
+        "Short video walk-through (max 60 s)",
+        "Site plan / sketch with measurements",
+        "PID or address, owner/occupier name and mobile",
+        "Name of person supervising construction on site",
+        "Regular line of street / building line from the sanctioned layout",
+        "Measured distance of the structure from the road centre line"
+      ],
+      "schedule_fine_inr": 1000,
+      "schedule_daily_fine_inr": null,
+      "appeal": "Divisional Commissioner, within the period specified in the order (s.261(2)); sealing: 7 days (s.263A(4))",
+      "notes": null,
+      "active": true
+    },
+    {
+      "code": "GL-05",
+      "category": "STREET_ENCROACHMENT",
+      "title_en": "Projection over street without permission (balcony, canopy, sunshade, ramp, steps)",
+      "title_hi": "बिना अनुमति सड़क पर प्रक्षेपण (बालकनी, कैनोपी, छज्जा, रैम्प, सीढ़ियाँ)",
+      "description": "Balconies, canopies, chajjas, awnings, signboards, ramps, steps or other things projecting over or on to a street beyond the plot boundary without written permission of the Commissioner, or beyond the permitted extent.",
+      "legal_basis": [
+        {
+          "statute": "HMCA1994",
+          "section": "235(1)"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "236"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "235(2)"
+        },
+        {
+          "statute": "HBC2017",
+          "section": "7.12"
+        }
+      ],
+      "contravention_of": "Sections 235 and 236 of the Haryana Municipal Corporation Act, 1994 read with Code 7.12 of the Haryana Building Code, 2017",
+      "action_path": "HMCA_235_238",
+      "orders_available": [
+        "REMOVAL_NOTICE_235",
+        "SUMMARY_REMOVAL_240",
+        "SCN_261"
+      ],
+      "scn_response_days_default": 7,
+      "order_compliance_days_default": 7,
+      "statutory_minimum_days": 0,
+      "severity": "MEDIUM",
+      "compoundable": "CONDITIONAL",
+      "evidence_checklist": [
+        "Geotagged photographs of the structure from the street (front, both sides)",
+        "Geotagged close-up of the violating portion",
+        "Short video walk-through (max 60 s)",
+        "Site plan / sketch with measurements",
+        "PID or address, owner/occupier name and mobile",
+        "Name of person supervising construction on site",
+        "Measured projection beyond plot line (metres)"
+      ],
+      "schedule_fine_inr": 500,
+      "schedule_daily_fine_inr": 50,
+      "appeal": "Notice under s.235(2); summary removal u/s 240/243(3)",
+      "notes": null,
+      "active": true
+    },
+    {
+      "code": "GL-06",
+      "category": "GOVT_LAND",
+      "title_en": "Construction on or over a municipal drain, nallah, water body, pond or johad",
+      "title_hi": "नगरपालिका नाले, नाली, जलाशय, तालाब या जोहड़ पर / के ऊपर निर्माण",
+      "description": "Structures raised on, over or into a municipal drain, storm-water nallah, natural water course, pond/johad or its embankment so as to interfere with its working, inspection or cleansing, or encroach upon land vested in the Corporation.",
+      "legal_basis": [
+        {
+          "statute": "HMCA1994",
+          "section": "235(1)"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "238(1)"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "408"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "408A(1)"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "261(1)"
+        }
+      ],
+      "contravention_of": "Sections 235(1)(b), 238(1) and 408/408A of the Haryana Municipal Corporation Act, 1994",
+      "action_path": "HMCA_408A",
+      "orders_available": [
+        "SCN_408A",
+        "EVICTION_DEMOLITION_ORDER_408A",
+        "STOP_WORK_262",
+        "DEMOLITION_ORDER_261"
+      ],
+      "scn_response_days_default": 7,
+      "order_compliance_days_default": 7,
+      "statutory_minimum_days": 7,
+      "severity": "CRITICAL",
+      "compoundable": "NO",
+      "evidence_checklist": [
+        "Geotagged photographs of the structure from the street (front, both sides)",
+        "Geotagged close-up of the violating portion",
+        "Short video walk-through (max 60 s)",
+        "Site plan / sketch with measurements",
+        "PID or address, owner/occupier name and mobile",
+        "Name of person supervising construction on site",
+        "Screenshot of the government-land layer showing the point inside the parcel",
+        "Khasra/parcel number from the land record layer",
+        "Photograph of any boundary pillars / demarcation",
+        "Drain/nallah name and the GIS drainage layer screenshot"
+      ],
+      "schedule_fine_inr": 1000,
+      "schedule_daily_fine_inr": 100,
+      "appeal": "Commissioner, within 7 days of the order (s.408B)",
+      "notes": "Water bodies: also check Haryana Pond and Waste Water Management Authority Act, 2018 and NGT directions; refer to the Executive Engineer (Drainage).",
+      "active": true
+    },
+    {
+      "code": "GL-07",
+      "category": "GOVT_LAND",
+      "title_en": "Construction on land reserved for public purpose in a sanctioned scheme / layout (park, green belt, community site, road)",
+      "title_hi": "स्वीकृत योजना / लेआउट में सार्वजनिक प्रयोजन हेतु आरक्षित भूमि (पार्क, ग्रीन बेल्ट, सामुदायिक स्थल, सड़क) पर निर्माण",
+      "description": "Buildings on sites earmarked in the sanctioned layout / development plan / building scheme for parks, open spaces, roads, community facilities or other public purposes.",
+      "legal_basis": [
+        {
+          "statute": "HMCA1994",
+          "section": "254(2)(g)"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "258(2)"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "267"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "261(1)"
+        },
+        {
+          "statute": "PSRCA1963",
+          "section": "7"
+        },
+        {
+          "statute": "PSRCA1963",
+          "section": "12(1)"
+        }
+      ],
+      "contravention_of": "Sections 254(2)(g), 258(2) and 267 of the Haryana Municipal Corporation Act, 1994 (and section 7 of the Punjab Scheduled Roads and Controlled Areas Restriction of Unregulated Development Act, 1963 where the site is in a controlled area)",
+      "action_path": "HMCA_261",
+      "orders_available": [
+        "SCN_261",
+        "STOP_WORK_262",
+        "SEALING_263A",
+        "DEMOLITION_ORDER_261",
+        "REFERRAL_TO_DTCP"
+      ],
+      "scn_response_days_default": 7,
+      "order_compliance_days_default": 15,
+      "statutory_minimum_days": 3,
+      "severity": "CRITICAL",
+      "compoundable": "NO",
+      "evidence_checklist": [
+        "Geotagged photographs of the structure from the street (front, both sides)",
+        "Geotagged close-up of the violating portion",
+        "Short video walk-through (max 60 s)",
+        "Site plan / sketch with measurements",
+        "PID or address, owner/occupier name and mobile",
+        "Name of person supervising construction on site",
+        "Screenshot of the government-land layer showing the point inside the parcel",
+        "Khasra/parcel number from the land record layer",
+        "Photograph of any boundary pillars / demarcation",
+        "Extract of sanctioned layout / zoning plan showing reservation"
+      ],
+      "schedule_fine_inr": 1000,
+      "schedule_daily_fine_inr": null,
+      "appeal": "Divisional Commissioner, within the period specified in the order (s.261(2)); sealing: 7 days (s.263A(4))",
+      "notes": null,
+      "active": true
+    },
+    {
+      "code": "GL-08",
+      "category": "STREET_ENCROACHMENT",
+      "title_en": "Deposit of building material / malba on street or public land without permission",
+      "title_hi": "बिना अनुमति सड़क या सार्वजनिक भूमि पर निर्माण सामग्री / मलबा जमा करना",
+      "description": "Building material, debris (malba), sand, bricks, scaffolding or enclosures placed on a street or public place without written permission of the Commissioner.",
+      "legal_basis": [
+        {
+          "statute": "HMCA1994",
+          "section": "243(1)"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "243(3)"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "238(2)"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "244"
+        }
+      ],
+      "contravention_of": "Sections 238(2) and 243(1) of the Haryana Municipal Corporation Act, 1994 (also Construction & Demolition Waste Management Rules, 2016)",
+      "action_path": "HMCA_235_238",
+      "orders_available": [
+        "REMOVAL_NOTICE_235",
+        "SUMMARY_REMOVAL_240"
+      ],
+      "scn_response_days_default": 1,
+      "order_compliance_days_default": 1,
+      "statutory_minimum_days": 0,
+      "severity": "LOW",
+      "compoundable": "YES",
+      "evidence_checklist": [
+        "Geotagged photographs of the structure from the street (front, both sides)",
+        "Geotagged close-up of the violating portion",
+        "Short video walk-through (max 60 s)",
+        "Site plan / sketch with measurements",
+        "PID or address, owner/occupier name and mobile",
+        "Name of person supervising construction on site"
+      ],
+      "schedule_fine_inr": 500,
+      "schedule_daily_fine_inr": 50,
+      "appeal": "Notice under s.235(2); summary removal u/s 240/243(3)",
+      "notes": "Summary removal without notice permitted (s.243(3)); link the C&D waste challan module for the malba lifting charge.",
+      "active": true
+    },
+    {
+      "code": "PL-01",
+      "category": "PRIVATE_LAND_NO_SANCTION",
+      "title_en": "Erection of building without sanction of building plan",
+      "title_hi": "भवन योजना की स्वीकृति के बिना भवन का निर्माण",
+      "description": "New construction commenced, in progress or completed on a private plot without the previous sanction of the Commissioner (no BR-I application / no sanctioned plan / no self-certification intimation).",
+      "legal_basis": [
+        {
+          "statute": "HMCA1994",
+          "section": "250"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "251"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "261(1)"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "262(1)"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "263A(1)"
+        },
+        {
+          "statute": "HBC2017",
+          "section": "2.1(1)"
+        },
+        {
+          "statute": "HBC2017",
+          "section": "2.2(4)"
+        }
+      ],
+      "contravention_of": "Section 250 read with section 251 of the Haryana Municipal Corporation Act, 1994 and Code 2.1 of the Haryana Building Code, 2017",
+      "action_path": "HMCA_261",
+      "orders_available": [
+        "SCN_261",
+        "STOP_WORK_262",
+        "SEALING_263A",
+        "DEMOLITION_ORDER_261"
+      ],
+      "scn_response_days_default": 7,
+      "order_compliance_days_default": 15,
+      "statutory_minimum_days": 3,
+      "severity": "CRITICAL",
+      "compoundable": "CONDITIONAL",
+      "evidence_checklist": [
+        "Geotagged photographs of the structure from the street (front, both sides)",
+        "Geotagged close-up of the violating portion",
+        "Short video walk-through (max 60 s)",
+        "Site plan / sketch with measurements",
+        "PID or address, owner/occupier name and mobile",
+        "Name of person supervising construction on site",
+        "Sanctioned plan number, date and licence/BR-I reference",
+        "Measured vs permitted values (coverage, FAR, setbacks, height)",
+        "DPC certificate / stage-completion records if any"
+      ],
+      "schedule_fine_inr": 5000,
+      "schedule_daily_fine_inr": 500,
+      "appeal": "Divisional Commissioner, within the period specified in the order (s.261(2)); sealing: 7 days (s.263A(4))",
+      "notes": "Regularisation possible only if the construction is otherwise in conformity with the Code and a plan is sanctioned with composition charges; ground-coverage violations are non-compoundable (HBC 6.3).",
+      "active": true
+    },
+    {
+      "code": "PL-02",
+      "category": "PRIVATE_LAND_NO_SANCTION",
+      "title_en": "Addition / alteration / structural repair without sanction",
+      "title_hi": "स्वीकृति के बिना जोड़ / परिवर्तन / संरचनात्मक मरम्मत",
+      "description": "Additional floor, room, extension, removal or re-erection of external/partition/load-bearing walls, sub-division of rooms, closing of external openings, relocation of principal staircase or other works listed in section 252 executed without sanction.",
+      "legal_basis": [
+        {
+          "statute": "HMCA1994",
+          "section": "252"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "250"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "261(1)"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "263"
+        },
+        {
+          "statute": "HBC2017",
+          "section": "4.6"
+        }
+      ],
+      "contravention_of": "Sections 250 and 252 of the Haryana Municipal Corporation Act, 1994 and Code 4.6 of the Haryana Building Code, 2017",
+      "action_path": "HMCA_261",
+      "orders_available": [
+        "SCN_261",
+        "STOP_WORK_262",
+        "ALTERATION_NOTICE_263",
+        "DEMOLITION_ORDER_261"
+      ],
+      "scn_response_days_default": 7,
+      "order_compliance_days_default": 15,
+      "statutory_minimum_days": 3,
+      "severity": "HIGH",
+      "compoundable": "CONDITIONAL",
+      "evidence_checklist": [
+        "Geotagged photographs of the structure from the street (front, both sides)",
+        "Geotagged close-up of the violating portion",
+        "Short video walk-through (max 60 s)",
+        "Site plan / sketch with measurements",
+        "PID or address, owner/occupier name and mobile",
+        "Name of person supervising construction on site",
+        "Sanctioned plan number, date and licence/BR-I reference",
+        "Measured vs permitted values (coverage, FAR, setbacks, height)",
+        "DPC certificate / stage-completion records if any"
+      ],
+      "schedule_fine_inr": 500,
+      "schedule_daily_fine_inr": 50,
+      "appeal": "Divisional Commissioner, within the period specified in the order (s.261(2)); sealing: 7 days (s.263A(4))",
+      "notes": null,
+      "active": true
+    },
+    {
+      "code": "PL-03",
+      "category": "PRIVATE_LAND_NO_SANCTION",
+      "title_en": "Construction continued after expiry / lapse of sanction validity",
+      "title_hi": "स्वीकृति की वैधता समाप्त होने के बाद निर्माण जारी रखना",
+      "description": "Work continued beyond the completion period specified in the sanction or after the sanction lapsed without re-validation / fresh sanction.",
+      "legal_basis": [
+        {
+          "statute": "HMCA1994",
+          "section": "259"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "255(3)"
+        },
+        {
+          "statute": "HBC2017",
+          "section": "4.3-4.4"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "261(1)"
+        }
+      ],
+      "contravention_of": "Section 259 read with section 255(3) of the Haryana Municipal Corporation Act, 1994 and Codes 4.3-4.4 of the Haryana Building Code, 2017",
+      "action_path": "HMCA_261",
+      "orders_available": [
+        "SCN_261",
+        "STOP_WORK_262",
+        "DEMOLITION_ORDER_261"
+      ],
+      "scn_response_days_default": 7,
+      "order_compliance_days_default": 15,
+      "statutory_minimum_days": 3,
+      "severity": "MEDIUM",
+      "compoundable": "YES",
+      "evidence_checklist": [
+        "Geotagged photographs of the structure from the street (front, both sides)",
+        "Geotagged close-up of the violating portion",
+        "Short video walk-through (max 60 s)",
+        "Site plan / sketch with measurements",
+        "PID or address, owner/occupier name and mobile",
+        "Name of person supervising construction on site",
+        "Sanctioned plan number, date and licence/BR-I reference",
+        "Measured vs permitted values (coverage, FAR, setbacks, height)",
+        "DPC certificate / stage-completion records if any",
+        "Sanction letter showing validity / completion period"
+      ],
+      "schedule_fine_inr": 2000,
+      "schedule_daily_fine_inr": 200,
+      "appeal": "Divisional Commissioner, within the period specified in the order (s.261(2)); sealing: 7 days (s.263A(4))",
+      "notes": null,
+      "active": true
+    },
+    {
+      "code": "PL-04",
+      "category": "PRIVATE_LAND_NO_SANCTION",
+      "title_en": "Sanction obtained by misrepresentation or fraudulent documents",
+      "title_hi": "गलत बयानी या कूटरचित दस्तावेज़ों से प्राप्त स्वीकृति",
+      "description": "Sanction/self-certification found to be based on material misrepresentation, forged ownership papers or false certificates; on cancellation the construction is deemed to be without sanction.",
+      "legal_basis": [
+        {
+          "statute": "HMCA1994",
+          "section": "256"
+        },
+        {
+          "statute": "HBC2017",
+          "section": "4.7"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "261(1)"
+        }
+      ],
+      "contravention_of": "Section 256 of the Haryana Municipal Corporation Act, 1994 and Code 4.7 of the Haryana Building Code, 2017",
+      "action_path": "HMCA_261",
+      "orders_available": [
+        "SCN_256_CANCELLATION",
+        "SCN_261",
+        "STOP_WORK_262",
+        "SEALING_263A",
+        "DEMOLITION_ORDER_261"
+      ],
+      "scn_response_days_default": 7,
+      "order_compliance_days_default": 15,
+      "statutory_minimum_days": 3,
+      "severity": "CRITICAL",
+      "compoundable": "NO",
+      "evidence_checklist": [
+        "Geotagged photographs of the structure from the street (front, both sides)",
+        "Geotagged close-up of the violating portion",
+        "Short video walk-through (max 60 s)",
+        "Site plan / sketch with measurements",
+        "PID or address, owner/occupier name and mobile",
+        "Name of person supervising construction on site",
+        "Sanctioned plan number, date and licence/BR-I reference",
+        "Measured vs permitted values (coverage, FAR, setbacks, height)",
+        "DPC certificate / stage-completion records if any",
+        "Copy of the impugned document and the verification report (revenue / registrar)"
+      ],
+      "schedule_fine_inr": 5000,
+      "schedule_daily_fine_inr": 500,
+      "appeal": "Divisional Commissioner, within the period specified in the order (s.261(2)); sealing: 7 days (s.263A(4))",
+      "notes": "Also refer the Architect to the Council of Architecture (HBC 2.2(3)) and consider a police complaint for forgery (BNS 2023 ss.336-340).",
+      "active": true
+    },
+    {
+      "code": "PL-05",
+      "category": "PROCEDURAL_NON_COMPLIANCE",
+      "title_en": "Commencement of work without notice of commencement / DPC certificate",
+      "title_hi": "प्रारंभ की सूचना / डी.पी.सी. प्रमाण-पत्र के बिना कार्य प्रारंभ",
+      "description": "Construction started without giving the notice of the proposed date of commencement (and DPC-level certificate) required after sanction.",
+      "legal_basis": [
+        {
+          "statute": "HMCA1994",
+          "section": "255(4)"
+        },
+        {
+          "statute": "HBC2017",
+          "section": "4.9"
+        }
+      ],
+      "contravention_of": "Section 255(4) of the Haryana Municipal Corporation Act, 1994 and Code 4.9 of the Haryana Building Code, 2017",
+      "action_path": "HMCA_263",
+      "orders_available": [
+        "ALTERATION_NOTICE_263",
+        "STOP_WORK_262"
+      ],
+      "scn_response_days_default": 7,
+      "order_compliance_days_default": 7,
+      "statutory_minimum_days": 0,
+      "severity": "LOW",
+      "compoundable": "YES",
+      "evidence_checklist": [
+        "Geotagged photographs of the structure from the street (front, both sides)",
+        "Geotagged close-up of the violating portion",
+        "Short video walk-through (max 60 s)",
+        "Site plan / sketch with measurements",
+        "PID or address, owner/occupier name and mobile",
+        "Name of person supervising construction on site",
+        "Sanctioned plan number, date and licence/BR-I reference",
+        "Measured vs permitted values (coverage, FAR, setbacks, height)",
+        "DPC certificate / stage-completion records if any"
+      ],
+      "schedule_fine_inr": 2000,
+      "schedule_daily_fine_inr": 200,
+      "appeal": "Show cause under s.263(1)(b); order under s.263(3); thereafter s.261 remedies",
+      "notes": null,
+      "active": true
+    },
+    {
+      "code": "PL-06",
+      "category": "PRIVATE_LAND_NO_SANCTION",
+      "title_en": "Illegal colony / unauthorised plotting or layout / roads laid without sanction",
+      "title_hi": "अवैध कॉलोनी / अनधिकृत प्लॉटिंग या लेआउट / बिना स्वीकृति सड़कें बनाना",
+      "description": "Land divided into plots, streets laid out, boundary walls/plinths raised or plots sold on the ground without a sanctioned layout plan / licence.",
+      "legal_basis": [
+        {
+          "statute": "HMCA1994",
+          "section": "230"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "231"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "232"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "254(2)(d)"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "261(1)"
+        },
+        {
+          "statute": "PSRCA1963",
+          "section": "7"
+        },
+        {
+          "statute": "PSRCA1963",
+          "section": "12(1)"
+        }
+      ],
+      "contravention_of": "Sections 230-232 and 254(2)(d) of the Haryana Municipal Corporation Act, 1994 (and section 7 of the 1963 Act / section 3 of the Haryana Development and Regulation of Urban Areas Act, 1975 where applicable)",
+      "action_path": "HMCA_261",
+      "orders_available": [
+        "SCN_261",
+        "STOP_WORK_262",
+        "DEMOLITION_ORDER_261",
+        "REFERRAL_TO_DTCP"
+      ],
+      "scn_response_days_default": 7,
+      "order_compliance_days_default": 15,
+      "statutory_minimum_days": 3,
+      "severity": "CRITICAL",
+      "compoundable": "NO",
+      "evidence_checklist": [
+        "Geotagged photographs of the structure from the street (front, both sides)",
+        "Geotagged close-up of the violating portion",
+        "Short video walk-through (max 60 s)",
+        "Site plan / sketch with measurements",
+        "PID or address, owner/occupier name and mobile",
+        "Name of person supervising construction on site",
+        "Drone / satellite imagery of the layout",
+        "Khasra numbers and area under plotting",
+        "Details of the coloniser / developer and any sale deeds"
+      ],
+      "schedule_fine_inr": 1000,
+      "schedule_daily_fine_inr": null,
+      "appeal": "Divisional Commissioner, within the period specified in the order (s.261(2)); sealing: 7 days (s.263A(4))",
+      "notes": "Co-ordinate with DTP (Enforcement) where the land is in a controlled area outside the sanctioned layout; the app generates the referral.",
+      "active": true
+    },
+    {
+      "code": "DV-01",
+      "category": "DEVIATION_FROM_SANCTION",
+      "title_en": "Construction contrary to sanctioned plan / in contravention of conditions of sanction",
+      "title_hi": "स्वीकृत नक्शे के विपरीत / स्वीकृति की शर्तों का उल्लंघन करते हुए निर्माण",
+      "description": "Any deviation from the sanctioned drawings or the conditions of sanction not covered by a revised sanction (general head; use the specific codes below where the deviation is identifiable).",
+      "legal_basis": [
+        {
+          "statute": "HMCA1994",
+          "section": "255(2)"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "261(1)"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "262(1)"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "263"
+        },
+        {
+          "statute": "HBC2017",
+          "section": "4.6"
+        },
+        {
+          "statute": "HBC2017",
+          "section": "2.2(4)"
+        }
+      ],
+      "contravention_of": "Section 255(2) of the Haryana Municipal Corporation Act, 1994 and Code 4.6 of the Haryana Building Code, 2017",
+      "action_path": "HMCA_263",
+      "orders_available": [
+        "ALTERATION_NOTICE_263",
+        "SCN_261",
+        "STOP_WORK_262",
+        "SEALING_263A",
+        "DEMOLITION_ORDER_261"
+      ],
+      "scn_response_days_default": 7,
+      "order_compliance_days_default": 15,
+      "statutory_minimum_days": 0,
+      "severity": "HIGH",
+      "compoundable": "CONDITIONAL",
+      "evidence_checklist": [
+        "Geotagged photographs of the structure from the street (front, both sides)",
+        "Geotagged close-up of the violating portion",
+        "Short video walk-through (max 60 s)",
+        "Site plan / sketch with measurements",
+        "PID or address, owner/occupier name and mobile",
+        "Name of person supervising construction on site",
+        "Sanctioned plan number, date and licence/BR-I reference",
+        "Measured vs permitted values (coverage, FAR, setbacks, height)",
+        "DPC certificate / stage-completion records if any"
+      ],
+      "schedule_fine_inr": 2000,
+      "schedule_daily_fine_inr": 200,
+      "appeal": "Show cause under s.263(1)(b); order under s.263(3); thereafter s.261 remedies",
+      "notes": null,
+      "active": true
+    },
+    {
+      "code": "DV-02",
+      "category": "DEVIATION_FROM_SANCTION",
+      "title_en": "Ground coverage in excess of permissible limit",
+      "title_hi": "अनुमेय सीमा से अधिक ग्राउंड कवरेज",
+      "description": "Covered area at ground/any floor exceeding the permissible ground coverage for the plot category; non-compoundable under the Code.",
+      "legal_basis": [
+        {
+          "statute": "HBC2017",
+          "section": "6.3"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "255(2)"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "261(1)"
+        }
+      ],
+      "contravention_of": "Code 6.3 of the Haryana Building Code, 2017 read with section 255(2) of the Haryana Municipal Corporation Act, 1994",
+      "action_path": "HMCA_261",
+      "orders_available": [
+        "SCN_261",
+        "STOP_WORK_262",
+        "SEALING_263A",
+        "DEMOLITION_ORDER_261"
+      ],
+      "scn_response_days_default": 7,
+      "order_compliance_days_default": 15,
+      "statutory_minimum_days": 3,
+      "severity": "HIGH",
+      "compoundable": "NO",
+      "evidence_checklist": [
+        "Geotagged photographs of the structure from the street (front, both sides)",
+        "Geotagged close-up of the violating portion",
+        "Short video walk-through (max 60 s)",
+        "Site plan / sketch with measurements",
+        "PID or address, owner/occupier name and mobile",
+        "Name of person supervising construction on site",
+        "Sanctioned plan number, date and licence/BR-I reference",
+        "Measured vs permitted values (coverage, FAR, setbacks, height)",
+        "DPC certificate / stage-completion records if any",
+        "Measured coverage (sq m) vs permitted (sq m and %)"
+      ],
+      "schedule_fine_inr": 2000,
+      "schedule_daily_fine_inr": 200,
+      "appeal": "Divisional Commissioner, within the period specified in the order (s.261(2)); sealing: 7 days (s.263A(4))",
+      "notes": null,
+      "active": true
+    },
+    {
+      "code": "DV-03",
+      "category": "DEVIATION_FROM_SANCTION",
+      "title_en": "Floor Area Ratio (FAR) / additional floor beyond permissible",
+      "title_hi": "अनुमेय से अधिक एफ.ए.आर. / अतिरिक्त मंज़िल",
+      "description": "Total covered area exceeding the permissible FAR, or floors constructed beyond the number sanctioned/permissible for the plot (e.g., 5th floor on a plot permitted S+4).",
+      "legal_basis": [
+        {
+          "statute": "HBC2017",
+          "section": "6.3"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "255(2)"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "261(1)"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "263A(1)"
+        }
+      ],
+      "contravention_of": "Code 6.3 (FAR) of the Haryana Building Code, 2017 read with section 255(2) of the Haryana Municipal Corporation Act, 1994",
+      "action_path": "HMCA_261",
+      "orders_available": [
+        "SCN_261",
+        "STOP_WORK_262",
+        "SEALING_263A",
+        "DEMOLITION_ORDER_261"
+      ],
+      "scn_response_days_default": 7,
+      "order_compliance_days_default": 15,
+      "statutory_minimum_days": 3,
+      "severity": "HIGH",
+      "compoundable": "CONDITIONAL",
+      "evidence_checklist": [
+        "Geotagged photographs of the structure from the street (front, both sides)",
+        "Geotagged close-up of the violating portion",
+        "Short video walk-through (max 60 s)",
+        "Site plan / sketch with measurements",
+        "PID or address, owner/occupier name and mobile",
+        "Name of person supervising construction on site",
+        "Sanctioned plan number, date and licence/BR-I reference",
+        "Measured vs permitted values (coverage, FAR, setbacks, height)",
+        "DPC certificate / stage-completion records if any",
+        "Measured FAR vs permitted FAR",
+        "Number of floors sanctioned vs constructed"
+      ],
+      "schedule_fine_inr": 2000,
+      "schedule_daily_fine_inr": 200,
+      "appeal": "Divisional Commissioner, within the period specified in the order (s.261(2)); sealing: 7 days (s.263A(4))",
+      "notes": "Purchasable FAR / composition may regularise excess FAR only within the limits and on the charges notified by the Government.",
+      "active": true
+    },
+    {
+      "code": "DV-04",
+      "category": "DEVIATION_FROM_SANCTION",
+      "title_en": "Violation of front / side / rear setbacks",
+      "title_hi": "आगे / बगल / पीछे के सेटबैक का उल्लंघन",
+      "description": "Construction within the mandatory open spaces (setbacks) around the building, including covering of setbacks with rooms, porticos beyond limits or sheds.",
+      "legal_basis": [
+        {
+          "statute": "HBC2017",
+          "section": "6.3"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "263"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "261(1)"
+        }
+      ],
+      "contravention_of": "Code 6.3 (setbacks) of the Haryana Building Code, 2017 read with sections 255(2) and 263 of the Haryana Municipal Corporation Act, 1994",
+      "action_path": "HMCA_263",
+      "orders_available": [
+        "ALTERATION_NOTICE_263",
+        "SCN_261",
+        "DEMOLITION_ORDER_261"
+      ],
+      "scn_response_days_default": 7,
+      "order_compliance_days_default": 15,
+      "statutory_minimum_days": 0,
+      "severity": "HIGH",
+      "compoundable": "CONDITIONAL",
+      "evidence_checklist": [
+        "Geotagged photographs of the structure from the street (front, both sides)",
+        "Geotagged close-up of the violating portion",
+        "Short video walk-through (max 60 s)",
+        "Site plan / sketch with measurements",
+        "PID or address, owner/occupier name and mobile",
+        "Name of person supervising construction on site",
+        "Sanctioned plan number, date and licence/BR-I reference",
+        "Measured vs permitted values (coverage, FAR, setbacks, height)",
+        "DPC certificate / stage-completion records if any",
+        "Measured setbacks (m) on each side vs required"
+      ],
+      "schedule_fine_inr": 2000,
+      "schedule_daily_fine_inr": 200,
+      "appeal": "Show cause under s.263(1)(b); order under s.263(3); thereafter s.261 remedies",
+      "notes": null,
+      "active": true
+    },
+    {
+      "code": "DV-05",
+      "category": "DEVIATION_FROM_SANCTION",
+      "title_en": "Building height beyond permissible",
+      "title_hi": "अनुमेय से अधिक भवन की ऊँचाई",
+      "description": "Height of building (including mumty/parapet where counted) exceeding the permissible height for the plot / zone (e.g., 15 m for residential plotted with stilt).",
+      "legal_basis": [
+        {
+          "statute": "HBC2017",
+          "section": "6.3"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "261(1)"
+        }
+      ],
+      "contravention_of": "Code 6.3 (height) of the Haryana Building Code, 2017 read with section 255(2) of the Haryana Municipal Corporation Act, 1994",
+      "action_path": "HMCA_261",
+      "orders_available": [
+        "SCN_261",
+        "STOP_WORK_262",
+        "DEMOLITION_ORDER_261"
+      ],
+      "scn_response_days_default": 7,
+      "order_compliance_days_default": 15,
+      "statutory_minimum_days": 3,
+      "severity": "HIGH",
+      "compoundable": "NO",
+      "evidence_checklist": [
+        "Geotagged photographs of the structure from the street (front, both sides)",
+        "Geotagged close-up of the violating portion",
+        "Short video walk-through (max 60 s)",
+        "Site plan / sketch with measurements",
+        "PID or address, owner/occupier name and mobile",
+        "Name of person supervising construction on site",
+        "Sanctioned plan number, date and licence/BR-I reference",
+        "Measured vs permitted values (coverage, FAR, setbacks, height)",
+        "DPC certificate / stage-completion records if any",
+        "Measured height (m) vs permitted"
+      ],
+      "schedule_fine_inr": 2000,
+      "schedule_daily_fine_inr": 200,
+      "appeal": "Divisional Commissioner, within the period specified in the order (s.261(2)); sealing: 7 days (s.263A(4))",
+      "notes": null,
+      "active": true
+    },
+    {
+      "code": "DV-06",
+      "category": "DEVIATION_FROM_SANCTION",
+      "title_en": "Basement constructed without sanction / beyond permitted extent or misused",
+      "title_hi": "स्वीकृति के बिना / अनुमत सीमा से अधिक बेसमेंट या उसका दुरुपयोग",
+      "description": "Basement dug or built without sanction, extending beyond the permitted footprint/setbacks, or used for habitation/commerce against the Code.",
+      "legal_basis": [
+        {
+          "statute": "HBC2017",
+          "section": "7.16"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "250"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "261(1)"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "265(1)"
+        }
+      ],
+      "contravention_of": "Code 7.16 of the Haryana Building Code, 2017 read with sections 250 and 265(1) of the Haryana Municipal Corporation Act, 1994",
+      "action_path": "HMCA_261",
+      "orders_available": [
+        "SCN_261",
+        "STOP_WORK_262",
+        "SEALING_263A",
+        "DEMOLITION_ORDER_261"
+      ],
+      "scn_response_days_default": 7,
+      "order_compliance_days_default": 15,
+      "statutory_minimum_days": 3,
+      "severity": "HIGH",
+      "compoundable": "NO",
+      "evidence_checklist": [
+        "Geotagged photographs of the structure from the street (front, both sides)",
+        "Geotagged close-up of the violating portion",
+        "Short video walk-through (max 60 s)",
+        "Site plan / sketch with measurements",
+        "PID or address, owner/occupier name and mobile",
+        "Name of person supervising construction on site",
+        "Sanctioned plan number, date and licence/BR-I reference",
+        "Measured vs permitted values (coverage, FAR, setbacks, height)",
+        "DPC certificate / stage-completion records if any",
+        "Structural safety concern noted (adjoining buildings)"
+      ],
+      "schedule_fine_inr": 2000,
+      "schedule_daily_fine_inr": 200,
+      "appeal": "Divisional Commissioner, within the period specified in the order (s.261(2)); sealing: 7 days (s.263A(4))",
+      "notes": null,
+      "active": true
+    },
+    {
+      "code": "DV-07",
+      "category": "DEVIATION_FROM_SANCTION",
+      "title_en": "Stilt parking covered / converted or parking not provided as sanctioned",
+      "title_hi": "स्टिल्ट पार्किंग को ढकना / बदलना या स्वीकृत पार्किंग उपलब्ध न कराना",
+      "description": "Stilt floor sanctioned for parking enclosed into rooms/shops, or mandatory parking spaces used for other purposes.",
+      "legal_basis": [
+        {
+          "statute": "HBC2017",
+          "section": "6.3"
+        },
+        {
+          "statute": "HBC2017",
+          "section": "7.1"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "263"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "265(1)"
+        }
+      ],
+      "contravention_of": "Codes 6.3 and 7.1 of the Haryana Building Code, 2017 read with sections 263 and 265(1) of the Haryana Municipal Corporation Act, 1994",
+      "action_path": "HMCA_263",
+      "orders_available": [
+        "ALTERATION_NOTICE_263",
+        "SCN_261",
+        "SEALING_263A",
+        "DEMOLITION_ORDER_261"
+      ],
+      "scn_response_days_default": 7,
+      "order_compliance_days_default": 15,
+      "statutory_minimum_days": 0,
+      "severity": "MEDIUM",
+      "compoundable": "NO",
+      "evidence_checklist": [
+        "Geotagged photographs of the structure from the street (front, both sides)",
+        "Geotagged close-up of the violating portion",
+        "Short video walk-through (max 60 s)",
+        "Site plan / sketch with measurements",
+        "PID or address, owner/occupier name and mobile",
+        "Name of person supervising construction on site",
+        "Sanctioned plan number, date and licence/BR-I reference",
+        "Measured vs permitted values (coverage, FAR, setbacks, height)",
+        "DPC certificate / stage-completion records if any"
+      ],
+      "schedule_fine_inr": 1000,
+      "schedule_daily_fine_inr": 100,
+      "appeal": "Show cause under s.263(1)(b); order under s.263(3); thereafter s.261 remedies",
+      "notes": null,
+      "active": true
+    },
+    {
+      "code": "DV-08",
+      "category": "DEVIATION_FROM_SANCTION",
+      "title_en": "Unauthorised sub-division of plot / more than one building unit on a plot",
+      "title_hi": "प्लॉट का अनधिकृत उप-विभाजन / एक प्लॉट पर एक से अधिक भवन इकाई",
+      "description": "Plot split into independent units with separate access/staircases, or more dwelling units than permitted, without approval.",
+      "legal_basis": [
+        {
+          "statute": "HBC2017",
+          "section": "6.2(1)-(2)"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "254(2)(d)"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "261(1)"
+        }
+      ],
+      "contravention_of": "Code 6.2 of the Haryana Building Code, 2017 read with section 254(2)(d) of the Haryana Municipal Corporation Act, 1994",
+      "action_path": "HMCA_261",
+      "orders_available": [
+        "SCN_261",
+        "STOP_WORK_262",
+        "SEALING_263A",
+        "DEMOLITION_ORDER_261"
+      ],
+      "scn_response_days_default": 7,
+      "order_compliance_days_default": 15,
+      "statutory_minimum_days": 3,
+      "severity": "HIGH",
+      "compoundable": "NO",
+      "evidence_checklist": [
+        "Geotagged photographs of the structure from the street (front, both sides)",
+        "Geotagged close-up of the violating portion",
+        "Short video walk-through (max 60 s)",
+        "Site plan / sketch with measurements",
+        "PID or address, owner/occupier name and mobile",
+        "Name of person supervising construction on site",
+        "Sanctioned plan number, date and licence/BR-I reference",
+        "Measured vs permitted values (coverage, FAR, setbacks, height)",
+        "DPC certificate / stage-completion records if any",
+        "Number of independent units / kitchens / meters"
+      ],
+      "schedule_fine_inr": 2000,
+      "schedule_daily_fine_inr": 200,
+      "appeal": "Divisional Commissioner, within the period specified in the order (s.261(2)); sealing: 7 days (s.263A(4))",
+      "notes": null,
+      "active": true
+    },
+    {
+      "code": "DV-09",
+      "category": "DEVIATION_FROM_SANCTION",
+      "title_en": "Unauthorised amalgamation of plots",
+      "title_hi": "प्लॉटों का अनधिकृत समामेलन",
+      "description": "Two or more plots built upon as one unit without approval of amalgamation or in violation of the zoning for the amalgamated plot.",
+      "legal_basis": [
+        {
+          "statute": "HBC2017",
+          "section": "6.2(1)-(2)"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "261(1)"
+        }
+      ],
+      "contravention_of": "Code 6.2 of the Haryana Building Code, 2017",
+      "action_path": "HMCA_263",
+      "orders_available": [
+        "ALTERATION_NOTICE_263",
+        "SCN_261",
+        "DEMOLITION_ORDER_261"
+      ],
+      "scn_response_days_default": 7,
+      "order_compliance_days_default": 15,
+      "statutory_minimum_days": 0,
+      "severity": "MEDIUM",
+      "compoundable": "CONDITIONAL",
+      "evidence_checklist": [
+        "Geotagged photographs of the structure from the street (front, both sides)",
+        "Geotagged close-up of the violating portion",
+        "Short video walk-through (max 60 s)",
+        "Site plan / sketch with measurements",
+        "PID or address, owner/occupier name and mobile",
+        "Name of person supervising construction on site",
+        "Sanctioned plan number, date and licence/BR-I reference",
+        "Measured vs permitted values (coverage, FAR, setbacks, height)",
+        "DPC certificate / stage-completion records if any"
+      ],
+      "schedule_fine_inr": 2000,
+      "schedule_daily_fine_inr": 200,
+      "appeal": "Show cause under s.263(1)(b); order under s.263(3); thereafter s.261 remedies",
+      "notes": null,
+      "active": true
+    },
+    {
+      "code": "DV-10",
+      "category": "DEVIATION_FROM_SANCTION",
+      "title_en": "Violation of zoning plan / architectural control sheet",
+      "title_hi": "ज़ोनिंग प्लान / आर्किटेक्चरल कंट्रोल शीट का उल्लंघन",
+      "description": "Building not conforming to the zoning plan or architectural control sheet applicable to the plot (e.g., shop-cum-flat sites, booths, sector commercial).",
+      "legal_basis": [
+        {
+          "statute": "HBC2017",
+          "section": "3.5"
+        },
+        {
+          "statute": "HBC2017",
+          "section": "6.4"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "261(1)"
+        }
+      ],
+      "contravention_of": "Codes 3.5 and 6.4 of the Haryana Building Code, 2017 read with section 255(2) of the Haryana Municipal Corporation Act, 1994",
+      "action_path": "HMCA_263",
+      "orders_available": [
+        "ALTERATION_NOTICE_263",
+        "SCN_261",
+        "DEMOLITION_ORDER_261"
+      ],
+      "scn_response_days_default": 7,
+      "order_compliance_days_default": 15,
+      "statutory_minimum_days": 0,
+      "severity": "MEDIUM",
+      "compoundable": "CONDITIONAL",
+      "evidence_checklist": [
+        "Geotagged photographs of the structure from the street (front, both sides)",
+        "Geotagged close-up of the violating portion",
+        "Short video walk-through (max 60 s)",
+        "Site plan / sketch with measurements",
+        "PID or address, owner/occupier name and mobile",
+        "Name of person supervising construction on site",
+        "Sanctioned plan number, date and licence/BR-I reference",
+        "Measured vs permitted values (coverage, FAR, setbacks, height)",
+        "DPC certificate / stage-completion records if any",
+        "Copy of the zoning plan / control sheet"
+      ],
+      "schedule_fine_inr": 2000,
+      "schedule_daily_fine_inr": 200,
+      "appeal": "Show cause under s.263(1)(b); order under s.263(3); thereafter s.261 remedies",
+      "notes": null,
+      "active": true
+    },
+    {
+      "code": "DV-11",
+      "category": "DEVIATION_FROM_SANCTION",
+      "title_en": "Mezzanine, mumty, pergola, chajja or projection beyond permitted limits",
+      "title_hi": "अनुमत सीमा से अधिक मेज़ेनाइन, मुमटी, पेर्गोला, छज्जा या प्रक्षेपण",
+      "description": "Mezzanine floors, mumty, pergolas, chajjas or cantilevered projections exceeding the dimensions permitted by the Code.",
+      "legal_basis": [
+        {
+          "statute": "HBC2017",
+          "section": "7.12"
+        },
+        {
+          "statute": "HBC2017",
+          "section": "7.13"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "263"
+        }
+      ],
+      "contravention_of": "Codes 7.12 and 7.13 of the Haryana Building Code, 2017 read with section 263 of the Haryana Municipal Corporation Act, 1994",
+      "action_path": "HMCA_263",
+      "orders_available": [
+        "ALTERATION_NOTICE_263",
+        "SCN_261"
+      ],
+      "scn_response_days_default": 7,
+      "order_compliance_days_default": 15,
+      "statutory_minimum_days": 0,
+      "severity": "LOW",
+      "compoundable": "YES",
+      "evidence_checklist": [
+        "Geotagged photographs of the structure from the street (front, both sides)",
+        "Geotagged close-up of the violating portion",
+        "Short video walk-through (max 60 s)",
+        "Site plan / sketch with measurements",
+        "PID or address, owner/occupier name and mobile",
+        "Name of person supervising construction on site",
+        "Sanctioned plan number, date and licence/BR-I reference",
+        "Measured vs permitted values (coverage, FAR, setbacks, height)",
+        "DPC certificate / stage-completion records if any"
+      ],
+      "schedule_fine_inr": 2000,
+      "schedule_daily_fine_inr": null,
+      "appeal": "Show cause under s.263(1)(b); order under s.263(3); thereafter s.261 remedies",
+      "notes": null,
+      "active": true
+    },
+    {
+      "code": "MU-01",
+      "category": "MISUSE_CHANGE_OF_USE",
+      "title_en": "Change of use of land or building without permission (e.g., residential to commercial, PG, guest house, godown)",
+      "title_hi": "बिना अनुमति भूमि या भवन के उपयोग में परिवर्तन (जैसे आवासीय से व्यावसायिक, पी.जी., गेस्ट हाउस, गोदाम)",
+      "description": "Use of premises for a purpose other than the sanctioned/permitted use without written permission of the Commissioner or Change of Land Use.",
+      "legal_basis": [
+        {
+          "statute": "HMCA1994",
+          "section": "265(1)"
+        },
+        {
+          "statute": "HBC2017",
+          "section": "4.12"
+        },
+        {
+          "statute": "HBC2017",
+          "section": "6.1"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "263A(1)"
+        }
+      ],
+      "contravention_of": "Section 265(1)(b) of the Haryana Municipal Corporation Act, 1994 and Codes 4.12 and 6.1 of the Haryana Building Code, 2017",
+      "action_path": "HMCA_265_1",
+      "orders_available": [
+        "MISUSE_NOTICE_265",
+        "SEALING_263A",
+        "OC_REVOCATION_HBC_4_12"
+      ],
+      "scn_response_days_default": 7,
+      "order_compliance_days_default": 15,
+      "statutory_minimum_days": 0,
+      "severity": "HIGH",
+      "compoundable": "CONDITIONAL",
+      "evidence_checklist": [
+        "Geotagged photographs of the structure from the street (front, both sides)",
+        "Geotagged close-up of the violating portion",
+        "Short video walk-through (max 60 s)",
+        "Site plan / sketch with measurements",
+        "PID or address, owner/occupier name and mobile",
+        "Name of person supervising construction on site",
+        "Photographs of signage / commercial activity",
+        "Trade licence / GST / electricity connection category if available"
+      ],
+      "schedule_fine_inr": 1000,
+      "schedule_daily_fine_inr": 100,
+      "appeal": "Notice u/s 265(1); revocation of OC after personal hearing (HBC 4.12)",
+      "notes": "Sealing under s.263A is available where the misuse is coupled with unauthorised construction; otherwise proceed under s.265(1), OC revocation and prosecution u/s 380.",
+      "active": true
+    },
+    {
+      "code": "MU-02",
+      "category": "MISUSE_CHANGE_OF_USE",
+      "title_en": "Occupation / use of building without completion / occupation certificate",
+      "title_hi": "पूर्णता / अधिभोग प्रमाण-पत्र के बिना भवन का अधिभोग / उपयोग",
+      "description": "Building or part occupied or used before the completion notice was given and occupation permission (OC) granted / deemed.",
+      "legal_basis": [
+        {
+          "statute": "HMCA1994",
+          "section": "264"
+        },
+        {
+          "statute": "HBC2017",
+          "section": "4.10(2)"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "266"
+        }
+      ],
+      "contravention_of": "Section 264(2) of the Haryana Municipal Corporation Act, 1994 and Code 4.10(2) of the Haryana Building Code, 2017",
+      "action_path": "HMCA_266",
+      "orders_available": [
+        "OC_NOTICE_264",
+        "VACATE_ORDER_266",
+        "SEALING_263A"
+      ],
+      "scn_response_days_default": 7,
+      "order_compliance_days_default": 15,
+      "statutory_minimum_days": 0,
+      "severity": "MEDIUM",
+      "compoundable": "YES",
+      "evidence_checklist": [
+        "Geotagged photographs of the structure from the street (front, both sides)",
+        "Geotagged close-up of the violating portion",
+        "Short video walk-through (max 60 s)",
+        "Site plan / sketch with measurements",
+        "PID or address, owner/occupier name and mobile",
+        "Name of person supervising construction on site",
+        "Evidence of occupation (residents, electricity/water connection)"
+      ],
+      "schedule_fine_inr": 500,
+      "schedule_daily_fine_inr": 50,
+      "appeal": "Order u/s 266(1) with reasons; police removal u/s 266(2)",
+      "notes": null,
+      "active": true
+    },
+    {
+      "code": "MU-03",
+      "category": "MISUSE_CHANGE_OF_USE",
+      "title_en": "Use of inflammable materials for roof / shed / pandal without permission",
+      "title_hi": "बिना अनुमति छत / शेड / पंडाल में ज्वलनशील सामग्री का उपयोग",
+      "description": "Roof, verandah, pandal, wall, shed or fence constructed of cloth, grass, leaves, mats or other inflammable material in an area specified by bye-laws without written permission.",
+      "legal_basis": [
+        {
+          "statute": "HMCA1994",
+          "section": "260"
+        }
+      ],
+      "contravention_of": "Section 260 of the Haryana Municipal Corporation Act, 1994",
+      "action_path": "HMCA_235_238",
+      "orders_available": [
+        "REMOVAL_NOTICE_235",
+        "SUMMARY_REMOVAL_240"
+      ],
+      "scn_response_days_default": 3,
+      "order_compliance_days_default": 3,
+      "statutory_minimum_days": 0,
+      "severity": "LOW",
+      "compoundable": "YES",
+      "evidence_checklist": [
+        "Geotagged photographs of the structure from the street (front, both sides)",
+        "Geotagged close-up of the violating portion",
+        "Short video walk-through (max 60 s)",
+        "Site plan / sketch with measurements",
+        "PID or address, owner/occupier name and mobile",
+        "Name of person supervising construction on site"
+      ],
+      "schedule_fine_inr": 1000,
+      "schedule_daily_fine_inr": null,
+      "appeal": "Notice under s.235(2); summary removal u/s 240/243(3)",
+      "notes": null,
+      "active": true
+    },
+    {
+      "code": "DB-01",
+      "category": "DANGEROUS_UNFIT",
+      "title_en": "Dangerous / ruinous structure likely to fall",
+      "title_hi": "खतरनाक / जर्जर संरचना जिसके गिरने की संभावना है",
+      "description": "Building or wall in a ruinous condition, likely to fall or otherwise dangerous to occupants, neighbours or passers-by.",
+      "legal_basis": [
+        {
+          "statute": "HMCA1994",
+          "section": "265(2)-(6)"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "315"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "266"
+        }
+      ],
+      "contravention_of": "Sections 265(2) and 315 of the Haryana Municipal Corporation Act, 1994",
+      "action_path": "HMCA_265_2",
+      "orders_available": [
+        "DANGEROUS_BUILDING_ORDER_265",
+        "VACATE_ORDER_266",
+        "IMMEDIATE_ACTION_265_4"
+      ],
+      "scn_response_days_default": 3,
+      "order_compliance_days_default": 7,
+      "statutory_minimum_days": 0,
+      "severity": "CRITICAL",
+      "compoundable": "NO",
+      "evidence_checklist": [
+        "Geotagged photographs of the structure from the street (front, both sides)",
+        "Geotagged close-up of the violating portion",
+        "Short video walk-through (max 60 s)",
+        "Site plan / sketch with measurements",
+        "PID or address, owner/occupier name and mobile",
+        "Name of person supervising construction on site",
+        "Structural condition photographs (cracks, tilt)",
+        "Engineer's preliminary assessment"
+      ],
+      "schedule_fine_inr": 2000,
+      "schedule_daily_fine_inr": 200,
+      "appeal": "Order under s.265(2); Commissioner may act forthwith if danger imminent (s.265(4))",
+      "notes": null,
+      "active": true
+    },
+    {
+      "code": "DB-02",
+      "category": "DANGEROUS_UNFIT",
+      "title_en": "Building unfit for human habitation",
+      "title_hi": "मानव निवास के लिए अनुपयुक्त भवन",
+      "description": "Building unfit for human habitation and not capable of being rendered fit at reasonable expense (repair, stability, damp, light/air, water, drainage, sanitation).",
+      "legal_basis": [
+        {
+          "statute": "HMCA1994",
+          "section": "284"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "282"
+        }
+      ],
+      "contravention_of": "Sections 282 to 284 of the Haryana Municipal Corporation Act, 1994",
+      "action_path": "HMCA_284",
+      "orders_available": [
+        "SCN_284",
+        "DEMOLITION_ORDER_284",
+        "VACATE_ORDER_266"
+      ],
+      "scn_response_days_default": 30,
+      "order_compliance_days_default": 42,
+      "statutory_minimum_days": 30,
+      "severity": "HIGH",
+      "compoundable": "NO",
+      "evidence_checklist": [
+        "Geotagged photographs of the structure from the street (front, both sides)",
+        "Geotagged close-up of the violating portion",
+        "Short video walk-through (max 60 s)",
+        "Site plan / sketch with measurements",
+        "PID or address, owner/occupier name and mobile",
+        "Name of person supervising construction on site",
+        "Health Officer / Engineer inspection report"
+      ],
+      "schedule_fine_inr": 2000,
+      "schedule_daily_fine_inr": 200,
+      "appeal": "Show cause u/s 284(1); undertaking u/s 284(2)",
+      "notes": "Statutory sequence: SCN -> undertaking (284(2)) -> demolition order with >=30 days to vacate and demolition within 6 weeks thereafter (284(3)).",
+      "active": true
+    },
+    {
+      "code": "PN-01",
+      "category": "PROCEDURAL_NON_COMPLIANCE",
+      "title_en": "Continuing construction after stop-work order",
+      "title_hi": "कार्य-रोक आदेश के बाद निर्माण जारी रखना",
+      "description": "Erection or work continued after service of a stop-work order under s.262(1) / s.261 second proviso.",
+      "legal_basis": [
+        {
+          "statute": "HMCA1994",
+          "section": "262(2)"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "262(3)"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "262(4)"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "380"
+        },
+        {
+          "statute": "BNS2023",
+          "section": "223"
+        }
+      ],
+      "contravention_of": "Section 262(2) of the Haryana Municipal Corporation Act, 1994 (disobedience of stop-work order) read with section 223 of the Bharatiya Nyaya Sanhita, 2023",
+      "action_path": "HMCA_261",
+      "orders_available": [
+        "POLICE_REQUISITION_262_2",
+        "WATCH_DEPUTATION_262_3",
+        "SEALING_263A",
+        "DEMOLITION_ORDER_261",
+        "PROSECUTION_380"
+      ],
+      "scn_response_days_default": 0,
+      "order_compliance_days_default": 3,
+      "statutory_minimum_days": 3,
+      "severity": "CRITICAL",
+      "compoundable": "NO",
+      "evidence_checklist": [
+        "Geotagged photographs of the structure from the street (front, both sides)",
+        "Geotagged close-up of the violating portion",
+        "Short video walk-through (max 60 s)",
+        "Site plan / sketch with measurements",
+        "PID or address, owner/occupier name and mobile",
+        "Name of person supervising construction on site",
+        "Copy of the stop-work order and proof of service",
+        "Dated photographs showing progress after service"
+      ],
+      "schedule_fine_inr": 2000,
+      "schedule_daily_fine_inr": 200,
+      "appeal": "Divisional Commissioner, within the period specified in the order (s.261(2)); sealing: 7 days (s.263A(4))",
+      "notes": null,
+      "active": true
+    },
+    {
+      "code": "PN-02",
+      "category": "PROCEDURAL_NON_COMPLIANCE",
+      "title_en": "Failure to comply with demolition order / alteration notice",
+      "title_hi": "ध्वस्तीकरण आदेश / परिवर्तन नोटिस का पालन न करना",
+      "description": "Person on whom a demolition order (s.261/408A) or alteration notice (s.263) was served has not complied within the period specified.",
+      "legal_basis": [
+        {
+          "statute": "HMCA1994",
+          "section": "261(6)"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "263"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "408A(3)"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "380"
+        }
+      ],
+      "contravention_of": "Sections 261(6), 263(2) and 408A(3) of the Haryana Municipal Corporation Act, 1994",
+      "action_path": "HMCA_261",
+      "orders_available": [
+        "EXECUTION_BY_CORPORATION",
+        "COST_RECOVERY",
+        "PROSECUTION_380"
+      ],
+      "scn_response_days_default": 0,
+      "order_compliance_days_default": 0,
+      "statutory_minimum_days": 3,
+      "severity": "CRITICAL",
+      "compoundable": "NO",
+      "evidence_checklist": [
+        "Geotagged photographs of the structure from the street (front, both sides)",
+        "Geotagged close-up of the violating portion",
+        "Short video walk-through (max 60 s)",
+        "Site plan / sketch with measurements",
+        "PID or address, owner/occupier name and mobile",
+        "Name of person supervising construction on site",
+        "Copy of order and proof of service",
+        "Photographs on the day after expiry"
+      ],
+      "schedule_fine_inr": 2000,
+      "schedule_daily_fine_inr": 200,
+      "appeal": "Divisional Commissioner, within the period specified in the order (s.261(2)); sealing: 7 days (s.263A(4))",
+      "notes": null,
+      "active": true
+    },
+    {
+      "code": "PN-03",
+      "category": "PROCEDURAL_NON_COMPLIANCE",
+      "title_en": "Breaking / removal of seal",
+      "title_hi": "सील तोड़ना / हटाना",
+      "description": "Seal affixed under s.263A removed or broken without an order of the Commissioner or the appellate authority.",
+      "legal_basis": [
+        {
+          "statute": "HMCA1994",
+          "section": "263A(3)"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "380"
+        },
+        {
+          "statute": "BNS2023",
+          "section": "223"
+        }
+      ],
+      "contravention_of": "Section 263A(3) of the Haryana Municipal Corporation Act, 1994 read with section 223 of the Bharatiya Nyaya Sanhita, 2023",
+      "action_path": "HMCA_261",
+      "orders_available": [
+        "RESEALING_263A",
+        "POLICE_COMPLAINT",
+        "DEMOLITION_ORDER_261",
+        "PROSECUTION_380"
+      ],
+      "scn_response_days_default": 0,
+      "order_compliance_days_default": 3,
+      "statutory_minimum_days": 3,
+      "severity": "CRITICAL",
+      "compoundable": "NO",
+      "evidence_checklist": [
+        "Geotagged photographs of the structure from the street (front, both sides)",
+        "Geotagged close-up of the violating portion",
+        "Short video walk-through (max 60 s)",
+        "Site plan / sketch with measurements",
+        "PID or address, owner/occupier name and mobile",
+        "Name of person supervising construction on site",
+        "Photograph of the broken seal with the sealing memo number",
+        "Police DDR / FIR number"
+      ],
+      "schedule_fine_inr": 2000,
+      "schedule_daily_fine_inr": 200,
+      "appeal": "Divisional Commissioner, within the period specified in the order (s.261(2)); sealing: 7 days (s.263A(4))",
+      "notes": null,
+      "active": true
+    },
+    {
+      "code": "PN-04",
+      "category": "PROCEDURAL_NON_COMPLIANCE",
+      "title_en": "Removal / defacing of notice affixed on premises",
+      "title_hi": "परिसर पर चस्पा नोटिस को हटाना / विरूपित करना",
+      "description": "Notice/order affixed on the premises removed, destroyed or defaced without authority.",
+      "legal_basis": [
+        {
+          "statute": "HMCA1994",
+          "section": "407"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "380"
+        }
+      ],
+      "contravention_of": "Section 407 of the Haryana Municipal Corporation Act, 1994",
+      "action_path": "HMCA_261",
+      "orders_available": [
+        "RE_AFFIXATION",
+        "PROSECUTION_380"
+      ],
+      "scn_response_days_default": 0,
+      "order_compliance_days_default": 0,
+      "statutory_minimum_days": 3,
+      "severity": "LOW",
+      "compoundable": "YES",
+      "evidence_checklist": [
+        "Geotagged photo of the affixed notice (from delivery proof)",
+        "Geotagged photo showing removal / defacement"
+      ],
+      "schedule_fine_inr": 500,
+      "schedule_daily_fine_inr": null,
+      "appeal": "Divisional Commissioner, within the period specified in the order (s.261(2)); sealing: 7 days (s.263A(4))",
+      "notes": null,
+      "active": true
+    },
+    {
+      "code": "PN-05",
+      "category": "PROCEDURAL_NON_COMPLIANCE",
+      "title_en": "Obstruction of Corporation officials during inspection / enforcement",
+      "title_hi": "निरीक्षण / प्रवर्तन के दौरान निगम अधिकारियों को बाधा पहुँचाना",
+      "description": "Officials obstructed, threatened or prevented from inspecting the premises or executing an order.",
+      "legal_basis": [
+        {
+          "statute": "HMCA1994",
+          "section": "405"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "380"
+        },
+        {
+          "statute": "BNS2023",
+          "section": "221"
+        }
+      ],
+      "contravention_of": "Section 405 of the Haryana Municipal Corporation Act, 1994 read with section 221 of the Bharatiya Nyaya Sanhita, 2023",
+      "action_path": "HMCA_261",
+      "orders_available": [
+        "POLICE_REQUISITION_262_2",
+        "POLICE_COMPLAINT",
+        "PROSECUTION_380"
+      ],
+      "scn_response_days_default": 0,
+      "order_compliance_days_default": 0,
+      "statutory_minimum_days": 3,
+      "severity": "HIGH",
+      "compoundable": "NO",
+      "evidence_checklist": [
+        "Video of the incident",
+        "Names / description of persons obstructing",
+        "Police DDR number"
+      ],
+      "schedule_fine_inr": 500,
+      "schedule_daily_fine_inr": null,
+      "appeal": "Divisional Commissioner, within the period specified in the order (s.261(2)); sealing: 7 days (s.263A(4))",
+      "notes": null,
+      "active": true
+    },
+    {
+      "code": "PL-07",
+      "category": "PRIVATE_LAND_NO_SANCTION",
+      "title_en": "Construction in controlled area / scheduled-road restricted belt without CLU / permission",
+      "title_hi": "नियंत्रित क्षेत्र / अनुसूचित सड़क प्रतिबंधित पट्टी में सी.एल.यू. / अनुमति के बिना निर्माण",
+      "description": "Building within a controlled area or the restricted belt along a scheduled road, without Change of Land Use / permission of the Director, Town & Country Planning, where the area lies within municipal limits.",
+      "legal_basis": [
+        {
+          "statute": "PSRCA1963",
+          "section": "3"
+        },
+        {
+          "statute": "PSRCA1963",
+          "section": "7"
+        },
+        {
+          "statute": "PSRCA1963",
+          "section": "12(1)"
+        },
+        {
+          "statute": "PSRCA1963",
+          "section": "12(2)-(3)"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "346(1)"
+        },
+        {
+          "statute": "HMCA1994",
+          "section": "250"
+        }
+      ],
+      "contravention_of": "Sections 3 and 7 of the Punjab Scheduled Roads and Controlled Areas Restriction of Unregulated Development Act, 1963 read with section 250 of the Haryana Municipal Corporation Act, 1994",
+      "action_path": "HMCA_261",
+      "orders_available": [
+        "SCN_261",
+        "STOP_WORK_262",
+        "DEMOLITION_ORDER_261",
+        "REFERRAL_TO_DTCP"
+      ],
+      "scn_response_days_default": 7,
+      "order_compliance_days_default": 15,
+      "statutory_minimum_days": 3,
+      "severity": "HIGH",
+      "compoundable": "NO",
+      "evidence_checklist": [
+        "Geotagged photographs of the structure from the street (front, both sides)",
+        "Geotagged close-up of the violating portion",
+        "Short video walk-through (max 60 s)",
+        "Site plan / sketch with measurements",
+        "PID or address, owner/occupier name and mobile",
+        "Name of person supervising construction on site",
+        "Sanctioned plan number, date and licence/BR-I reference",
+        "Measured vs permitted values (coverage, FAR, setbacks, height)",
+        "DPC certificate / stage-completion records if any",
+        "Controlled-area / scheduled-road layer screenshot"
+      ],
+      "schedule_fine_inr": 5000,
+      "schedule_daily_fine_inr": 500,
+      "appeal": "Divisional Commissioner, within the period specified in the order (s.261(2)); sealing: 7 days (s.263A(4))",
+      "notes": "Where DTCP is the enforcing authority, MCG issues the referral and continues proceedings for the building under the HMC Act.",
+      "active": true
+    }
+  ]
+}

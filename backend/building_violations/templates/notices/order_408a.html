@@ -1,0 +1,12 @@
+{% extends "notices/base.html" %}
+{% block body %}
+<p>WHEREAS a notice under section 408A(1) of the Haryana Municipal Corporation Act, 1994 was served on you{% if case.scn_served_at %} on {{ case.scn_served_at|date:"d-m-Y" }}{% endif %} calling upon you to show cause why you should not be ordered to vacate the premises / land of the Corporation or demolish the unauthorised construction thereon;</p>
+<p>AND WHEREAS {% if case.responses.exists %}the cause shown by you has been considered and found unsatisfactory{% else %}you have failed to show cause / appear within the period of seven days{% endif %} for the reasons recorded below;</p>
+<p><b>Reasons / कारण:</b> {{ case.decision_reasons|default:"As recorded in the case file." }}</p>
+<div class="operative">
+<p><b>NOW THEREFORE</b>, in exercise of the powers of the competent authority under section 408A(2) of the Haryana Municipal Corporation Act, 1994, the undersigned hereby <b>ORDERS you to vacate the said premises / land or building / structure constructed thereon, demolish the unauthorised construction and restore the land to its original state within {{ notice.compliance_days }} days (on or before {{ compliance_due_local|date:"d-m-Y" }})</b>.</p>
+<p>On failure, the competent authority shall, under section 408A(3), evict you and take possession of the premises / land, demolish the unauthorised construction and restore the land, using such force as may be necessary, and the cost shall be recoverable from you as arrears of land revenue. If you continue the contravention even before the expiry of the said period, action will be taken forthwith under section 408A(4).</p>
+<p>An appeal against this order lies to the <b>Commissioner, Municipal Corporation Gurugram within seven days</b> of this order under section 408B of the Act.</p>
+<p class="hi">धारा 408A(2) के अंतर्गत आदेश दिया जाता है कि {{ notice.compliance_days }} दिनों के भीतर ({{ compliance_due_local|date:"d-m-Y" }} तक) निगम की उक्त भूमि/परिसर खाली करें, अनधिकृत निर्माण ध्वस्त करें और भूमि को मूल स्थिति में लाएँ। असफल रहने पर धारा 408A(3) के अंतर्गत बलपूर्वक बेदखली/ध्वस्तीकरण किया जाएगा और लागत भू-राजस्व के बकाया के रूप में वसूली जाएगी। अपील सात दिनों के भीतर आयुक्त, नगर निगम गुरुग्राम के समक्ष (धारा 408B)।</p>
+</div>
+{% endblock %}

@@ -1,0 +1,11 @@
+{% extends "notices/base.html" %}
+{% block body %}
+<p>WHEREAS the erection / work / use described above has been found to be without or contrary to the sanction referred to in section 254 of the Haryana Municipal Corporation Act, 1994{% if case.stop_work_issued %} and the stop-work order under section 262(1) has not been complied with{% endif %}, and the undersigned is satisfied that sealing of the premises is necessary to prevent the continuation / completion / use of the unauthorised construction;</p>
+<div class="operative">
+<p><b>NOW THEREFORE</b>, in exercise of the powers conferred by section 263A(1) of the Haryana Municipal Corporation Act, 1994 (inserted by Haryana Act 12 of 2013), the undersigned hereby <b>ORDERS that the premises described above be SEALED</b> forthwith by the enforcement team of the Corporation, and directs that no person shall remove the seal except under an order of the undersigned under section 263A(2) or of the appellate authority (section 263A(3)).</p>
+<p>The seal may be removed only for the purpose of (a) allowing you to bring the premises in conformity with the sanctioned building plan within a period not exceeding three months, or (b) allowing the functionaries of the Corporation to do so at your cost, or (c) demolition at your cost. Breaking the seal is punishable under section 380 of the Act and section 223 of the Bharatiya Nyaya Sanhita, 2023.</p>
+<p>An appeal against this order lies to the <b>Divisional Commissioner, Gurugram within seven days</b> of the passing of this order (section 263A(4)); the appellate authority may stay the order subject to conditions including furnishing of a bank guarantee.</p>
+<p class="hi">हरियाणा नगर निगम अधिनियम, 1994 की धारा 263A(1) के अंतर्गत आदेश दिया जाता है कि उपरोक्त परिसर को तत्काल सील किया जाए। धारा 263A(3) के अनुसार अधोहस्ताक्षरी अथवा अपीलीय प्राधिकारी के आदेश के बिना कोई भी व्यक्ति सील नहीं हटाएगा। इस आदेश के विरुद्ध अपील सात दिनों के भीतर मंडल आयुक्त, गुरुग्राम के समक्ष की जा सकती है (धारा 263A(4))।</p>
+</div>
+{% endblock %}
+{% block extra_copies %} (4) SHO, Police Station concerned - to assist in sealing and to register a case if the seal is broken (5) Divisional Commissioner, Gurugram - for information{% endblock %}

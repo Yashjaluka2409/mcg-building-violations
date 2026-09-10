@@ -1,0 +1,9 @@
+{% extends "notices/base.html" %}
+{% block body %}
+<p>WHEREAS during the erection of the building / execution of the work described above (or within three months of its completion) it has been found that the erection / execution is without or contrary to the sanction referred to in section 254 / in contravention of the conditions of sanction / the provisions of the Haryana Municipal Corporation Act, 1994 and the Haryana Building Code, 2017 in the matters specified in the table of violations above;</p>
+<div class="operative">
+<p><b>NOW THEREFORE</b>, in exercise of the powers conferred by section 263(1) of the Haryana Municipal Corporation Act, 1994, you are hereby required either (a) to <b>make such alterations as will bring the building / work in conformity with the sanction and the Code</b> (namely: {{ notice.operative_text_en|default:"removal of the deviations listed above" }}) or (b) to <b>show cause within {{ notice.response_days }} days (on or before {{ response_due_local|date:"d-m-Y" }})</b> why such alterations should not be made.</p>
+<p>If you do not show cause, you shall be bound to make the alterations specified (section 263(2)); on cause being shown the undersigned will by order cancel or confirm this notice with modifications (section 263(3)). Failure to carry out the alterations is punishable with fine up to Rs 2,000 (Third Schedule) and renders the work liable to demolition under section 261.</p>
+<p class="hi">धारा 263(1) के अंतर्गत आपको निर्देश दिया जाता है कि या तो भवन/कार्य को स्वीकृति एवं भवन संहिता के अनुरूप लाने हेतु आवश्यक परिवर्तन करें, या {{ notice.response_days }} दिनों के भीतर ({{ response_due_local|date:"d-m-Y" }} तक) कारण बताएँ कि ऐसे परिवर्तन क्यों न किए जाएँ।</p>
+</div>
+{% endblock %}

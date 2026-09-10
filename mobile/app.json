@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "MCG Building Violations",
+    "slug": "mcg-building-violations",
+    "scheme": "mcgbv",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/brand/mcg-logo.png",
+    "userInterfaceStyle": "automatic",
+    "splash": { "image": "./assets/brand/mcg-logo.png", "resizeMode": "contain", "backgroundColor": "#782669" },
+    "ios": {
+      "bundleIdentifier": "in.gov.mcg.buildingviolations",
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "The camera is used to capture geotagged photographs and videos of building violations, delivery of notices and demolition/sealing.",
+        "NSLocationWhenInUseUsageDescription": "Your location is recorded with every photograph and inspection as legal evidence.",
+        "NSMicrophoneUsageDescription": "Needed to record videos of the site.",
+        "NSPhotoLibraryUsageDescription": "Used only to attach documents (replies, sanction letters)."
+      }
+    },
+    "android": {
+      "package": "in.gov.mcg.buildingviolations",
+      "adaptiveIcon": { "foregroundImage": "./assets/brand/mcg-logo.png", "backgroundColor": "#782669" },
+      "permissions": ["CAMERA", "RECORD_AUDIO", "ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION", "READ_MEDIA_IMAGES", "READ_MEDIA_VIDEO"]
+    },
+    "plugins": [
+      "expo-router",
+      ["expo-camera", { "cameraPermission": "Capture geotagged evidence of building violations.", "microphonePermission": "Record site videos.", "recordAudioAndroid": true }],
+      ["expo-location", { "locationWhenInUsePermission": "Location is attached to every inspection and photograph as evidence." }],
+      "expo-secure-store",
+      "expo-sqlite"
+    ],
+    "extra": { "apiBase": "https://sms-be.austere.biz/building-violations/api", "eas": { "projectId": "REPLACE-WITH-EAS-PROJECT-ID" } }
+  }
+}
