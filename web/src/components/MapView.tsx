@@ -116,7 +116,7 @@ export default function MapView({ center = [28.4595, 77.0266], zoom = 12, height
   return (
     <div className="relative">
       <div ref={el} style={{ height }} className="w-full rounded-lg overflow-hidden border border-light-border z-0" />
-      {legend && <div className="absolute bottom-3 left-3 z-[400] card p-2 text-[10px] space-y-1 max-w-[220px]">
+      {legend && <div className="absolute bottom-3 left-3 z-[400] card p-2 text-[10px] space-y-1 max-w-[220px] hidden md:block">
         <div className="font-semibold">Case status</div>
         <div className="grid grid-cols-2 gap-x-2">{[["PENDING_JC", "With JC"], ["SCN_SERVED", "SCN served"], ["ORDER_SERVED", "Order served"], ["EXECUTION_DUE", "Execution due"], ["APPEAL_STAY", "Stayed"], ["EXECUTED", "Demolished/sealed"], ["CLOSED", "Closed"]].map(([k, l]) => <div key={k} className="flex items-center gap-1"><span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: STATUS_PIN[k] }} />{l}</div>)}</div>
         <div className="font-semibold pt-1">Planned inspection ◆</div>
