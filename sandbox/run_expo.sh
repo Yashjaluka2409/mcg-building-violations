@@ -22,6 +22,7 @@ import sys, qrcode
 qrcode.make(sys.argv[1]).save("../sandbox/qr-expo-go.png")
 qrcode.make(sys.argv[2]).save("../sandbox/qr-expo-lan.png")
 PY
+sed -i '' "s|^Web portal (any browser / phone):.*|Web portal (any browser / phone): $PUBLIC_URL/building-violations/|" "$ROOT/sandbox/LINKS.txt"
 sed -i '' "s|^Mobile app in Expo Go.*|Mobile app in Expo Go (internet): $TUNNEL   ·   same Wi-Fi as the Mac: $LAN|" "$ROOT/sandbox/LINKS.txt"
 echo "$(date '+%F %T') expo up: $TUNNEL | $LAN | api $PUBLIC_URL" >> "$ROOT/sandbox/supervisor.log"
 echo "Expo Go (internet): $TUNNEL"; echo "Expo Go (same Wi-Fi): $LAN"
