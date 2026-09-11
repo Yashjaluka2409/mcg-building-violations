@@ -1,0 +1,29 @@
+# MCG Building Violation Management System - backend (Django REST)
+# Minimum versions; tested on Python 3.12 and 3.14 (Sept 2026).
+Django>=5.1,<6.0
+djangorestframework>=3.15
+djangorestframework-simplejwt>=5.4
+django-filter>=24.3
+django-cors-headers>=4.6
+drf-spectacular>=0.28
+psycopg[binary]>=3.2.10
+celery>=5.4
+redis>=5.2
+django-celery-beat>=2.7
+Pillow>=11.1
+qrcode[pil]>=8.0
+reportlab>=4.2
+pyHanko[pkcs11,image-support]>=0.25
+pyhanko-certvalidator>=0.26
+cryptography>=43
+shapely>=2.0.6
+pyshp>=2.3
+openpyxl>=3.1
+python-dotenv>=1.0
+requests>=2.32
+cbor2>=5.6            # Apple App Attest objects (services/attestation.py)
+gunicorn>=23
+whitenoise>=6.8
+# Bilingual (Hindi) PDF rendering with proper Devanagari shaping. Needs Pango on the host:
+#   Ubuntu/Debian: apt install libpango-1.0-0 libpangoft2-1.0-0 ; macOS: brew install pango
+weasyprint>=63

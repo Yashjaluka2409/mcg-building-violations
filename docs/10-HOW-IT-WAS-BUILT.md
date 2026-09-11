@@ -12,7 +12,7 @@ repository (https://github.com/Yashjaluka2409/mcg-building-violations):
 
 | Piece | What it is | Where it runs today |
 |---|---|---|
-| **Server** (the "brain") | Django + Django REST Framework, Python. Holds the registers, enforces the workflow and the law, signs notices, sends SMS, keeps the audit trail. | On your Mac, port 8000, behind a public tunnel |
+| **Server** (the "brain") | FastAPI + SQLAlchemy, Python - the same tools the MCG IT platform uses. Holds the registers, enforces the workflow and the law, signs notices, sends SMS, keeps the audit trail. (The earlier Django version is kept in `backend-django/`.) | On your Mac, port 8000, behind a public tunnel |
 | **Web portal** (the "office counter") | React + Vite + Tailwind. What AE / JC / Admin / branches use on a desktop. | Built into static files that the server itself serves at `/building-violations/` |
 | **Mobile app** (the "field kit") | Expo / React Native. What the JE and field squads use: geotagged photos, planned inspections, delivery proof. | In Expo Go on your phone, and as native builds in the iPhone simulator and Android emulator |
 | **Sandbox** | Scripts that keep all of the above running and reachable from the internet for the Commissioner's demo. | `sandbox/` folder; current links always in `sandbox/LINKS.txt` |
@@ -57,14 +57,14 @@ server (say, "no final order while a hold-referral is pending") applies everywhe
 
 | Tool | Role | Why this one |
 |---|---|---|
-| **Python 3 + Django + DRF** | Server | MCG's existing platform (built by Austere Systems) exposes a Django-style API with JWT tokens; matching it makes integration a matter of mounting our module rather than rewriting it. |
+| **Python 3 + FastAPI + SQLAlchemy** | Server | MCG's existing platform (built by Austere Systems) is FastAPI + async SQLAlchemy + PostgreSQL, as its architecture report states; matching it makes integration a matter of copying our packages into their project rather than rewriting. (Section 14 tells the story of the switch.) |
 | **React 18 + Vite + Tailwind** | Portal | The same stack, colours and conventions as the MCG portal (`src/theme/mcg-tailwind-preset.js` carries the purple #782669 scale). |
 | **Expo (React Native)** | Mobile | One code base for iOS and Android; Expo Go lets us test on a real phone without an App Store release. |
 | **SQLite / PostgreSQL** | Database | SQLite for a zero-setup demo; PostgreSQL in production (`docs/07`). |
 | **Git + GitHub** | Version history and hand-over | Every change is a commit with a message; the IT team clones the repository. |
 | **Homebrew, Node.js, npm** | Installers | Homebrew installs Mac tools (Pango, JDK, Tailscale); npm installs JavaScript packages for the portal and the app. |
 | **Xcode, Android SDK** | Native builds | Needed only to compile the *native* parts of the app (the anti-spoofing module); Expo Go does not need them. |
-| **gunicorn, cloudflared** | Sandbox | gunicorn runs Django properly; cloudflared opens the temporary public tunnel. |
+| **gunicorn + uvicorn, cloudflared** | Sandbox | gunicorn with uvicorn workers runs the FastAPI server properly (the platform's arrangement); cloudflared opens the temporary public tunnel. |
 
 ---
 
@@ -113,21 +113,22 @@ cd ~/Demolition\ Tracker\ Project/backend && python3 -m venv .venv
 The one library that needed a Mac-level dependency was WeasyPrint (bilingual PDF notices). It needs Pango, installed with
 `brew install pango`.
 
-**Step 3 - create the register tables.** Django describes each table in `models.py`; a *migration* is the recorded change
-that turns those descriptions into real tables, so a fresh machine can rebuild the same database:
+**Step 3 - create the register tables.** SQLAlchemy describes each table in `app/models/building_violations.py`; a
+*migration* (Alembic) is the recorded change that turns those descriptions into real tables, so a fresh machine can rebuild
+the same database:
 
 ```bash
-~/Demolition\ Tracker\ Project/backend/.venv/bin/python ~/Demolition\ Tracker\ Project/backend/manage.py migrate
+cd ~/Demolition\ Tracker\ Project/backend && .venv/bin/python -m app.cli migrate
 ```
 
 **Step 4 - load the law and the demo data:**
 
 ```bash
-~/Demolition\ Tracker\ Project/backend/.venv/bin/python ~/Demolition\ Tracker\ Project/backend/manage.py load_legal_catalogue
+cd ~/Demolition\ Tracker\ Project/backend && .venv/bin/python -m app.cli load-legal-catalogue
 ```
 
 ```bash
-~/Demolition\ Tracker\ Project/backend/.venv/bin/python ~/Demolition\ Tracker\ Project/backend/manage.py seed_demo
+cd ~/Demolition\ Tracker\ Project/backend && .venv/bin/python -m app.cli seed-demo --with-cases
 ```
 
 **Step 5 - run the automated tests.** These are 40 scripted scenarios (a JE files, an AE forwards, a JC issues an SCN, a
@@ -135,20 +136,20 @@ spoofed GPS is rejected, a paper order is imported…) that the machine replays 
 a future change, a test fails before a citizen ever sees it:
 
 ```bash
-~/Demolition\ Tracker\ Project/backend/.venv/bin/python ~/Demolition\ Tracker\ Project/backend/manage.py test building_violations
+cd ~/Demolition\ Tracker\ Project/backend && .venv/bin/python -m pytest
 ```
 
 **Step 6 - start the server for development:**
 
 ```bash
-~/Demolition\ Tracker\ Project/backend/.venv/bin/python ~/Demolition\ Tracker\ Project/backend/manage.py runserver 0.0.0.0:8000
+cd ~/Demolition\ Tracker\ Project/backend && .venv/bin/python -m app.cli serve --host 0.0.0.0 --port 8000
 ```
 
 Settings that change between demo and production (SMS gateway, signing certificate, database, `DEMO_MODE`, the public
 address printed on notices) are read from `backend/.env`, a small text file that is deliberately kept out of GitHub.
 
 **What you just learned:** *migrate* builds the registers, *seed* fills in demo entries, *test* replays the rulebook,
-*runserver* opens the counter. Those four verbs are the whole life-cycle of a Django project.
+*serve* opens the counter. Those four verbs are the whole life-cycle of the server.
 
 ---
 
@@ -161,13 +162,13 @@ server can hand out.
 cd ~/Demolition\ Tracker\ Project/web && npm install
 ```
 
-During development, a live-reloading server on port 5173 forwards API calls to Django:
+During development, a live-reloading server on port 5173 forwards API calls to the FastAPI server:
 
 ```bash
 cd ~/Demolition\ Tracker\ Project/web && npm run dev
 ```
 
-For the sandbox and production we build it and let Django serve the result (setting `SERVE_SPA=1`), so one address serves
+For the sandbox and production we build it and let the API server hand out the result (setting `SERVE_SPA=1`), so one address serves
 both the API and the screens:
 
 ```bash
@@ -221,8 +222,8 @@ For a demo, the Mac plays the role of the future MCG server. Four scripts in `sa
 
 | Script | Job |
 |---|---|
-| `run_sandbox.sh` | Starts gunicorn (a production-grade runner for Django) on port 8000 with `DEMO_MODE=1` and `SERVE_SPA=1`. |
-| `tunnel_supervisor.sh` | Opens a Cloudflare "quick tunnel" and, whenever it dies, opens a new one, writes the new address to `sandbox/PUBLIC_URL`, updates the address printed on notices and reloads the server. |
+| `run_sandbox.sh` → `start_backend.sh` | Starts the API server (gunicorn with uvicorn workers, the platform's runner) on port 8000 with `DEMO_MODE=1` and `SERVE_SPA=1`. |
+| `tunnel_supervisor.sh` | Opens a Cloudflare "quick tunnel" and, whenever it dies, opens a new one, writes the new address to `sandbox/PUBLIC_URL`, updates the address printed on notices and restarts the server. |
 | `tunnel_watchdog.sh` | Catches the case where the tunnel dies *without* the program exiting ("Unauthorized: Tunnel not found"), which is exactly what happened at 14:35 today. |
 | `expo_supervisor.sh` → `run_expo.sh` | Keeps the Metro server alive and pointed at the current public address; regenerates `LINKS.txt` and the QR codes. |
 
@@ -351,12 +352,45 @@ which does all of the above on a build server and produces an installable APK / 
 |---|---|
 | See the current links and logins | `cat ~/Demolition\ Tracker\ Project/sandbox/LINKS.txt` |
 | Start the whole sandbox after a reboot | `~/Demolition\ Tracker\ Project/sandbox/run_sandbox.sh` then `nohup ~/Demolition\ Tracker\ Project/sandbox/tunnel_supervisor.sh &` (or `sandbox/funnel.sh` for a fixed address) then `nohup ~/Demolition\ Tracker\ Project/sandbox/expo_supervisor.sh &` |
-| Check that the server is up | `curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:8000/building-violations/api/masters/zones/` (401 means "up, login required") |
-| Read the logs | `sandbox/gunicorn.log`, `sandbox/tunnel.log`, `sandbox/expo.log`, `sandbox/supervisor.log` |
-| Reset the demo data | `manage.py flush --noinput && manage.py migrate && manage.py load_legal_catalogue && manage.py seed_demo` (run with the `.venv` python as in Section 4) |
-| Run the tests | Section 4, step 5 |
+| Check that the server is up | `curl -s http://127.0.0.1:8000/healthz` (answers `{"ok":true}`) |
+| Read the logs | `sandbox/error.log` and `sandbox/access.log` (server), `sandbox/tunnel.log`, `sandbox/expo.log`, `sandbox/supervisor.log` |
+| Reset the demo data | `cd backend && rm -f bvms.sqlite3* .seeded && .venv/bin/python -m app.cli migrate && .venv/bin/python -m app.cli seed-demo --with-cases && ../sandbox/start_backend.sh` |
+| Run the tests | `cd backend && .venv/bin/python -m pytest` (Section 4, step 5) |
+| Restart only the server (after editing `backend/.env`) | `sandbox/start_backend.sh` |
 | Rebuild the portal after a change | Section 5, last command; the server picks it up on the next reload |
 | See what changed in the code | `cd ~/Demolition\ Tracker\ Project && git log --oneline` |
+
+---
+
+## 14. Moving the server to FastAPI (11 Sep 2026)
+
+**Why.** The IT team's *Technical Architecture & System Clarification Report* describes the real MCG platform: the backend is
+**FastAPI** (a modern Python web framework) with **SQLAlchemy** talking to **PostgreSQL** asynchronously, tokens carry the
+user's UUID, files live in **AWS S3**, SMS goes through **Pixabits** and WhatsApp through **Aisensy**; the portal uses
+**Redux Toolkit** for the login session, **React Query** for data, **Radix** components and **Google Maps**. Our first
+version used Django, which speaks the same HTTP language but is a different house style. Merging two house styles is
+slow and error-prone, so the server was rewritten in the platform's style before hand-over.
+
+**What changed and what did not.**
+
+| Same as before | Different now |
+|---|---|
+| Every web address the portal and the app call, every JSON answer, the OTP login, the demo logins | The server code lives in `backend/app/…` in the platform's folder pattern (`routers`, `services`, `models`, `repositories`, `schemas`) |
+| The rules: statutory periods, SLA timers, hash-chained audit trail, signed PDFs, anti-spoofing, paper orders | Commands: `python -m app.cli migrate / load-legal-catalogue / seed-demo / sweep / serve` instead of `manage.py …` |
+| The 40 automated scenarios (all pass, now in ~20 seconds) | User ids are UUIDs (like the platform's), files are served from `/uploads/` or S3 |
+| The web screens and the mobile app | The portal keeps the session in Redux (persisted), dialogs are Radix, the map can use Google Maps with a key |
+
+**How "async" works here, in one paragraph.** A synchronous server serves requests one after another per worker, like
+a single counter clerk. An asynchronous server lets one clerk start a request, hand the waiting (for the database, for S3)
+to the system, and pick up the next request meanwhile. Our business logic - the state machine, the signing, the audit
+chain - still reads like ordinary step-by-step code; it is run *inside* the platform's asynchronous session through a small
+adapter (`_router.py`) that SQLAlchemy provides for exactly this purpose. The IT team therefore sees plain, readable rules
+and gets the platform's concurrency model for free.
+
+**Two lessons from the switch.** First, a Python virtual environment remembers the folder it was created in; renaming
+`backend-fastapi/` to `backend/` silently broke every launcher in `.venv/bin` until the paths were fixed (recreating the
+venv is the clean fix). Second, some libraries (pyHanko for PDF signing) start their own event loop; inside an async
+server that has to happen on a separate thread, which `services/signing.py` now does.
 
 ---
 

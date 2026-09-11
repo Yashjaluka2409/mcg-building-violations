@@ -4,13 +4,13 @@ services:
     build: { context: .., dockerfile: sandbox/Dockerfile }
     ports: ["8000:8000"]
     environment:
-      DATABASE_URL: postgres://bvms:bvms@db:5432/bvms
+      DATABASE_URL: postgresql://bvms:bvms@db:5432/bvms      # asyncpg is used automatically
       PUBLIC_VERIFY_BASE: https://sandbox.example.gov.in/building-violations/verify
-      DJANGO_SECRET_KEY: change-me
+      SECRET_KEY: change-me
     volumes: ["bvms-data:/data"]
     depends_on: [db]
   db:
-    image: postgres:16
+    image: postgis/postgis:16-3.4
     environment: { POSTGRES_USER: bvms, POSTGRES_PASSWORD: bvms, POSTGRES_DB: bvms }
     volumes: ["bvms-db:/var/lib/postgresql/data"]
 volumes: { bvms-data: {}, bvms-db: {} }

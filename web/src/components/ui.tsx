@@ -1,3 +1,4 @@
+import * as Dialog from "@radix-ui/react-dialog";
 import { clsx } from "clsx";
 import { X } from "lucide-react";
 import type { ReactNode } from "react";
@@ -45,17 +46,20 @@ export function Card({ title, children, className, actions }: { title?: ReactNod
 }
 
 export function Modal({ open, onClose, title, children, wide }: { open: boolean; onClose: () => void; title: ReactNode; children: ReactNode; wide?: boolean }) {
-  if (!open) return null;
+  // Radix UI Dialog primitive (focus trap, Escape, scroll lock, aria) - same primitives as the MCG platform portal.
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 p-4 overflow-y-auto" onClick={onClose}>
-      <div className={clsx("card w-full mt-8 mb-8", wide ? "max-w-4xl" : "max-w-2xl")} onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-5 py-3 border-b border-light-border dark:border-dark-border">
-          <h3 className="font-semibold">{title}</h3>
-          <button className="p-1 rounded hover:bg-gray-100" onClick={onClose}><X className="h-5 w-5" /></button>
-        </div>
-        <div className="p-5">{children}</div>
-      </div>
-    </div>
+    <Dialog.Root open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40" />
+        <Dialog.Content aria-describedby={undefined} className={clsx("fixed z-50 left-1/2 top-8 -translate-x-1/2 w-[calc(100%-2rem)] card max-h-[calc(100vh-4rem)] overflow-y-auto focus:outline-none", wide ? "max-w-4xl" : "max-w-2xl")}>
+          <div className="flex items-center justify-between px-5 py-3 border-b border-light-border dark:border-dark-border">
+            <Dialog.Title className="font-semibold">{title}</Dialog.Title>
+            <Dialog.Close className="p-1 rounded hover:bg-gray-100" aria-label="Close"><X className="h-5 w-5" /></Dialog.Close>
+          </div>
+          <div className="p-5">{children}</div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }
 

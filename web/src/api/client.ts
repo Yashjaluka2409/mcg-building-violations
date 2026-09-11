@@ -1,18 +1,29 @@
 /**
- * Axios client with the same conventions as the MCG platform:
- *  - Bearer access token from localStorage("accessToken"), refresh via refresh_token
+ * Axios client with the MCG platform's conventions:
+ *  - Bearer access token injected by a request interceptor; on 401 the refresh token is exchanged once
+ *    (`/auth/token/refresh/`, body {refresh} -> {access}) and the request replayed
  *  - errors arrive as {detail: "..."}
- * When mounted inside the platform, point VITE_API_BASE at sms-be (e.g. https://sms-be.austere.biz/building-violations/api)
- * and the platform's login already provides the tokens - nothing else changes.
+ * Tokens live in the persisted Redux auth slice (store/authSlice.ts) and reach this module through
+ * `bindAuthBridge`, so the platform's own session can drive the module when it is mounted inside the portal.
+ * VITE_API_BASE points at the backend (e.g. https://sms-be.austere.biz/building-violations/api).
  */
 import axios, { AxiosError } from "axios";
 
 export const API_BASE = import.meta.env.VITE_API_BASE || "/building-violations/api";
 
+export interface AuthBridge { getAccess: () => string | null; getRefresh: () => string | null; setAccess: (t: string) => void; clear: () => void; }
+let bridge: AuthBridge = {
+  getAccess: () => localStorage.getItem("accessToken"),
+  getRefresh: () => localStorage.getItem("refreshToken"),
+  setAccess: (t) => localStorage.setItem("accessToken", t),
+  clear: () => { localStorage.removeItem("accessToken"); localStorage.removeItem("refreshToken"); },
+};
+export function bindAuthBridge(b: AuthBridge) { bridge = b; }
+
 export const api = axios.create({ baseURL: API_BASE, timeout: 60_000 });
 
 api.interceptors.request.use((cfg) => {
-  const t = localStorage.getItem("accessToken");
+  const t = bridge.getAccess();
   if (t) cfg.headers.Authorization = `Bearer ${t}`;
   cfg.headers["X-Device-Id"] = deviceId();
   return cfg;
@@ -23,12 +34,13 @@ api.interceptors.response.use(
   (r) => r,
   async (err: AxiosError<any>) => {
     const original: any = err.config;
-    if (err.response?.status === 401 && !original?._retry && localStorage.getItem("refreshToken")) {
+    const refresh = bridge.getRefresh();
+    if (err.response?.status === 401 && !original?._retry && refresh) {
       original._retry = true;
       refreshing ??= axios
-        .post(`${API_BASE}/auth/token/refresh/`, { refresh: localStorage.getItem("refreshToken") })
-        .then((r) => { localStorage.setItem("accessToken", r.data.access); return r.data.access as string; })
-        .catch(() => { localStorage.removeItem("accessToken"); localStorage.removeItem("refreshToken"); window.location.reload(); return null; })
+        .post(`${API_BASE}/auth/token/refresh/`, { refresh })
+        .then((r) => { bridge.setAccess(r.data.access); return r.data.access as string; })
+        .catch(() => { bridge.clear(); window.location.reload(); return null; })
         .finally(() => { refreshing = null; });
       const token = await refreshing;
       if (token) { original.headers.Authorization = `Bearer ${token}`; return api(original); }

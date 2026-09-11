@@ -37,3 +37,16 @@ sandbox/expo_token.env
 mobile/ios/
 mobile/android/
 sandbox/ngrok.env
+
+# FastAPI edition (backend/) and the archived Django edition (backend-django/)
+backend/uploads/
+backend/app/keys/*.p12
+backend/app/keys/*.pem
+*.sqlite3-wal
+*.sqlite3-shm
+backend-django/media/
+backend-django/staticfiles/
+backend-django/.env
+backend-django/.seeded
+backend-django/building_violations/keys/*.p12
+backend-django/building_violations/keys/*.pem

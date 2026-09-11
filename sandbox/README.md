@@ -25,7 +25,8 @@ address. For a permanent build use EAS with the `uat` profile.
 
 Cloudflare quick tunnels are deleted by Cloudflare when the connection drops for a few minutes (laptop sleep,
 Wi-Fi/VPN change), and the URL then changes. `sandbox/tunnel_supervisor.sh` restarts the tunnel automatically,
-writes the current URL to `sandbox/PUBLIC_URL`, updates `PUBLIC_VERIFY_BASE` and reloads gunicorn. Always read
+writes the current URL to `sandbox/PUBLIC_URL`, updates `PUBLIC_VERIFY_BASE` and restarts the API server
+(`sandbox/start_backend.sh`: gunicorn with uvicorn workers; logs in `sandbox/error.log` / `access.log`). Always read
 the current link from `sandbox/PUBLIC_URL` (or `sandbox/LINKS.txt`) before sharing it, keep the laptop plugged in
 and awake (`caffeinate -dims`), and use the IT team's Docker sandbox for anything that must stay up.
 

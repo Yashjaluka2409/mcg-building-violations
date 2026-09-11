@@ -1,6 +1,7 @@
 # 08 - UAT test plan
 
-Automated: `cd backend && python manage.py test building_violations` (15 tests: full private-land
+Automated: `cd backend && python -m pytest` (40 tests in about 20 seconds - workflow, admin/referrals/litigation,
+planned inspections + GIS, location integrity, paper orders: full private-land
 flow, Corporation-land s.408A flow, interim stop-work/sealing, API round-trip incl. PDF and QR, branch
 referral with hold, admin rule switch-off, AE-stage setting, permission override, jurisdiction change +
 bulk re-assignment, stay requiring uploaded order + clock resumption, geofenced planned inspections, bulk PID push, no-violation

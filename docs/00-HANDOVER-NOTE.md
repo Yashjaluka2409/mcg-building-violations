@@ -5,8 +5,8 @@
 Dear team,
 
 The Building Violation Management System has been developed as a pluggable module for the MCG platform
-(same stack and design as the Sanitary Monitoring System: React + Vite + Tailwind portal, Django-style REST
-backend, React Native / Expo mobile app). The complete source, documentation and a one-command sandbox are in
+(the same stack and design as the Sanitary Monitoring System, per your Technical Architecture report: FastAPI +
+async SQLAlchemy 2.0 + PostgreSQL backend, React + Vite + Tailwind + Redux Toolkit portal, React Native / Expo mobile app). The complete source, documentation and a one-command sandbox are in
 the private repository below; you have been added as collaborators.
 
 **Repository:** https://github.com/Yashjaluka2409/mcg-building-violations
@@ -39,11 +39,12 @@ the private repository below; you have been added as collaborators.
 | API reference / OpenAPI | `docs/05-API-REFERENCE.md`, `docs/openapi.yaml` |
 | Database schema | `docs/06-DATABASE-SCHEMA.md` |
 | Deployment (standalone, platform, Docker, certificates) | `docs/07-DEPLOYMENT.md`, `sandbox/` |
-| UAT scenarios (36) | `docs/08-UAT-TEST-PLAN.md` |
+| Plain-language walkthrough of how it was built and how to run it | `docs/10-HOW-IT-WAS-BUILT.md` |
+| UAT scenarios (45) | `docs/08-UAT-TEST-PLAN.md` |
 | Security notes (incl. the PID credential exposure in the current portal bundle) | `docs/09-SECURITY-NOTES.md` |
 | Sample signed notice | `docs/samples/` |
 
-Automated tests: `cd backend && python manage.py test building_violations` (15 tests).
+Automated tests: `cd backend && python -m pytest` (40 tests, about 20 seconds).
 
 Please raise questions as GitHub issues on the repository so that they are tracked in one place.
 
@@ -67,3 +68,14 @@ eviction orders (single entry or register upload) and keep their status current;
 service / stay / execution / closure machinery as new cases. See docs/03 (section "Orders issued before the
 system"), docs/05 (endpoints) and UAT scenarios 42-45. Data-entry task for MCG: collect the zone-wise order
 registers in the CSV template before go-live.
+
+## Added 11 Sep 2026: server aligned with the platform stack (FastAPI edition)
+
+Following your *Technical Architecture & System Clarification Report*, the backend was ported from Django/DRF to
+the platform's own stack: **FastAPI + Pydantic v2, async SQLAlchemy 2.0 (`AsyncSession`, asyncpg), Alembic,
+PostgreSQL 14+ (PostGIS-ready), JWT Bearer with the user UUID in `sub`, AWS S3 with local `/uploads` fallback,
+Pixabits SMS and Aisensy WhatsApp adapters**, laid out as `app/routers`, `app/services`, `app/models`,
+`app/repositories`, `app/schemas` so that it merges by copying packages (`docs/02-INTEGRATION-GUIDE.md`, section A).
+The portal now uses Redux Toolkit + redux-persist for the session, Radix UI dialogs, React Query, React Hook Form +
+Zod, Vite 5 and Google Maps (Leaflet fallback). Every URL, JSON shape and login the web portal and the app use is
+unchanged; the 40 automated tests were ported and pass. The Django edition is kept in `backend-django/` for reference.

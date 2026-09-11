@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Keeps a Cloudflare quick tunnel alive. Quick tunnels die when the connection is lost, so this loop
 # starts a new one, writes the fresh URL to sandbox/PUBLIC_URL, updates PUBLIC_VERIFY_BASE in backend/.env
-# and reloads gunicorn (HUP) so new notices carry the right QR URL. Run with nohup.
+# and restarts the API server so new notices carry the right QR URL. Run with nohup.
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 while true; do
   : > "$ROOT/sandbox/tunnel.log"
@@ -15,7 +15,7 @@ while true; do
   if [ -n "$URL" ]; then
     echo "$URL" > "$ROOT/sandbox/PUBLIC_URL"
     sed -i '' "s|^PUBLIC_VERIFY_BASE=.*|PUBLIC_VERIFY_BASE=$URL/building-violations/verify|" "$ROOT/backend/.env" 2>/dev/null
-    pgrep -f "gunicorn config.wsg[i]" | head -1 | xargs -I{} kill -HUP {} 2>/dev/null
+    "$ROOT/sandbox/start_backend.sh" >/dev/null 2>&1 || true
     echo "$(date '+%F %T') tunnel up: $URL" >> "$ROOT/sandbox/supervisor.log"
   fi
   wait $CF

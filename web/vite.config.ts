@@ -16,10 +16,10 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      // dev only: forward the module's API, the public verify endpoint and media files to Django
+      // dev only: forward the module's API, the public verify endpoint and uploaded files to the FastAPI server
       "/building-violations/api": { target: process.env.VITE_API_PROXY || "http://127.0.0.1:8000", changeOrigin: true },
       "/building-violations/public": { target: process.env.VITE_API_PROXY || "http://127.0.0.1:8000", changeOrigin: true },
-      "/media": { target: process.env.VITE_API_PROXY || "http://127.0.0.1:8000", changeOrigin: true },
+      "/uploads": { target: process.env.VITE_API_PROXY || "http://127.0.0.1:8000", changeOrigin: true },
     },
   },
 });

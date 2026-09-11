@@ -15,7 +15,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY backend ./
 COPY shared ../shared
 COPY --from=web /app/web/dist ../web/dist
-ENV DEMO_MODE=1 SERVE_SPA=1 DJANGO_DEBUG=0 DJANGO_ALLOWED_HOSTS=* MEDIA_ROOT=/data/media PYTHONUNBUFFERED=1
+ENV DEMO_MODE=1 SERVE_SPA=1 DEBUG=0 UPLOADS_DIR=/data/uploads FORWARDED_ALLOW_IPS=* PYTHONUNBUFFERED=1
 VOLUME ["/data"]
 EXPOSE 8000
-CMD sh -c "python manage.py migrate -v 0 && (python manage.py seed_demo --with-cases || true) && gunicorn config.wsgi:application -b 0.0.0.0:8000 -w 3 --timeout 180"
+CMD sh -c "python -m app.cli migrate && (python -m app.cli seed-demo --with-cases || true) && gunicorn -k uvicorn.workers.UvicornWorker app.main:app -b 0.0.0.0:8000 -w 3 --timeout 180"

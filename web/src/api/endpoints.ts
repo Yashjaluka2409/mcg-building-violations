@@ -14,7 +14,7 @@ export const masters = {
   legalSections: (params?: Record<string, string>) => api.get<LegalSection[]>("/masters/legal-sections/", { params }).then((r) => r.data),
   statutes: () => api.get("/masters/legal-sections/statutes/").then((r) => r.data as { code: string; title: string; citation: string; jurisdiction: string; primary: boolean; sections: number }[]),
   sla: () => api.get("/masters/sla/").then((r) => r.data),
-  officers: (params?: Record<string, string | number>) => api.get("/officers/dropdown/", { params }).then((r) => r.data as { user_id: number; name: string; role: string; designation: string }[]),
+  officers: (params?: Record<string, string | number>) => api.get("/officers/dropdown/", { params }).then((r) => r.data as { user_id: string; name: string; role: string; designation: string }[]),
 };
 export const property = {
   lookupPid: (pid: string) => api.get(`/property/pid/${encodeURIComponent(pid)}/`).then((r) => r.data),
@@ -30,7 +30,7 @@ export const tasks = {
   get: (id: number) => api.get<InspectionTask>(`/inspections/tasks/${id}/`).then((r) => r.data),
   counts: () => api.get("/inspections/tasks/counts/").then((r) => r.data as Record<string, number>),
   create: (d: Record<string, unknown>) => api.post<InspectionTask>("/inspections/tasks/", d).then((r) => r.data),
-  assign: (id: number, assigned_to: number, remarks = "") => api.post<InspectionTask>(`/inspections/tasks/${id}/assign/`, { assigned_to, remarks }).then((r) => r.data),
+  assign: (id: number, assigned_to: string, remarks = "") => api.post<InspectionTask>(`/inspections/tasks/${id}/assign/`, { assigned_to, remarks }).then((r) => r.data),
   start: (id: number, latitude: number, longitude: number, accuracy_m?: number) => api.post<InspectionTask>(`/inspections/tasks/${id}/start/`, { latitude, longitude, accuracy_m, location_integrity: { source: "web", platform: "web", native_module: false, user_agent: navigator.userAgent } }).then((r) => r.data),
   distance: (id: number, lat: number, lng: number) => api.get(`/inspections/tasks/${id}/distance/`, { params: { lat, lng } }).then((r) => r.data as { distance_m: number | null; geofence_m: number; within: boolean }),
   close: (id: number, d: Record<string, unknown>) => api.post<InspectionTask>(`/inspections/tasks/${id}/close/`, d).then((r) => r.data),

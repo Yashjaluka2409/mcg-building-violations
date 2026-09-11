@@ -1,742 +1,836 @@
 # 06 - Database Schema
 
-All tables are prefixed `bvms_`. Generated from `backend/building_violations/models.py` (Django ORM); the same DDL is produced by `manage.py migrate` on PostgreSQL or SQLite.
-
-
-## `bvms_zone` - Zone
-
-| Column | Type | Null | Description |
-|---|---|---|---|
-| id | BigAutoField | no |  |
-| code | CharField | no |  |
-| name_en | CharField | no |  |
-| name_hi | CharField | no |  |
-| active | BooleanField | no |  |
-
-## `bvms_division` - Division
-
-| Column | Type | Null | Description |
-|---|---|---|---|
-| id | BigAutoField | no |  |
-| code | CharField | no |  |
-| zone_id | FK → bvms_zone | no |  |
-| name_en | CharField | no |  |
-| active | BooleanField | no |  |
-
-## `bvms_ward` - Ward
-
-| Column | Type | Null | Description |
-|---|---|---|---|
-| id | BigAutoField | no |  |
-| number | PositiveSmallIntegerField | no |  |
-| name_en | CharField | no |  |
-| name_hi | CharField | no |  |
-| zone_id | FK → bvms_zone | no |  |
-| division_id | FK → bvms_division | yes |  |
-| boundary | JSONField | yes | GeoJSON Polygon/MultiPolygon (WGS84) |
-| active | BooleanField | no |  |
+All module tables are prefixed `bvms_`; the standalone user registry is `users` (UUID primary key, like the platform's UserModel).
+Generated from `backend/app/models/building_violations.py` (SQLAlchemy 2.0) by `backend/scripts/gen_schema_doc.py`; the same DDL
+is produced by `python -m app.cli migrate` (Alembic) on PostgreSQL or SQLite. Geometry is GeoJSON in JSON columns (PostGIS optional).
 
 ## `bvms_branch` - Branch
 
-A branch of the Corporation that can be consulted on a case (Planning, Revenue, Legal, Fire ...).
-
 | Column | Type | Null | Description |
 |---|---|---|---|
-| code | CharField | no |  |
-| name_en | CharField | no |  |
-| name_hi | CharField | no |  |
-| description | TextField | no |  |
-| head_designation | CharField | no |  |
-| default_response_days | PositiveSmallIntegerField | no |  |
-| active | BooleanField | no |  |
-
-## `bvms_officer_profile` - OfficerProfile
-
-Role and jurisdiction of a platform user inside this module.
-
-| Column | Type | Null | Description |
-|---|---|---|---|
-| id | BigAutoField | no |  |
-| created_at | DateTimeField | no |  |
-| updated_at | DateTimeField | no |  |
-| user_id | FK → auth_user | no |  |
-| role | CharField | no | choices: JE, AE, XEN, JC, JC_CLERK, ADDL_COMMISSIONER, COMMISSIONER, FIELD_STAFF, BRANCH_OFFICER, GIS_LAB, ADMIN, VIEWER |
-| designation | CharField | no |  |
-| employee_code | CharField | no |  |
-| mobile | CharField | no |  |
-| email | CharField | no |  |
-| reports_to_id | FK → bvms_officer_profile | yes |  |
-| delegation_order_no | CharField | no |  |
-| delegation_order_date | DateField | yes |  |
-| signature_image | FileField | yes |  |
-| parent_profile_id | FK → bvms_officer_profile | yes | For JC_CLERK: the JC whose office this clerk belongs to |
-| branch_id | FK → bvms_branch | yes | For BRANCH_OFFICER: the branch this officer answers for |
-| active | BooleanField | no |  |
-| zones | ManyToManyField | no |  |
-| wards | ManyToManyField | no |  |
-| divisions | ManyToManyField | no |  |
-| (zones) | M2M → bvms_zone | | via `bvms_officer_profile_zones` |
-| (wards) | M2M → bvms_ward | | via `bvms_officer_profile_wards` |
-| (divisions) | M2M → bvms_division | | via `bvms_officer_profile_divisions` |
+| code | String(20) | no | primary key |
+| name_en | String(120) | no |  |
+| name_hi | String(120) | no |  |
+| description | Text | no |  |
+| head_designation | String(120) | no |  |
+| default_response_days | Integer | no |  |
+| active | Boolean | no |  |
 
 ## `bvms_legal_statute` - LegalStatute
 
 | Column | Type | Null | Description |
 |---|---|---|---|
-| code | CharField | no |  |
-| title | CharField | no |  |
-| citation | CharField | no |  |
-| jurisdiction | CharField | no |  |
-| primary | BooleanField | no |  |
-
-## `bvms_legal_section` - LegalSection
-
-| Column | Type | Null | Description |
-|---|---|---|---|
-| id | BigAutoField | no |  |
-| statute_id | FK → bvms_legal_statute | no |  |
-| section | CharField | no |  |
-| heading | CharField | no |  |
-| kind | CharField | no |  |
-| text | TextField | no |  |
-| schedule_fine_inr | PositiveIntegerField | yes |  |
-| schedule_daily_fine_inr | PositiveIntegerField | yes |  |
-| verify | BooleanField | no | Text extracted from scan - to be verified against Gazette |
-| notes | TextField | no |  |
-
-## `bvms_violation_type` - ViolationType
-
-| Column | Type | Null | Description |
-|---|---|---|---|
-| code | CharField | no |  |
-| category | CharField | no | choices: GOVT_LAND, PRIVATE_LAND_NO_SANCTION, DEVIATION_FROM_SANCTION, STREET_ENCROACHMENT, MISUSE_CHANGE_OF_USE, DANGEROUS_UNFIT, PROCEDURAL_NON_COMPLIANCE |
-| title_en | CharField | no |  |
-| title_hi | CharField | no |  |
-| description | TextField | no |  |
-| contravention_of | TextField | no | Phrase printed in the notice |
-| legal_basis | JSONField | no |  |
-| action_path | CharField | no |  |
-| orders_available | JSONField | no |  |
-| scn_response_days_default | PositiveSmallIntegerField | no |  |
-| order_compliance_days_default | PositiveSmallIntegerField | no |  |
-| statutory_minimum_days | PositiveSmallIntegerField | no |  |
-| severity | CharField | no |  |
-| compoundable | CharField | no |  |
-| evidence_checklist | JSONField | no |  |
-| schedule_fine_inr | PositiveIntegerField | yes |  |
-| schedule_daily_fine_inr | PositiveIntegerField | yes |  |
-| appeal | TextField | no |  |
-| notes | TextField | no |  |
-| active | BooleanField | no |  |
-| sort_order | PositiveSmallIntegerField | no |  |
+| code | String(20) | no | primary key |
+| title | String(200) | no |  |
+| citation | String(300) | no |  |
+| jurisdiction | String(200) | no |  |
+| primary | Boolean | no |  |
 
 ## `bvms_order_type` - OrderType
 
 | Column | Type | Null | Description |
 |---|---|---|---|
-| code | CharField | no |  |
-| title_en | CharField | no |  |
-| title_hi | CharField | no |  |
-| statute | CharField | no |  |
-| section | CharField | no |  |
-| kind | CharField | no |  |
-| min_days | PositiveSmallIntegerField | no |  |
-| default_days | PositiveSmallIntegerField | no |  |
-| template | CharField | no |  |
-| appeal_days | PositiveSmallIntegerField | yes |  |
-| appeal_to | CharField | no |  |
-| body_override_en | TextField | no | Admin-editable operative text (optional) |
-| body_override_hi | TextField | no |  |
-| active | BooleanField | no |  |
+| code | String(40) | no | primary key |
+| title_en | String(250) | no |  |
+| title_hi | String(250) | no |  |
+| statute | String(20) | no |  |
+| section | String(30) | no |  |
+| kind | String(12) | no |  |
+| min_days | Integer | no |  |
+| default_days | Integer | no |  |
+| template | String(80) | no |  |
+| appeal_days | Integer | yes |  |
+| appeal_to | String(200) | no |  |
+| body_override_en | Text | no |  |
+| body_override_hi | Text | no |  |
+| active | Boolean | no |  |
+
+## `bvms_otp` - OTPRequest
+
+| Column | Type | Null | Description |
+|---|---|---|---|
+| id | Integer | no | primary key |
+| mobile | String(15) | no |  |
+| code_hash | String(64) | no |  |
+| expires_at | DateTime(tz) | no |  |
+| consumed | Boolean | no |  |
+| attempts | Integer | no |  |
+| created_at | DateTime(tz) | no |  |
+
+## `bvms_sequence` - Sequence
+
+| Column | Type | Null | Description |
+|---|---|---|---|
+| key | String(60) | no | primary key |
+| value | Integer | no |  |
 
 ## `bvms_sla_config` - SLAConfig
 
-Turn-around time per workflow stage; escalation goes to `escalate_to_role`.
+| Column | Type | Null | Description |
+|---|---|---|---|
+| id | Integer | no | primary key |
+| stage | String(40) | no | unique |
+| label | String(120) | no |  |
+| hours | Integer | no |  |
+| escalate_to_role | String(24) | no |  |
+| active | Boolean | no |  |
+
+## `bvms_violation_type` - ViolationType
 
 | Column | Type | Null | Description |
 |---|---|---|---|
-| id | BigAutoField | no |  |
-| stage | CharField | no |  |
-| label | CharField | no |  |
-| hours | PositiveIntegerField | no |  |
-| escalate_to_role | CharField | no | choices: JE, AE, XEN, JC, JC_CLERK, ADDL_COMMISSIONER, COMMISSIONER, FIELD_STAFF, BRANCH_OFFICER, GIS_LAB, ADMIN, VIEWER |
-| active | BooleanField | no |  |
+| code | String(10) | no | primary key |
+| category | String(40) | no |  |
+| title_en | String(250) | no |  |
+| title_hi | String(250) | no |  |
+| description | Text | no |  |
+| contravention_of | Text | no |  |
+| legal_basis | JSON | no |  |
+| action_path | String(30) | no |  |
+| orders_available | JSON | no |  |
+| scn_response_days_default | Integer | no |  |
+| order_compliance_days_default | Integer | no |  |
+| statutory_minimum_days | Integer | no |  |
+| severity | String(10) | no |  |
+| compoundable | String(12) | no |  |
+| evidence_checklist | JSON | no |  |
+| schedule_fine_inr | Integer | yes |  |
+| schedule_daily_fine_inr | Integer | yes |  |
+| appeal | Text | no |  |
+| notes | Text | no |  |
+| active | Boolean | no |  |
+| sort_order | Integer | no |  |
+
+## `bvms_zone` - Zone
+
+| Column | Type | Null | Description |
+|---|---|---|---|
+| id | Integer | no | primary key |
+| code | String(10) | no | unique |
+| name_en | String(80) | no |  |
+| name_hi | String(80) | no |  |
+| active | Boolean | no |  |
+
+## `users` - User
+
+| Column | Type | Null | Description |
+|---|---|---|---|
+| id | Uuid | no | UUID; JWT `sub`. Inside the platform: the unified user registry |
+| username | String(150) | no | unique |
+| first_name | String(150) | no |  |
+| last_name | String(150) | no |  |
+| email | String(254) | no |  |
+| is_staff | Boolean | no |  |
+| is_superuser | Boolean | no |  |
+| is_active | Boolean | no |  |
+| last_login | DateTime(tz) | yes |  |
+| date_joined | DateTime(tz) | no |  |
+
+## `bvms_admin_audit_log` - AdminAuditLog
+
+| Column | Type | Null | Description |
+|---|---|---|---|
+| id | BigInteger | no | primary key |
+| at | DateTime(tz) | no |  |
+| actor_id | FK → users | yes |  |
+| action | String(40) | no |  |
+| target_type | String(40) | no |  |
+| target_id | String(60) | no |  |
+| before | JSON | no |  |
+| after | JSON | no |  |
+| order_reference | String(120) | no |  |
+| remarks | Text | no |  |
+| ip_address | String(45) | yes |  |
+
+## `bvms_app_attest_key` - AppAttestKey
+
+| Column | Type | Null | Description |
+|---|---|---|---|
+| key_id | String(64) | no | primary key |
+| user_id | FK → users | no |  |
+| public_key_pem | Text | no |  |
+| counter | BigInteger | no |  |
+| environment | String(12) | no |  |
+| created_at | DateTime(tz) | no |  |
+| last_used_at | DateTime(tz) | yes |  |
+
+## `bvms_division` - Division
+
+| Column | Type | Null | Description |
+|---|---|---|---|
+| id | Integer | no | primary key |
+| code | String(10) | no | unique |
+| zone_id | FK → bvms_zone | no |  |
+| name_en | String(80) | no |  |
+| active | Boolean | no |  |
+
+## `bvms_inspection_batch` - InspectionBatch
+
+| Column | Type | Null | Description |
+|---|---|---|---|
+| id | Integer | no | primary key |
+| created_at | DateTime(tz) | no |  |
+| updated_at | DateTime(tz) | no |  |
+| title | String(200) | no |  |
+| category | String(40) | no |  |
+| created_by_id | FK → users | no |  |
+| source_file | String(300) | no |  |
+| instructions | Text | no |  |
+| due_at | DateTime(tz) | yes |  |
+| total | Integer | no |  |
+| errors | JSON | no |  |
+
+## `bvms_integrity_nonce` - IntegrityNonce
+
+| Column | Type | Null | Description |
+|---|---|---|---|
+| nonce | String(64) | no | primary key |
+| user_id | FK → users | no |  |
+| created_at | DateTime(tz) | no |  |
+| used_at | DateTime(tz) | yes |  |
 
 ## `bvms_land_layer_upload` - LandLayerUpload
 
-One upload of a government-land layer by the GIS lab (GeoJSON / KML / zipped shapefile, WGS84).
+| Column | Type | Null | Description |
+|---|---|---|---|
+| id | Integer | no | primary key |
+| created_at | DateTime(tz) | no |  |
+| updated_at | DateTime(tz) | no |  |
+| name | String(200) | no |  |
+| layer_key | String(80) | no |  |
+| version | Integer | no |  |
+| replaces_id | FK → bvms_land_layer_upload | yes |  |
+| agency | String(20) | no |  |
+| source_file | String(300) | no |  |
+| file_format | String(10) | no |  |
+| source | String(200) | no |  |
+| survey_date | Date | yes |  |
+| feature_count | Integer | no |  |
+| skipped_count | Integer | no |  |
+| uploaded_by_id | FK → users | yes |  |
+| remarks | Text | no |  |
+| active | Boolean | no |  |
+| import_log | Text | no |  |
+
+## `bvms_legacy_batch` - LegacyOrderBatch
 
 | Column | Type | Null | Description |
 |---|---|---|---|
-| id | BigAutoField | no |  |
-| created_at | DateTimeField | no |  |
-| updated_at | DateTimeField | no |  |
-| name | CharField | no |  |
-| layer_key | SlugField | no | Stable id of the layer, e.g. mcg-green-belts; re-uploads with the same key replace the old version |
-| version | PositiveIntegerField | no |  |
-| replaces_id | FK → bvms_land_layer_upload | yes |  |
-| agency | CharField | no | choices: MCG, HSVP, GMDA, STATE_GOVT, PWD, IRRIGATION, FOREST, PANCHAYAT, RAILWAYS, NHAI, DEFENCE, OTHER |
-| source_file | FileField | no |  |
-| file_format | CharField | no | choices: GEOJSON, KML, SHP_ZIP |
-| source | CharField | no | Revenue record / survey / drone / DTP layout ... |
-| survey_date | DateField | yes |  |
-| feature_count | PositiveIntegerField | no |  |
-| skipped_count | PositiveIntegerField | no |  |
-| uploaded_by_id | FK → auth_user | yes |  |
-| remarks | TextField | no |  |
-| active | BooleanField | no |  |
-| import_log | TextField | no |  |
+| id | BigInteger | no | primary key |
+| title | String(200) | no |  |
+| source_file | String(300) | no |  |
+| created_by_id | FK → users | yes |  |
+| created_at | DateTime(tz) | no |  |
+| total_rows | Integer | no |  |
+| imported | Integer | no |  |
+| errors | JSON | no |  |
+
+## `bvms_legal_section` - LegalSection
+
+| Column | Type | Null | Description |
+|---|---|---|---|
+| id | Integer | no | primary key |
+| statute_id | FK → bvms_legal_statute | no |  |
+| section | String(30) | no |  |
+| heading | String(300) | no |  |
+| kind | String(20) | no |  |
+| text | Text | no |  |
+| schedule_fine_inr | Integer | yes |  |
+| schedule_daily_fine_inr | Integer | yes |  |
+| verify | Boolean | no |  |
+| notes | Text | no |  |
+
+## `bvms_officer_profile` - OfficerProfile
+
+| Column | Type | Null | Description |
+|---|---|---|---|
+| id | Integer | no | primary key |
+| created_at | DateTime(tz) | no |  |
+| updated_at | DateTime(tz) | no |  |
+| user_id | FK → users | no | one profile per platform user |
+| role | String(24) | no |  |
+| designation | String(120) | no |  |
+| employee_code | String(40) | no |  |
+| mobile | String(15) | no |  |
+| email | String(254) | no |  |
+| reports_to_id | FK → bvms_officer_profile | yes |  |
+| delegation_order_no | String(120) | no |  |
+| delegation_order_date | Date | yes |  |
+| signature_image | String(300) | no |  |
+| parent_profile_id | FK → bvms_officer_profile | yes |  |
+| branch_id | FK → bvms_branch | yes |  |
+| active | Boolean | no |  |
+
+## `bvms_role_permission` - RolePermission
+
+| Column | Type | Null | Description |
+|---|---|---|---|
+| id | Integer | no | primary key |
+| role | String(24) | no |  |
+| permission | String(40) | no |  |
+| allowed | Boolean | no |  |
+| updated_by_id | FK → users | yes |  |
+| updated_at | DateTime(tz) | no |  |
+
+## `bvms_workflow_rule` - WorkflowRule
+
+| Column | Type | Null | Description |
+|---|---|---|---|
+| id | Integer | no | primary key |
+| status | String(30) | no |  |
+| role | String(24) | no |  |
+| action | String(40) | no |  |
+| allowed | Boolean | no |  |
+| updated_by_id | FK → users | yes |  |
+| updated_at | DateTime(tz) | no |  |
+
+## `bvms_workflow_setting` - WorkflowSetting
+
+| Column | Type | Null | Description |
+|---|---|---|---|
+| key | String(60) | no | primary key |
+| value | JSON | no | typed by value_type (bool | int | str) |
+| value_type | String(10) | no |  |
+| label | String(160) | no |  |
+| description | Text | no |  |
+| group | String(40) | no |  |
+| choices | JSON | no |  |
+| updated_by_id | FK → users | yes |  |
+| updated_at | DateTime(tz) | no |  |
+
+## `bvms_officer_permission_override` - OfficerPermissionOverride
+
+| Column | Type | Null | Description |
+|---|---|---|---|
+| id | Integer | no | primary key |
+| profile_id | FK → bvms_officer_profile | no |  |
+| permission | String(40) | no |  |
+| allowed | Boolean | no |  |
+| reason | String(300) | no |  |
+| order_reference | String(120) | no |  |
+| updated_by_id | FK → users | yes |  |
+| updated_at | DateTime(tz) | no |  |
+
+## `bvms_officer_profile_divisions` - association table
+
+| Column | Type | Null | Description |
+|---|---|---|---|
+| id | Integer | no | primary key |
+| officerprofile_id | FK → bvms_officer_profile | no |  |
+| division_id | FK → bvms_division | no |  |
+
+## `bvms_officer_profile_zones` - association table
+
+| Column | Type | Null | Description |
+|---|---|---|---|
+| id | Integer | no | primary key |
+| officerprofile_id | FK → bvms_officer_profile | no |  |
+| zone_id | FK → bvms_zone | no |  |
+
+## `bvms_ward` - Ward
+
+| Column | Type | Null | Description |
+|---|---|---|---|
+| id | Integer | no | primary key |
+| number | Integer | no | unique |
+| name_en | String(120) | no |  |
+| name_hi | String(120) | no |  |
+| zone_id | FK → bvms_zone | no |  |
+| division_id | FK → bvms_division | yes |  |
+| boundary | JSON | yes | GeoJSON Polygon/MultiPolygon (WGS84) |
+| active | Boolean | no |  |
 
 ## `bvms_govt_land_parcel` - GovtLandParcel
 
 | Column | Type | Null | Description |
 |---|---|---|---|
-| id | BigAutoField | no |  |
-| created_at | DateTimeField | no |  |
-| updated_at | DateTimeField | no |  |
-| name | CharField | no |  |
-| agency | CharField | no | choices: MCG, HSVP, GMDA, STATE_GOVT, PWD, IRRIGATION, FOREST, PANCHAYAT, RAILWAYS, NHAI, DEFENCE, OTHER |
-| land_use | CharField | no |  |
-| village | CharField | no |  |
-| khasra_no | CharField | no |  |
-| area_sqm | DecimalField | yes |  |
+| id | Integer | no | primary key |
+| created_at | DateTime(tz) | no |  |
+| updated_at | DateTime(tz) | no |  |
+| name | String(200) | no |  |
+| agency | String(20) | no |  |
+| land_use | String(120) | no |  |
+| village | String(120) | no |  |
+| khasra_no | String(120) | no |  |
+| area_sqm | Numeric(14,2) | yes |  |
 | ward_id | FK → bvms_ward | yes |  |
-| geometry | JSONField | no | GeoJSON Polygon / MultiPolygon (WGS84) |
-| bbox | JSONField | no | [minx, miny, maxx, maxy] for quick filtering |
-| properties | JSONField | no |  |
+| geometry | JSON | no | GeoJSON Polygon/MultiPolygon (WGS84); bbox cached for fast filtering |
+| bbox | JSON | no |  |
+| properties | JSON | no |  |
 | layer_upload_id | FK → bvms_land_layer_upload | yes |  |
-| layer_key | SlugField | no |  |
-| active | BooleanField | no |  |
-
-## `bvms_sanctioned_plan` - SanctionedPlan
-
-| Column | Type | Null | Description |
-|---|---|---|---|
-| id | BigAutoField | no |  |
-| created_at | DateTimeField | no |  |
-| updated_at | DateTimeField | no |  |
-| plan_no | CharField | no |  |
-| pid | CharField | no |  |
-| address | TextField | no |  |
-| ward_id | FK → bvms_ward | yes |  |
-| zone_id | FK → bvms_zone | yes |  |
-| latitude | DecimalField | yes |  |
-| longitude | DecimalField | yes |  |
-| owner_name | CharField | no |  |
-| owner_mobile | CharField | no |  |
-| plot_area_sqm | DecimalField | yes |  |
-| land_use | CharField | no |  |
-| building_type | CharField | no |  |
-| sanctioned_on | DateField | no |  |
-| valid_till | DateField | yes |  |
-| sanction_mode | CharField | no |  |
-| permitted_floors | CharField | no |  |
-| permitted_ground_coverage_pct | DecimalField | yes |  |
-| permitted_far | DecimalField | yes |  |
-| permitted_height_m | DecimalField | yes |  |
-| setbacks | JSONField | no |  |
-| licence_no | CharField | no |  |
-| licence_holder | CharField | no |  |
-| licence_date | DateField | yes |  |
-| licence_valid_till | DateField | yes |  |
-| licence_authority | CharField | no |  |
-| colony_name | CharField | no |  |
-| architect_name | CharField | no |  |
-| architect_registration_no | CharField | no |  |
-| dpc_certificate_on | DateField | yes |  |
-| occupation_certificate_no | CharField | no |  |
-| occupation_certificate_on | DateField | yes |  |
-| status | CharField | no |  |
-| source | CharField | no | choices: MANUAL, BULK_UPLOAD, PLATFORM_SYNC |
-| external_ref | CharField | no |  |
-| remarks | TextField | no |  |
-| created_by_id | FK → auth_user | yes |  |
-
-## `bvms_media` - MediaAttachment
-
-| Column | Type | Null | Description |
-|---|---|---|---|
-| created_at | DateTimeField | no |  |
-| updated_at | DateTimeField | no |  |
-| id | UUIDField | no |  |
-| case_id | FK → bvms_case | yes |  |
-| task_id | FK → bvms_inspection_task | yes |  |
-| notice_id | FK → bvms_notice | yes |  |
-| sanctioned_plan_id | FK → bvms_sanctioned_plan | yes |  |
-| kind | CharField | no | choices: INSPECTION, NOTICE_DELIVERY, ORDER_DELIVERY, RESPONSE, HEARING, EXECUTION, COMPLIANCE, APPEAL, STAY_ORDER, COURT_ORDER, SANCTION_DOC, TASK_EVIDENCE, BRANCH_REFE |
-| media_type | CharField | no |  |
-| file | FileField | no |  |
-| original_name | CharField | no |  |
-| size_bytes | PositiveBigIntegerField | no |  |
-| sha256 | CharField | no |  |
-| latitude | DecimalField | yes |  |
-| longitude | DecimalField | yes |  |
-| accuracy_m | DecimalField | yes |  |
-| altitude_m | DecimalField | yes |  |
-| captured_at | DateTimeField | yes |  |
-| device_id | CharField | no |  |
-| distance_from_case_m | DecimalField | yes |  |
-| geotag_verified | BooleanField | no |  |
-| caption | CharField | no |  |
-| uploaded_by_id | FK → auth_user | yes |  |
-
-## `bvms_sequence` - Sequence
-
-Atomic counters for case / notice numbering.
-
-| Column | Type | Null | Description |
-|---|---|---|---|
-| key | CharField | no |  |
-| value | PositiveIntegerField | no |  |
-
-## `bvms_case` - ViolationCase
-
-| Column | Type | Null | Description |
-|---|---|---|---|
-| created_at | DateTimeField | no |  |
-| updated_at | DateTimeField | no |  |
-| id | UUIDField | no |  |
-| case_no | CharField | no |  |
-| status | CharField | no | choices: DRAFT, PENDING_AE, RETURNED_TO_JE, PENDING_JC, SCN_ISSUED, SCN_SERVED, RESPONSE_RECEIVED, RESPONSE_PENDING_AE, RESPONSE_PENDING_JC, NO_RESPONSE, HEARING_SCHEDUL |
-| status_changed_at | DateTimeField | no |  |
-| source | CharField | no |  |
-| complaint_ref | CharField | no |  |
-| priority | CharField | no |  |
-| pid | CharField | no | DULB Property ID |
-| pid_snapshot | JSONField | no | Property record fetched from the PID API at creation |
-| pid_linked_mobile | CharField | no |  |
-| alternate_mobile | CharField | no |  |
-| address_line | TextField | no |  |
-| locality | CharField | no |  |
-| sector | CharField | no |  |
-| village_colony | CharField | no |  |
-| pincode | CharField | no |  |
-| ward_id | FK → bvms_ward | yes |  |
-| zone_id | FK → bvms_zone | yes |  |
-| division_id | FK → bvms_division | yes |  |
-| latitude | DecimalField | yes |  |
-| longitude | DecimalField | yes |  |
-| location_accuracy_m | DecimalField | yes |  |
-| land_type | CharField | no | choices: GOVT_MCG, GOVT_STATE, PRIVATE, UNKNOWN |
-| govt_parcel_id | FK → bvms_govt_land_parcel | yes |  |
-| sanctioned_plan_id | FK → bvms_sanctioned_plan | yes |  |
-| owner_name | CharField | no |  |
-| owner_father_name | CharField | no |  |
-| occupier_name | CharField | no |  |
-| builder_name | CharField | no |  |
-| person_on_site | CharField | no |  |
-| construction_stage | CharField | no | choices: PLINTH, UNDER_CONSTRUCTION, COMPLETED, OCCUPIED |
-| plot_area_sqm | DecimalField | yes |  |
-| covered_area_sqm | DecimalField | yes |  |
-| storeys | CharField | no |  |
-| height_m | DecimalField | yes |  |
-| use_observed | CharField | no |  |
-| description | TextField | no | Inspection report / observations |
-| measurements | JSONField | no | Permitted vs actual values |
-| reported_by_id | FK → auth_user | no |  |
-| assigned_ae_id | FK → auth_user | yes |  |
-| assigned_jc_id | FK → auth_user | yes |  |
-| current_owner_role | CharField | no | choices: JE, AE, XEN, JC, JC_CLERK, ADDL_COMMISSIONER, COMMISSIONER, FIELD_STAFF, BRANCH_OFFICER, GIS_LAB, ADMIN, VIEWER |
-| stage_due_at | DateTimeField | yes | SLA due time for the current stage |
-| sla_breached | BooleanField | no |  |
-| inspected_at | DateTimeField | no |  |
-| submitted_at | DateTimeField | yes |  |
-| ae_forwarded_at | DateTimeField | yes |  |
-| jc_received_at | DateTimeField | yes |  |
-| scn_issued_at | DateTimeField | yes |  |
-| scn_served_at | DateTimeField | yes |  |
-| response_due_at | DateTimeField | yes |  |
-| response_received_at | DateTimeField | yes |  |
-| hearing_at | DateTimeField | yes |  |
-| decided_at | DateTimeField | yes |  |
-| order_issued_at | DateTimeField | yes |  |
-| order_served_at | DateTimeField | yes |  |
-| compliance_due_at | DateTimeField | yes |  |
-| executed_at | DateTimeField | yes |  |
-| closed_at | DateTimeField | yes |  |
-| task_id | FK → bvms_inspection_task | yes |  |
-| inspector_latitude | DecimalField | yes | Officer's device location at the time of recording |
-| inspector_longitude | DecimalField | yes |  |
-| inspector_distance_m | DecimalField | yes |  |
-| litigation_status | CharField | no |  |
-| litigation_authority | CharField | no |  |
-| stay_until | DateField | yes |  |
-| next_hearing_on | DateField | yes |  |
-| stop_work_issued | BooleanField | no |  |
-| sealed | BooleanField | no |  |
-| decision | CharField | no |  |
-| decision_reasons | TextField | no |  |
-| final_order_id | FK → bvms_notice | yes |  |
-| closure_reason | TextField | no |  |
-| demolition_cost_inr | DecimalField | yes |  |
-| cost_recovery_status | CharField | no |  |
-
-## `bvms_case_violation` - CaseViolation
-
-| Column | Type | Null | Description |
-|---|---|---|---|
-| id | BigAutoField | no |  |
-| case_id | FK → bvms_case | no |  |
-| violation_type_id | FK → bvms_violation_type | no |  |
-| details | JSONField | no | permitted / actual measurements, floors etc. |
-| remarks | TextField | no |  |
-| is_primary | BooleanField | no |  |
-
-## `bvms_notice` - Notice
-
-A show-cause notice, order, memo or referral generated for a case.
-
-| Column | Type | Null | Description |
-|---|---|---|---|
-| created_at | DateTimeField | no |  |
-| updated_at | DateTimeField | no |  |
-| id | UUIDField | no |  |
-| case_id | FK → bvms_case | no |  |
-| order_type_id | FK → bvms_order_type | no |  |
-| notice_no | CharField | no |  |
-| kind | CharField | no |  |
-| issued_by_id | FK → auth_user | no |  |
-| issued_at | DateTimeField | no |  |
-| addressee_name | CharField | no |  |
-| addressee_address | TextField | no |  |
-| addressee_mobiles | JSONField | no |  |
-| response_days | PositiveSmallIntegerField | no |  |
-| response_due_at | DateTimeField | yes |  |
-| compliance_days | PositiveSmallIntegerField | no |  |
-| compliance_due_at | DateTimeField | yes |  |
-| hearing_at | DateTimeField | yes |  |
-| hearing_venue | CharField | no |  |
-| operative_text_en | TextField | no |  |
-| operative_text_hi | TextField | no |  |
-| html_snapshot | TextField | no |  |
-| context_snapshot | JSONField | no |  |
-| pdf | FileField | yes |  |
-| signed_pdf | FileField | yes |  |
-| document_hash | CharField | no |  |
-| verification_code | CharField | no |  |
-| qr_payload | TextField | no |  |
-| signature_status | CharField | no | choices: UNSIGNED, SIGNED, FAILED |
-| signer_name | CharField | no |  |
-| signer_cert_subject | CharField | no |  |
-| signer_cert_serial | CharField | no |  |
-| signed_at | DateTimeField | yes |  |
-| signature_error | TextField | no |  |
-| served_at | DateTimeField | yes |  |
-| served_mode | CharField | no | choices: SMS, IN_PERSON, AFFIXATION, POST, EMAIL, WHATSAPP, BEAT_OF_DRUM |
-| served_by_id | FK → auth_user | yes |  |
-| service_remarks | TextField | no |  |
-| superseded_by_id | FK → bvms_notice | yes |  |
-| is_final_order | BooleanField | no |  |
-
-## `bvms_notice_dispatch` - NoticeDispatch
-
-| Column | Type | Null | Description |
-|---|---|---|---|
-| id | BigAutoField | no |  |
-| created_at | DateTimeField | no |  |
-| updated_at | DateTimeField | no |  |
-| notice_id | FK → bvms_notice | no |  |
-| channel | CharField | no |  |
-| to | CharField | no |  |
-| message | TextField | no |  |
-| status | CharField | no |  |
-| provider_ref | CharField | no |  |
-| attempts | PositiveSmallIntegerField | no |  |
-| last_error | TextField | no |  |
-| sent_at | DateTimeField | yes |  |
-
-## `bvms_case_response` - CaseResponse
-
-Reply of the noticee to a show-cause notice.
-
-| Column | Type | Null | Description |
-|---|---|---|---|
-| id | BigAutoField | no |  |
-| created_at | DateTimeField | no |  |
-| updated_at | DateTimeField | no |  |
-| case_id | FK → bvms_case | no |  |
-| notice_id | FK → bvms_notice | yes |  |
-| received_on | DateField | no |  |
-| received_via | CharField | no | choices: JE, JC_CLERK, AE, JC, HEARING, POST |
-| submitted_by_name | CharField | no |  |
-| summary | TextField | no |  |
-| requests_hearing | BooleanField | no |  |
-| is_within_time | BooleanField | no |  |
-| uploaded_by_id | FK → auth_user | no |  |
-| ae_comments | TextField | no |  |
-| ae_commented_at | DateTimeField | yes |  |
-| jc_remarks | TextField | no |  |
-
-## `bvms_hearing` - Hearing
-
-| Column | Type | Null | Description |
-|---|---|---|---|
-| id | BigAutoField | no |  |
-| created_at | DateTimeField | no |  |
-| updated_at | DateTimeField | no |  |
-| case_id | FK → bvms_case | no |  |
-| notice_id | FK → bvms_notice | yes |  |
-| scheduled_at | DateTimeField | no |  |
-| venue | CharField | no |  |
-| presiding_id | FK → auth_user | no |  |
-| held_at | DateTimeField | yes |  |
-| attendees | TextField | no |  |
-| proceedings | TextField | no |  |
-| outcome | CharField | no |  |
-| next_date | DateTimeField | yes |  |
-
-## `bvms_appeal` - Appeal
-
-An appeal / writ / suit against a notice or order, and the stay (if any) granted in it.
-
-| Column | Type | Null | Description |
-|---|---|---|---|
-| id | BigAutoField | no |  |
-| created_at | DateTimeField | no |  |
-| updated_at | DateTimeField | no |  |
-| case_id | FK → bvms_case | no |  |
-| order_id | FK → bvms_notice | yes |  |
-| authority | CharField | no | choices: DIVISIONAL_COMMISSIONER, COMMISSIONER_MCG, CIVIL_COURT, HIGH_COURT, SUPREME_COURT, NGT, OTHER |
-| authority_other | CharField | no |  |
-| filed_on | DateField | no |  |
-| appeal_no | CharField | no | Appeal / CWP / SLP / OA number |
-| appellant_name | CharField | no |  |
-| counsel_for_mcg | CharField | no |  |
-| status | CharField | no | choices: PENDING, STAYED, STAY_VACATED, DISMISSED, ALLOWED, MODIFIED, WITHDRAWN, DISPOSED |
-| stay_granted | BooleanField | no |  |
-| stay_order_date | DateField | yes |  |
-| stay_until | DateField | yes | Blank = until further orders / next date |
-| stay_scope | CharField | no | choices: FULL, DEMOLITION_ONLY, STATUS_QUO, PARTIAL |
-| stay_order_id | FK → bvms_media | yes | Uploaded copy of the stay / interim order |
-| conditions | TextField | no |  |
-| next_hearing_on | DateField | yes |  |
-| decided_on | DateField | yes |  |
-| decision_summary | TextField | no |  |
-| final_order_id | FK → bvms_media | yes | Uploaded copy of the final order / judgment |
-| recorded_by_id | FK → auth_user | no |  |
-
-## `bvms_execution` - ExecutionRecord
-
-| Column | Type | Null | Description |
-|---|---|---|---|
-| id | BigAutoField | no |  |
-| created_at | DateTimeField | no |  |
-| updated_at | DateTimeField | no |  |
-| case_id | FK → bvms_case | no |  |
-| order_id | FK → bvms_notice | yes |  |
-| action | CharField | no | choices: DEMOLITION, PARTIAL_DEMOLITION, SEALING, DESEALING, EVICTION, REMOVAL, ALTERATION |
-| mode | CharField | no | choices: OWNER_SELF, CORPORATION |
-| executed_on | DateTimeField | no |  |
-| squad_incharge | CharField | no |  |
-| police_assistance | BooleanField | no |  |
-| police_station | CharField | no |  |
-| duty_magistrate | CharField | no |  |
-| machinery_used | CharField | no |  |
-| area_demolished_sqm | DecimalField | yes |  |
-| seal_memo_no | CharField | no |  |
-| cost_incurred_inr | DecimalField | yes |  |
-| remarks | TextField | no |  |
-| recorded_by_id | FK → auth_user | no |  |
-| verified_by_id | FK → auth_user | yes |  |
-| verified_at | DateTimeField | yes |  |
-
-## `bvms_case_event` - CaseEvent
-
-| Column | Type | Null | Description |
-|---|---|---|---|
-| id | BigAutoField | no |  |
-| case_id | FK → bvms_case | no |  |
-| at | DateTimeField | no |  |
-| actor_id | FK → auth_user | yes |  |
-| actor_role | CharField | no |  |
-| action | CharField | no |  |
-| from_status | CharField | no |  |
-| to_status | CharField | no |  |
-| remarks | TextField | no |  |
-| payload | JSONField | no |  |
-| ip_address | GenericIPAddressField | yes |  |
-| device_id | CharField | no |  |
-| latitude | DecimalField | yes |  |
-| longitude | DecimalField | yes |  |
-| prev_hash | CharField | no |  |
-| hash | CharField | no |  |
-
-## `bvms_notification` - Notification
-
-| Column | Type | Null | Description |
-|---|---|---|---|
-| id | BigAutoField | no |  |
-| created_at | DateTimeField | no |  |
-| updated_at | DateTimeField | no |  |
-| user_id | FK → auth_user | no |  |
-| case_id | FK → bvms_case | yes |  |
-| title | CharField | no |  |
-| body | TextField | no |  |
-| level | CharField | no |  |
-| read_at | DateTimeField | yes |  |
-
-## `bvms_otp` - OTPRequest
-
-Standalone-mode OTP login (the platform's own OTP service is used when mounted inside sms-be).
-
-| Column | Type | Null | Description |
-|---|---|---|---|
-| id | BigAutoField | no |  |
-| mobile | CharField | no |  |
-| code_hash | CharField | no |  |
-| expires_at | DateTimeField | no |  |
-| consumed | BooleanField | no |  |
-| attempts | PositiveSmallIntegerField | no |  |
-| created_at | DateTimeField | no |  |
-
-## `bvms_branch_referral` - BranchReferral
-
-| Column | Type | Null | Description |
-|---|---|---|---|
-| id | BigAutoField | no |  |
-| created_at | DateTimeField | no |  |
-| updated_at | DateTimeField | no |  |
-| case_id | FK → bvms_case | no |  |
-| branch_id | FK → bvms_branch | no |  |
-| referred_by_id | FK → auth_user | no |  |
-| referred_at | DateTimeField | no |  |
-| query | TextField | no | What the branch is asked to examine / report on |
-| due_at | DateTimeField | yes |  |
-| hold_case | BooleanField | no | If true, final orders are blocked until the branch responds (subject to workflow setting) |
-| status | CharField | no | choices: PENDING, RESPONDED, CLOSED, WITHDRAWN |
-| assigned_to_id | FK → auth_user | yes |  |
-| response | TextField | no |  |
-| recommendation | CharField | no |  |
-| responded_by_id | FK → auth_user | yes |  |
-| responded_at | DateTimeField | yes |  |
-| closed_by_id | FK → auth_user | yes |  |
-| closed_at | DateTimeField | yes |  |
-| closing_remarks | TextField | no |  |
-
-## `bvms_workflow_rule` - WorkflowRule
-
-Which role may perform which action when a case is in a given status.
-
-| Column | Type | Null | Description |
-|---|---|---|---|
-| id | BigAutoField | no |  |
-| status | CharField | no |  |
-| role | CharField | no | choices: JE, AE, XEN, JC, JC_CLERK, ADDL_COMMISSIONER, COMMISSIONER, FIELD_STAFF, BRANCH_OFFICER, GIS_LAB, ADMIN, VIEWER |
-| action | CharField | no |  |
-| allowed | BooleanField | no |  |
-| updated_by_id | FK → auth_user | yes |  |
-| updated_at | DateTimeField | no |  |
-
-## `bvms_workflow_setting` - WorkflowSetting
-
-Typed key/value settings that change the routing and guards of the workflow.
-
-| Column | Type | Null | Description |
-|---|---|---|---|
-| key | CharField | no |  |
-| value | JSONField | no |  |
-| value_type | CharField | no |  |
-| label | CharField | no |  |
-| description | TextField | no |  |
-| group | CharField | no |  |
-| choices | JSONField | no |  |
-| updated_by_id | FK → auth_user | yes |  |
-| updated_at | DateTimeField | no |  |
-
-## `bvms_role_permission` - RolePermission
-
-Module-level permissions per role (view all zones, export reports, manage plans ...).
-
-| Column | Type | Null | Description |
-|---|---|---|---|
-| id | BigAutoField | no |  |
-| role | CharField | no | choices: JE, AE, XEN, JC, JC_CLERK, ADDL_COMMISSIONER, COMMISSIONER, FIELD_STAFF, BRANCH_OFFICER, GIS_LAB, ADMIN, VIEWER |
-| permission | CharField | no |  |
-| allowed | BooleanField | no |  |
-| updated_by_id | FK → auth_user | yes |  |
-| updated_at | DateTimeField | no |  |
-
-## `bvms_officer_permission_override` - OfficerPermissionOverride
-
-Grant or revoke a permission for one officer, over and above the role defaults.
-
-| Column | Type | Null | Description |
-|---|---|---|---|
-| id | BigAutoField | no |  |
-| profile_id | FK → bvms_officer_profile | no |  |
-| permission | CharField | no |  |
-| allowed | BooleanField | no |  |
-| reason | CharField | no |  |
-| order_reference | CharField | no | Office order / Commissioner's order authorising the change |
-| updated_by_id | FK → auth_user | yes |  |
-| updated_at | DateTimeField | no |  |
-
-## `bvms_admin_audit_log` - AdminAuditLog
-
-Every administrative change (officer, jurisdiction, rule, permission, setting, re-assignment).
-
-| Column | Type | Null | Description |
-|---|---|---|---|
-| id | BigAutoField | no |  |
-| at | DateTimeField | no |  |
-| actor_id | FK → auth_user | yes |  |
-| action | CharField | no |  |
-| target_type | CharField | no |  |
-| target_id | CharField | no |  |
-| before | JSONField | no |  |
-| after | JSONField | no |  |
-| order_reference | CharField | no |  |
-| remarks | TextField | no |  |
-| ip_address | GenericIPAddressField | yes |  |
-
-## `bvms_inspection_batch` - InspectionBatch
-
-A bulk push of properties for verification, e.g. 'all PGs in the PID database, Zone 2'.
-
-| Column | Type | Null | Description |
-|---|---|---|---|
-| id | BigAutoField | no |  |
-| created_at | DateTimeField | no |  |
-| updated_at | DateTimeField | no |  |
-| title | CharField | no |  |
-| category | CharField | no |  |
-| created_by_id | FK → auth_user | no |  |
-| source_file | FileField | yes |  |
-| instructions | TextField | no |  |
-| due_at | DateTimeField | yes |  |
-| total | PositiveIntegerField | no |  |
-| errors | JSONField | no |  |
+| layer_key | String(80) | no |  |
+| active | Boolean | no |  |
 
 ## `bvms_inspection_task` - InspectionTask
 
 | Column | Type | Null | Description |
 |---|---|---|---|
-| id | BigAutoField | no |  |
-| created_at | DateTimeField | no |  |
-| updated_at | DateTimeField | no |  |
+| id | Integer | no | primary key |
+| created_at | DateTime(tz) | no |  |
+| updated_at | DateTime(tz) | no |  |
 | batch_id | FK → bvms_inspection_batch | yes |  |
-| category | CharField | no | choices: VERIFICATION, PG_HOSTEL, COMPLAINT, DRONE_FLAG, COURT_DIRECTION, SANCTION_FOLLOWUP, GOVT_LAND, RE_INSPECTION, OTHER |
-| pid | CharField | no |  |
-| pid_snapshot | JSONField | no |  |
-| address | TextField | no |  |
-| owner_name | CharField | no |  |
-| owner_mobile | CharField | no |  |
-| latitude | DecimalField | yes |  |
-| longitude | DecimalField | yes |  |
+| category | String(24) | no |  |
+| pid | String(40) | no |  |
+| pid_snapshot | JSON | no |  |
+| address | Text | no |  |
+| owner_name | String(200) | no |  |
+| owner_mobile | String(15) | no |  |
+| latitude | Numeric(10,7) | yes |  |
+| longitude | Numeric(10,7) | yes |  |
 | ward_id | FK → bvms_ward | yes |  |
 | zone_id | FK → bvms_zone | yes |  |
-| instructions | TextField | no | What the field officer must check |
-| priority | CharField | no |  |
-| created_by_id | FK → auth_user | no |  |
-| assigned_to_id | FK → auth_user | yes |  |
-| assigned_at | DateTimeField | yes |  |
-| due_at | DateTimeField | yes |  |
-| status | CharField | no | choices: ASSIGNED, UNASSIGNED, IN_PROGRESS, VIOLATION_RECORDED, NO_VIOLATION, NOT_FOUND, CANCELLED |
-| related_case_id | FK → bvms_case | yes | For re-inspection tasks |
-| started_at | DateTimeField | yes |  |
-| start_latitude | DecimalField | yes |  |
-| start_longitude | DecimalField | yes |  |
-| start_distance_m | DecimalField | yes |  |
-| completed_at | DateTimeField | yes |  |
-| outcome_remarks | TextField | no |  |
-| geofence_m | PositiveIntegerField | no | Officer must be within this many metres of the point to start |
+| instructions | Text | no |  |
+| priority | String(10) | no |  |
+| created_by_id | FK → users | no |  |
+| assigned_to_id | FK → users | yes |  |
+| assigned_at | DateTime(tz) | yes |  |
+| due_at | DateTime(tz) | yes |  |
+| status | String(20) | no |  |
+| related_case_id | FK → bvms_case | yes |  |
+| started_at | DateTime(tz) | yes |  |
+| start_latitude | Numeric(10,7) | yes |  |
+| start_longitude | Numeric(10,7) | yes |  |
+| start_distance_m | Numeric(10,2) | yes |  |
+| completed_at | DateTime(tz) | yes |  |
+| outcome_remarks | Text | no |  |
+| geofence_m | Integer | no |  |
+
+## `bvms_officer_profile_wards` - association table
+
+| Column | Type | Null | Description |
+|---|---|---|---|
+| id | Integer | no | primary key |
+| officerprofile_id | FK → bvms_officer_profile | no |  |
+| ward_id | FK → bvms_ward | no |  |
+
+## `bvms_sanctioned_plan` - SanctionedPlan
+
+| Column | Type | Null | Description |
+|---|---|---|---|
+| id | Integer | no | primary key |
+| created_at | DateTime(tz) | no |  |
+| updated_at | DateTime(tz) | no |  |
+| plan_no | String(80) | no | unique |
+| pid | String(40) | no |  |
+| address | Text | no |  |
+| ward_id | FK → bvms_ward | yes |  |
+| zone_id | FK → bvms_zone | yes |  |
+| latitude | Numeric(10,7) | yes |  |
+| longitude | Numeric(10,7) | yes |  |
+| owner_name | String(200) | no |  |
+| owner_mobile | String(15) | no |  |
+| plot_area_sqm | Numeric(12,2) | yes |  |
+| land_use | String(60) | no |  |
+| building_type | String(80) | no |  |
+| sanctioned_on | Date | no |  |
+| valid_till | Date | yes |  |
+| sanction_mode | String(40) | no |  |
+| permitted_floors | String(40) | no |  |
+| permitted_ground_coverage_pct | Numeric(5,2) | yes |  |
+| permitted_far | Numeric(5,2) | yes |  |
+| permitted_height_m | Numeric(6,2) | yes |  |
+| setbacks | JSON | no |  |
+| licence_no | String(80) | no |  |
+| licence_holder | String(200) | no |  |
+| licence_date | Date | yes |  |
+| licence_valid_till | Date | yes |  |
+| licence_authority | String(120) | no |  |
+| colony_name | String(160) | no |  |
+| architect_name | String(160) | no |  |
+| architect_registration_no | String(80) | no |  |
+| dpc_certificate_on | Date | yes |  |
+| occupation_certificate_no | String(80) | no |  |
+| occupation_certificate_on | Date | yes |  |
+| status | String(20) | no |  |
+| source | String(20) | no |  |
+| external_ref | String(120) | no |  |
+| remarks | Text | no |  |
+| created_by_id | FK → users | yes |  |
+
+## `bvms_case` - ViolationCase
+
+| Column | Type | Null | Description |
+|---|---|---|---|
+| id | Uuid | no | UUID primary key |
+| created_at | DateTime(tz) | no |  |
+| updated_at | DateTime(tz) | no |  |
+| case_no | String(40) | no | unique |
+| status | String(30) | no |  |
+| status_changed_at | DateTime(tz) | no |  |
+| source | String(20) | no | FIELD_INSPECTION | COMPLAINT | DRONE | LEGACY_ORDER ... |
+| legacy_reference | String(120) | no |  |
+| legacy_batch_id | FK → bvms_legacy_batch | yes |  |
+| complaint_ref | String(80) | no |  |
+| priority | String(10) | no |  |
+| pid | String(40) | no |  |
+| pid_snapshot | JSON | no |  |
+| pid_linked_mobile | String(15) | no |  |
+| alternate_mobile | String(15) | no |  |
+| address_line | Text | no |  |
+| locality | String(160) | no |  |
+| sector | String(60) | no |  |
+| village_colony | String(160) | no |  |
+| pincode | String(6) | no |  |
+| ward_id | FK → bvms_ward | yes |  |
+| zone_id | FK → bvms_zone | yes |  |
+| division_id | FK → bvms_division | yes |  |
+| latitude | Numeric(10,7) | yes |  |
+| longitude | Numeric(10,7) | yes |  |
+| location_accuracy_m | Numeric(8,2) | yes |  |
+| land_type | String(12) | no |  |
+| govt_parcel_id | FK → bvms_govt_land_parcel | yes |  |
+| sanctioned_plan_id | FK → bvms_sanctioned_plan | yes |  |
+| owner_name | String(200) | no |  |
+| owner_father_name | String(200) | no |  |
+| occupier_name | String(200) | no |  |
+| builder_name | String(200) | no |  |
+| person_on_site | String(200) | no |  |
+| construction_stage | String(20) | no |  |
+| plot_area_sqm | Numeric(12,2) | yes |  |
+| covered_area_sqm | Numeric(12,2) | yes |  |
+| storeys | String(40) | no |  |
+| height_m | Numeric(6,2) | yes |  |
+| use_observed | String(80) | no |  |
+| description | Text | no |  |
+| measurements | JSON | no |  |
+| reported_by_id | FK → users | no |  |
+| assigned_ae_id | FK → users | yes |  |
+| assigned_jc_id | FK → users | yes |  |
+| current_owner_role | String(24) | no |  |
+| stage_due_at | DateTime(tz) | yes |  |
+| sla_breached | Boolean | no |  |
+| inspected_at | DateTime(tz) | no |  |
+| submitted_at | DateTime(tz) | yes |  |
+| ae_forwarded_at | DateTime(tz) | yes |  |
+| jc_received_at | DateTime(tz) | yes |  |
+| scn_issued_at | DateTime(tz) | yes |  |
+| scn_served_at | DateTime(tz) | yes |  |
+| response_due_at | DateTime(tz) | yes |  |
+| response_received_at | DateTime(tz) | yes |  |
+| hearing_at | DateTime(tz) | yes |  |
+| decided_at | DateTime(tz) | yes |  |
+| order_issued_at | DateTime(tz) | yes |  |
+| order_served_at | DateTime(tz) | yes |  |
+| compliance_due_at | DateTime(tz) | yes |  |
+| executed_at | DateTime(tz) | yes |  |
+| closed_at | DateTime(tz) | yes |  |
+| task_id | FK → bvms_inspection_task | yes | unique |
+| inspector_latitude | Numeric(10,7) | yes |  |
+| inspector_longitude | Numeric(10,7) | yes |  |
+| inspector_distance_m | Numeric(10,2) | yes |  |
+| litigation_status | String(20) | no |  |
+| litigation_authority | String(30) | no |  |
+| stay_until | Date | yes |  |
+| next_hearing_on | Date | yes |  |
+| stop_work_issued | Boolean | no |  |
+| sealed | Boolean | no |  |
+| decision | String(30) | no |  |
+| decision_reasons | Text | no |  |
+| final_order_id | FK → bvms_notice | yes |  |
+| closure_reason | Text | no |  |
+| demolition_cost_inr | Numeric(12,2) | yes |  |
+| cost_recovery_status | String(20) | no |  |
+
+## `bvms_branch_referral` - BranchReferral
+
+| Column | Type | Null | Description |
+|---|---|---|---|
+| id | Integer | no | primary key |
+| created_at | DateTime(tz) | no |  |
+| updated_at | DateTime(tz) | no |  |
+| case_id | FK → bvms_case | no |  |
+| branch_id | FK → bvms_branch | no |  |
+| referred_by_id | FK → users | no |  |
+| referred_at | DateTime(tz) | no |  |
+| query | Text | no |  |
+| due_at | DateTime(tz) | yes |  |
+| hold_case | Boolean | no |  |
+| status | String(12) | no |  |
+| assigned_to_id | FK → users | yes |  |
+| response | Text | no |  |
+| recommendation | String(40) | no |  |
+| responded_by_id | FK → users | yes |  |
+| responded_at | DateTime(tz) | yes |  |
+| closed_by_id | FK → users | yes |  |
+| closed_at | DateTime(tz) | yes |  |
+| closing_remarks | Text | no |  |
+
+## `bvms_case_event` - CaseEvent
+
+| Column | Type | Null | Description |
+|---|---|---|---|
+| id | BigInteger | no | primary key |
+| case_id | FK → bvms_case | no |  |
+| at | DateTime(tz) | no |  |
+| actor_id | FK → users | yes |  |
+| actor_role | String(24) | no |  |
+| action | String(40) | no |  |
+| from_status | String(30) | no |  |
+| to_status | String(30) | no |  |
+| remarks | Text | no |  |
+| payload | JSON | no |  |
+| ip_address | String(45) | yes |  |
+| device_id | String(120) | no |  |
+| latitude | Numeric(10,7) | yes |  |
+| longitude | Numeric(10,7) | yes |  |
+| prev_hash | String(64) | no |  |
+| hash | String(64) | no | SHA-256 over the event + prev_hash (tamper-evident chain) |
+
+## `bvms_case_violation` - CaseViolation
+
+| Column | Type | Null | Description |
+|---|---|---|---|
+| id | Integer | no | primary key |
+| case_id | FK → bvms_case | no |  |
+| violation_type_id | FK → bvms_violation_type | no |  |
+| details | JSON | no |  |
+| remarks | Text | no |  |
+| is_primary | Boolean | no |  |
+
+## `bvms_location_integrity` - LocationIntegrityCheck
+
+| Column | Type | Null | Description |
+|---|---|---|---|
+| id | BigInteger | no | primary key |
+| at | DateTime(tz) | no |  |
+| officer_id | FK → users | yes |  |
+| context | String(14) | no |  |
+| decision | String(10) | no | PASS | FLAGGED | REJECTED |
+| reasons | JSON | no |  |
+| flags | JSON | no |  |
+| case_id | FK → bvms_case | yes |  |
+| task_id | FK → bvms_inspection_task | yes |  |
+| media_id | FK → bvms_media | yes |  |
+| latitude | Numeric(10,7) | yes |  |
+| longitude | Numeric(10,7) | yes |  |
+| accuracy_m | Numeric(10,3) | yes |  |
+| altitude_m | Numeric(10,3) | yes |  |
+| speed_mps | Numeric(10,3) | yes |  |
+| heading | Numeric(10,3) | yes |  |
+| provider | String(30) | no |  |
+| fix_at | DateTime(tz) | yes |  |
+| fix_age_s | Numeric(10,3) | yes |  |
+| jitter_m | Numeric(10,3) | yes |  |
+| device_id | String(120) | no |  |
+| platform | String(10) | no |  |
+| source | String(10) | no |  |
+| app_version | String(40) | no |  |
+| build_number | String(40) | no |  |
+| os_version | String(40) | no |  |
+| device_model | String(80) | no |  |
+| native_module | Boolean | no |  |
+| is_physical_device | Boolean | yes |  |
+| mock_location | Boolean | yes |  |
+| rooted | Boolean | yes |  |
+| developer_options | Boolean | yes |  |
+| vpn_active | Boolean | yes |  |
+| proxy_configured | Boolean | yes |  |
+| simulated_by_software | Boolean | yes |  |
+| produced_by_accessory | Boolean | yes |  |
+| attestation_type | String(20) | no |  |
+| attestation_status | String(12) | no |  |
+| attestation_detail | JSON | no |  |
+| client_ip | String(45) | yes |  |
+| ip_intel | JSON | no |  |
+| ip_distance_km | Numeric(8,1) | yes |  |
+| previous_id | FK → bvms_location_integrity | yes |  |
+| travel_distance_km | Numeric(10,2) | yes |  |
+| travel_speed_kmph | Numeric(10,1) | yes |  |
+| signals | JSON | no |  |
+
+## `bvms_notice` - Notice
+
+| Column | Type | Null | Description |
+|---|---|---|---|
+| id | Uuid | no | primary key |
+| created_at | DateTime(tz) | no |  |
+| updated_at | DateTime(tz) | no |  |
+| case_id | FK → bvms_case | no |  |
+| order_type_id | FK → bvms_order_type | no |  |
+| notice_no | String(60) | no | unique |
+| kind | String(12) | no |  |
+| issued_by_id | FK → users | no |  |
+| issued_at | DateTime(tz) | no |  |
+| addressee_name | String(200) | no |  |
+| addressee_address | Text | no |  |
+| addressee_mobiles | JSON | no |  |
+| response_days | Integer | no |  |
+| response_due_at | DateTime(tz) | yes |  |
+| compliance_days | Integer | no |  |
+| compliance_due_at | DateTime(tz) | yes |  |
+| hearing_at | DateTime(tz) | yes |  |
+| hearing_venue | String(200) | no |  |
+| operative_text_en | Text | no |  |
+| operative_text_hi | Text | no |  |
+| html_snapshot | Text | no |  |
+| context_snapshot | JSON | no |  |
+| pdf | String(300) | no |  |
+| signed_pdf | String(300) | no |  |
+| document_hash | String(64) | no |  |
+| verification_code | String(24) | no | 12-character code printed under the QR; public verify endpoint |
+| qr_payload | Text | no |  |
+| signature_status | String(10) | no |  |
+| signer_name | String(200) | no |  |
+| signer_cert_subject | String(300) | no |  |
+| signer_cert_serial | String(120) | no |  |
+| signed_at | DateTime(tz) | yes |  |
+| signature_error | Text | no |  |
+| served_at | DateTime(tz) | yes |  |
+| served_mode | String(16) | no |  |
+| served_by_id | FK → users | yes |  |
+| service_remarks | Text | no |  |
+| superseded_by_id | FK → bvms_notice | yes |  |
+| is_final_order | Boolean | no |  |
+| is_legacy | Boolean | no | order issued on paper before the system (not re-signed) |
+
+## `bvms_notification` - Notification
+
+| Column | Type | Null | Description |
+|---|---|---|---|
+| id | Integer | no | primary key |
+| created_at | DateTime(tz) | no |  |
+| updated_at | DateTime(tz) | no |  |
+| user_id | FK → users | no |  |
+| case_id | FK → bvms_case | yes |  |
+| title | String(200) | no |  |
+| body | Text | no |  |
+| level | String(10) | no |  |
+| read_at | DateTime(tz) | yes |  |
+
+## `bvms_case_response` - CaseResponse
+
+| Column | Type | Null | Description |
+|---|---|---|---|
+| id | Integer | no | primary key |
+| created_at | DateTime(tz) | no |  |
+| updated_at | DateTime(tz) | no |  |
+| case_id | FK → bvms_case | no |  |
+| notice_id | FK → bvms_notice | yes |  |
+| received_on | Date | no |  |
+| received_via | String(10) | no |  |
+| submitted_by_name | String(200) | no |  |
+| summary | Text | no |  |
+| requests_hearing | Boolean | no |  |
+| is_within_time | Boolean | no |  |
+| uploaded_by_id | FK → users | no |  |
+| ae_comments | Text | no |  |
+| ae_commented_at | DateTime(tz) | yes |  |
+| jc_remarks | Text | no |  |
+
+## `bvms_execution` - ExecutionRecord
+
+| Column | Type | Null | Description |
+|---|---|---|---|
+| id | Integer | no | primary key |
+| created_at | DateTime(tz) | no |  |
+| updated_at | DateTime(tz) | no |  |
+| case_id | FK → bvms_case | no |  |
+| order_id | FK → bvms_notice | yes |  |
+| action | String(20) | no |  |
+| mode | String(12) | no |  |
+| executed_on | DateTime(tz) | no |  |
+| squad_incharge | String(200) | no |  |
+| police_assistance | Boolean | no |  |
+| police_station | String(120) | no |  |
+| duty_magistrate | String(200) | no |  |
+| machinery_used | String(300) | no |  |
+| area_demolished_sqm | Numeric(12,2) | yes |  |
+| seal_memo_no | String(60) | no |  |
+| cost_incurred_inr | Numeric(12,2) | yes |  |
+| remarks | Text | no |  |
+| recorded_by_id | FK → users | no |  |
+| verified_by_id | FK → users | yes |  |
+| verified_at | DateTime(tz) | yes |  |
+
+## `bvms_hearing` - Hearing
+
+| Column | Type | Null | Description |
+|---|---|---|---|
+| id | Integer | no | primary key |
+| created_at | DateTime(tz) | no |  |
+| updated_at | DateTime(tz) | no |  |
+| case_id | FK → bvms_case | no |  |
+| notice_id | FK → bvms_notice | yes |  |
+| scheduled_at | DateTime(tz) | no |  |
+| venue | String(200) | no |  |
+| presiding_id | FK → users | no |  |
+| held_at | DateTime(tz) | yes |  |
+| attendees | Text | no |  |
+| proceedings | Text | no |  |
+| outcome | String(30) | no |  |
+| next_date | DateTime(tz) | yes |  |
+
+## `bvms_media` - MediaAttachment
+
+| Column | Type | Null | Description |
+|---|---|---|---|
+| id | Uuid | no | primary key |
+| created_at | DateTime(tz) | no |  |
+| updated_at | DateTime(tz) | no |  |
+| case_id | FK → bvms_case | yes |  |
+| task_id | FK → bvms_inspection_task | yes |  |
+| notice_id | FK → bvms_notice | yes |  |
+| sanctioned_plan_id | FK → bvms_sanctioned_plan | yes |  |
+| kind | String(20) | no |  |
+| media_type | String(10) | no |  |
+| file | String(300) | no | S3 object key or path under UPLOADS_DIR |
+| original_name | String(255) | no |  |
+| size_bytes | BigInteger | no |  |
+| sha256 | String(64) | no |  |
+| latitude | Numeric(10,7) | yes |  |
+| longitude | Numeric(10,7) | yes |  |
+| accuracy_m | Numeric(8,2) | yes |  |
+| altitude_m | Numeric(8,2) | yes |  |
+| captured_at | DateTime(tz) | yes |  |
+| device_id | String(120) | no |  |
+| distance_from_case_m | Numeric(10,2) | yes |  |
+| geotag_verified | Boolean | no |  |
+| integrity_status | String(12) | no | PASS | FLAGGED | REJECTED | UNVERIFIED (services/location_integrity.py) |
+| integrity_check_id | FK → bvms_location_integrity | yes |  |
+| caption | String(300) | no |  |
+| uploaded_by_id | FK → users | yes |  |
+
+## `bvms_notice_dispatch` - NoticeDispatch
+
+| Column | Type | Null | Description |
+|---|---|---|---|
+| id | Integer | no | primary key |
+| created_at | DateTime(tz) | no |  |
+| updated_at | DateTime(tz) | no |  |
+| notice_id | FK → bvms_notice | no |  |
+| channel | String(10) | no |  |
+| to | String(120) | no |  |
+| message | Text | no |  |
+| status | String(12) | no |  |
+| provider_ref | String(120) | no |  |
+| attempts | Integer | no |  |
+| last_error | Text | no |  |
+| sent_at | DateTime(tz) | yes |  |
+
+## `bvms_appeal` - Appeal
+
+| Column | Type | Null | Description |
+|---|---|---|---|
+| id | Integer | no | primary key |
+| created_at | DateTime(tz) | no |  |
+| updated_at | DateTime(tz) | no |  |
+| case_id | FK → bvms_case | no |  |
+| order_id | FK → bvms_notice | yes |  |
+| authority | String(30) | no |  |
+| authority_other | String(200) | no |  |
+| filed_on | Date | no |  |
+| appeal_no | String(120) | no |  |
+| appellant_name | String(200) | no |  |
+| counsel_for_mcg | String(200) | no |  |
+| status | String(16) | no |  |
+| stay_granted | Boolean | no |  |
+| stay_order_date | Date | yes |  |
+| stay_until | Date | yes |  |
+| stay_scope | String(20) | no |  |
+| stay_order_id | FK → bvms_media | yes |  |
+| conditions | Text | no |  |
+| next_hearing_on | Date | yes |  |
+| decided_on | Date | yes |  |
+| decision_summary | Text | no |  |
+| final_order_id | FK → bvms_media | yes |  |
+| recorded_by_id | FK → users | no |  |

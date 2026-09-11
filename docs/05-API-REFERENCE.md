@@ -1,10 +1,12 @@
 # 05 - API reference
 
-Full OpenAPI 3 schema: `docs/openapi.yaml` (regenerate with `python manage.py spectacular --file
-docs/openapi.yaml`; interactive docs at `/api/docs/` when running standalone).
+Full OpenAPI 3.1 schema: `docs/openapi.yaml` (regenerate with `python -m app.cli openapi` + `backend/scripts`; interactive
+Swagger UI at `/api/docs/`, raw schema at `/api/schema/`).
 
-Base path: `/building-violations/api/` · Auth: `Authorization: Bearer <access_token>` · Errors:
-`{"detail": "..."}` · Lists: `{count,next,previous,results}` with `?page=&page_size=&search=&ordering=`.
+Base path: `/building-violations/api/` · Auth: `Authorization: Bearer <access_token>` (JWT: `sub` = user UUID, `roles`,
+`token_type`, `exp`; refresh with `POST auth/token/refresh/ {refresh}` → `{access}`) · Errors: `{"detail": "..."}` · Lists:
+`{count,next,previous,results}` with `?page=&page_size=&search=&ordering=` · User ids are UUID strings · Files are
+absolute URLs (S3, or `/uploads/...` on the server).
 
 | Method & path | Purpose |
 |---|---|
@@ -18,7 +20,7 @@ Base path: `/building-violations/api/` · Auth: `Authorization: Bearer <access_t
 | GET/POST `sanctioned-plans/` · GET `sanctioned-plans/by-pid/{pid}/` · POST `sanctioned-plans/bulk_upload/` · GET `sanctioned-plans/template/` | Sanctioned plans & licences |
 | POST `media/` (multipart: file, kind, case?, notice?, latitude, longitude, accuracy_m, captured_at, device_id, caption) | Geotagged upload |
 | GET `cases/?status=&zone=&ward=&land_type=&inbox=1&mine=1&overdue=1&search=` · GET `cases/counts/` | Case lists / badges |
-| POST `cases/` | Create (JE); body = `CaseCreateSerializer` (violations[], media_ids[], submit) |
+| POST `cases/` | Create (JE); body = `CaseCreateIn` in `app/schemas/building_violations/inputs.py` (violations[], media_ids[], submit) |
 | GET/PATCH `cases/{id}/` · GET `cases/{id}/timeline/` · GET `cases/{id}/notices/` | Detail, audit chain |
 | POST `cases/{id}/submit/` `ae_forward/` `ae_return/` `issue_notice/` `record_service/` `record_response/` `ae_forward_response/` `schedule_hearing/` `record_hearing/` `drop/` `record_appeal/` `decide_appeal/` `record_execution/` `close/` `reopen/` | Workflow actions (role-checked) |
 | GET `notices/` · GET `notices/{id}/` · GET `notices/{id}/pdf/` · POST `notices/{id}/resend_sms/` · POST `notices/{id}/resign/` | Notice register, PDF, SMS, re-sign |
@@ -78,7 +80,7 @@ evidence; the attempt itself is kept in `integrity/checks/`. Responses of `media
 
 | Endpoint | Purpose |
 |---|---|
-| `POST legacy-orders/` (LegacyOrderSerializer: order_no, order_date, order_type, issued_by_name/designation, pid or address, ward_number, owner…, violations[], compliance_days, served_on, served_mode, current_status, executed_on, execution_action/mode, cost_incurred_inr, appeal_authority, appeal_no, stay_granted, stay_until, closed_on, legacy_reference, media_ids, order_reference) | Record one paper order → case detail (permission LEGACY_ORDERS_MANAGE) |
+| `POST legacy-orders/` (`LegacyOrderIn`: order_no, order_date, order_type, issued_by_name/designation, pid or address, ward_number, owner…, violations[], compliance_days, served_on, served_mode, current_status, executed_on, execution_action/mode, cost_incurred_inr, appeal_authority, appeal_no, stay_granted, stay_until, closed_on, legacy_reference, media_ids, order_reference) | Record one paper order → case detail (permission LEGACY_ORDERS_MANAGE) |
 | `POST legacy-orders/bulk/` multipart {file (CSV/XLSX), title, order_reference} → batch {imported, errors[]} · `GET legacy-orders/template/` | Register import |
 | `GET legacy-orders/?status=&ward=&search=` · `GET legacy-orders/summary/` · `GET legacy-orders/batches/` | Register of imported orders (jurisdiction-scoped), counts, upload history |
 | `POST legacy-orders/{case_id}/status/` {status, on_date, remarks, order_reference, served_mode, execution_action, execution_mode, cost_incurred_inr, appeal_authority, appeal_no, stay_until, closure_reason, media_ids} | Record a historical status change from the paper file |

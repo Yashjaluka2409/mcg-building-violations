@@ -7,15 +7,18 @@
 2. **Evidence integrity.** SHA-256 per file, distance-from-case check, hash-chained `CaseEvent`
    ledger (`verify_chain`), PAdES-signed PDFs with document hash in the QR. Evidence cannot be deleted
    after submission; edits are events.
-3. **Access control.** Every workflow action re-checks role and status server-side
-   (`_require_role`, `_require_status`); jurisdiction scoping in `ViolationCaseViewSet.get_queryset`.
+3. **Access control.** Every workflow action re-checks role and status server-side (`_authorize`,
+   `_require_status` in `app/services/building_violations/workflow.py`); jurisdiction scoping in
+   `app/repositories/building_violations.py`; permissions are data-driven (docs/03).
 4. **Personal data (DPDP Act, 2023).** Notices carry only the data required by law; the public
    verification page exposes notice number, property, addressee name and status - no mobile numbers.
-   Media are served behind auth via the API; if `/media/` is public on the platform, add
-   X-Accel-Redirect protection for `bvms/`.
+   Signed PDFs are streamed behind auth by `notices/{id}/pdf/`; keep the S3 bucket private (or `/uploads/bvms/notices/`
+   `internal` in nginx) if PDFs must not be fetched by URL.
 5. **OTP.** Standalone mode hashes OTPs, limits attempts (5) and validity (10 min); DEBUG uses a fixed
    demo code - never enable DEBUG in production.
-6. **Signing keys.** `building_violations/keys/*.p12` is git-ignored; use the platform's secret store.
+6. **Signing keys.** `backend/app/keys/*.p12` is git-ignored; use the platform's secret store.
+8. **Tokens.** Stateless JWT (HS256 by default, `ALGORITHM`), access 12 h / refresh 30 days, user UUID in `sub`;
+   rotate `SECRET_KEY` to invalidate every session. Inside the platform the platform's own JWT service is used.
 7. **Uploads.** File types are whitelisted (images, video, PDF, DOC/XLS); size limit 200 MB; consider
    AV scanning at the reverse proxy.
 

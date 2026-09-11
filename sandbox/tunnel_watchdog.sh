@@ -2,7 +2,7 @@
 # Cloudflare quick tunnels sometimes stay alive as a process while the edge has forgotten them
 # ("Unauthorized: Tunnel not found" / "Connection terminated" in tunnel.log, nothing served). The supervisor only
 # restarts cloudflared when it exits, so this watchdog kills it in that state; the supervisor then brings up a new
-# URL, updates PUBLIC_URL / PUBLIC_VERIFY_BASE, reloads gunicorn, and the Expo supervisor re-points the app.
+# URL, updates PUBLIC_URL / PUBLIC_VERIFY_BASE, restarts the API server, and the Expo supervisor re-points the app.
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 while true; do
   L="$ROOT/sandbox/tunnel.log"

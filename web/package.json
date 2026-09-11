@@ -1,8 +1,8 @@
 {
   "name": "mcg-building-violations-web",
   "private": true,
-  "version": "1.0.0",
-  "description": "MCG Building Violation Management System - web portal module (React + Vite + Tailwind, same stack and theme as the MCG platform)",
+  "version": "2.0.0",
+  "description": "MCG Building Violation Management System - web portal module. Same stack as web-sanitary-monitoring-system-fe: React 18 + Vite 5 + TypeScript, Tailwind 3.4, Radix UI, lucide-react, Redux Toolkit + redux-persist (auth/session), Zustand (local state), Axios interceptors, TanStack React Query v5, React Hook Form + Zod, Google Maps JS API (Leaflet fallback).",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -12,8 +12,14 @@
     "lint": "eslint src --ext .ts,.tsx"
   },
   "dependencies": {
-    "@tanstack/react-query": "^5.62.0",
-    "axios": "^1.7.9",
+    "@hookform/resolvers": "^5.1.1",
+    "@radix-ui/react-dialog": "^1.1.14",
+    "@radix-ui/react-dropdown-menu": "^2.1.15",
+    "@radix-ui/react-tooltip": "^1.2.7",
+    "@react-google-maps/api": "^2.20.6",
+    "@reduxjs/toolkit": "^2.8.2",
+    "@tanstack/react-query": "^5.102.0",
+    "axios": "^1.11.0",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "i18next": "^24.2.0",
@@ -21,12 +27,14 @@
     "lucide-react": "^0.469.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-hook-form": "^7.54.2",
+    "react-hook-form": "^7.62.0",
     "react-i18next": "^15.4.0",
     "react-leaflet": "^4.2.1",
+    "react-redux": "^9.2.0",
     "react-router-dom": "^6.28.1",
     "recharts": "^2.15.0",
-    "zod": "^3.24.1",
+    "redux-persist": "^6.0.0",
+    "zod": "^4.0.0",
     "zustand": "^5.0.2"
   },
   "devDependencies": {
@@ -38,6 +46,6 @@
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.7.2",
-    "vite": "^6.0.7"
+    "vite": "^5.4.19"
   }
 }

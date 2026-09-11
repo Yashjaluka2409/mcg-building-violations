@@ -1,0 +1,8 @@
+{% extends "notices/base.html" %}
+{% block body %}
+<p>WHEREAS the structure / fixture / projection / material described above has been erected, set up, placed or deposited in, upon or over a public street / footpath / drain in contravention of sections 235(1), 238 and 243(1) of the Haryana Municipal Corporation Act, 1994, so as to obstruct or encroach upon the safe and convenient passage of the public;</p>
+<div class="operative">
+<p><b>NOW THEREFORE</b>, in exercise of the powers conferred by section 235(2) of the Act, you are hereby required to <b>remove the said structure / fixture / projection / material within {{ notice.response_days }} days (on or before {{ response_due_local|date("d-m-Y") }})</b> and restore the street to its original condition, failing which the same shall be removed by the Corporation without further notice under sections 240 / 243(3) and disposed of under section 244, the cost being recoverable from you, without prejudice to prosecution under section 380 (fine up to Rs 1,000 and Rs 100 per day under s.238(1)).</p>
+<p class="hi">धारा 235(2) के अंतर्गत आपको निर्देश दिया जाता है कि सार्वजनिक सड़क/फुटपाथ/नाली पर किए गए उक्त अतिक्रमण/प्रक्षेपण/सामग्री को {{ notice.response_days }} दिनों के भीतर ({{ response_due_local|date("d-m-Y") }} तक) हटाएँ, अन्यथा धारा 240/243(3) के अंतर्गत निगम द्वारा बिना आगे सूचना के हटाया जाएगा।</p>
+</div>
+{% endblock %}
