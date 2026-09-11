@@ -31,3 +31,5 @@ sandbox/PUBLIC_URL
 sandbox/LINKS.txt
 sandbox/qr-*.png
 backend/.seeded
+sandbox/supervisor.log
+sandbox/serveo.log

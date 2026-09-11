@@ -15,3 +15,11 @@ Revenue branch 9000000012 · Legal branch 9000000013 · GIS lab 9000000014.
 
 Mobile app against the sandbox: `cd mobile && EXPO_PUBLIC_API_BASE=https://<host>/building-violations/api npx expo start`
 and open the QR code in Expo Go (same Wi-Fi), or build with EAS using the `uat` profile.
+
+## Keeping the laptop tunnel alive
+
+Cloudflare quick tunnels are deleted by Cloudflare when the connection drops for a few minutes (laptop sleep,
+Wi-Fi/VPN change), and the URL then changes. `sandbox/tunnel_supervisor.sh` restarts the tunnel automatically,
+writes the current URL to `sandbox/PUBLIC_URL`, updates `PUBLIC_VERIFY_BASE` and reloads gunicorn. Always read
+the current link from `sandbox/PUBLIC_URL` (or `sandbox/LINKS.txt`) before sharing it, keep the laptop plugged in
+and awake (`caffeinate -dims`), and use the IT team's Docker sandbox for anything that must stay up.
