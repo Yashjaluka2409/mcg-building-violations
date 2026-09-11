@@ -15,7 +15,7 @@ export async function loadServer() { const v = await AsyncStorage.getItem("serve
 export async function setServer(v: string) { const b = normaliseServer(v); await AsyncStorage.setItem("serverUrl", b); API_BASE = b; api.defaults.baseURL = b; return b; }
 export const api = axios.create({ baseURL: API_BASE, timeout: 120_000 });
 
-export async function getToken(k: "accessToken" | "refreshToken") { return SecureStore.getItemAsync(k); }
+export async function getToken(k: "accessToken" | "refreshToken") { try { return await SecureStore.getItemAsync(k); } catch { return null; } }   // keychain unavailable (e.g. unsigned dev build) -> treat as logged out
 export async function setTokens(a: string, r: string) { await SecureStore.setItemAsync("accessToken", a); await SecureStore.setItemAsync("refreshToken", r); }
 export async function clearTokens() { await SecureStore.deleteItemAsync("accessToken"); await SecureStore.deleteItemAsync("refreshToken"); }
 export const deviceId = () => `${Device.modelName || "device"}-${Device.osBuildId || Device.osVersion || ""}`.slice(0, 100);
