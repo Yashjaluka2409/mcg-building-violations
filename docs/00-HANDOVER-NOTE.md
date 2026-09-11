@@ -79,3 +79,20 @@ Pixabits SMS and Aisensy WhatsApp adapters**, laid out as `app/routers`, `app/se
 The portal now uses Redux Toolkit + redux-persist for the session, Radix UI dialogs, React Query, React Hook Form +
 Zod, Vite 5 and Google Maps (Leaflet fallback). Every URL, JSON shape and login the web portal and the app use is
 unchanged; the 40 automated tests were ported and pass. The Django edition is kept in `backend-django/` for reference.
+
+## Configuration the IT team enters (no code changes)
+
+Everything below is a setting, not a change to the code. Enter the values, restart the server (and rebuild the
+portal once for the map key); `backend/.env.example` lists every variable with a comment and the go-live checklist
+at the end of docs/02 walks through them in order.
+
+| Item | Where | Notes |
+|---|---|---|
+| Pixabits SMS (DLT, sender MCGGGN) | `backend/.env`: `SMS_GATEWAY=pixabits`, `PIXABITS_API_URL`, `PIXABITS_API_KEY`, `SMS_DLT_TEMPLATE_SCN`, `SMS_DLT_TEMPLATE_ORDER` | The adapter uses the common Pixabits request form; if your account differs, it is one method (`PixabitsSMSGateway.build_request` in `app/integrations/sms.py`). |
+| Aisensy WhatsApp (optional) | `backend/.env`: `AISENSY_API_KEY`, `AISENSY_CAMPAIGN_SCN`, `AISENSY_CAMPAIGN_ORDER` | Two approved templates with the six variables listed in `app/integrations/whatsapp.py`. |
+| File storage | `backend/.env`: `AWS_S3_BUCKET_NAME`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION` | Files go under the `bvms/` prefix; the IAM user needs put/get/delete. Unset = local `/uploads/` folder. |
+| Google Maps key | `web/.env`: `VITE_GOOGLE_MAPS_API_KEY`, then `npm run build` | Build-time setting; without it the map uses OpenStreetMap / Leaflet. |
+| Database, tokens, public address | `backend/.env`: `DATABASE_URL`, `SECRET_KEY`, `PUBLIC_VERIFY_BASE` | `PUBLIC_VERIFY_BASE` is printed in every QR code; set it to the production portal URL. |
+| PID API and digital signature | `backend/.env`: `PID_API_USER` / `PID_API_PASSWORD` (or `PID_PLATFORM_PROXY_URL`), `SIGNER=local` + `SIGNER_P12_PATH` / `SIGNER_P12_PASSWORD` | Credentials stay on the server only (docs/09). |
+| Planned-inspection geofence | Portal → Admin → settings → "Geofence for planned inspections (metres)" | Raised to 50 000 m for the demo; set back to 100 before go-live. |
+| Location-integrity production switches | Portal → Admin → settings → group "Location integrity" | Turn on "reject browser geotags", "require the native checks" and "require device attestation" once the EAS build is distributed (docs/09). |
