@@ -33,3 +33,4 @@ sandbox/qr-*.png
 backend/.seeded
 sandbox/supervisor.log
 sandbox/serveo.log
+sandbox/expo_token.env

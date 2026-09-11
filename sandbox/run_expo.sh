@@ -3,12 +3,14 @@
 # Expo tunnel, then refreshes sandbox/LINKS.txt and the QR codes (qr-expo-go.png = internet tunnel,
 # qr-expo-lan.png = same-Wi-Fi). Usage: nohup sandbox/run_expo.sh [--ios] </dev/null >/dev/null 2>&1 &
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# Optional: sandbox/expo_token.env with EXPO_TOKEN=<personal access token from expo.dev> runs Expo under that account.
+[ -f "$ROOT/sandbox/expo_token.env" ] && set -a && . "$ROOT/sandbox/expo_token.env" && set +a
 PUBLIC_URL="$(cat "$ROOT/sandbox/PUBLIC_URL" 2>/dev/null)"
 LAN_IP="$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null)"
 cd "$ROOT/mobile"
 pgrep -f "expo start --tunne[l]" | xargs kill 2>/dev/null; sleep 1
 : > "$ROOT/sandbox/expo.log"
-EXPO_PUBLIC_API_BASE="$PUBLIC_URL/building-violations/api" EXPO_NO_TELEMETRY=1 CI=1 \
+EXPO_PUBLIC_API_BASE="$PUBLIC_URL/building-violations/api" EXPO_NO_TELEMETRY=1 DEBUG=expo:start:server:developmentSession \
   nohup npx expo start --tunnel --port 8081 "$@" < /dev/null >> "$ROOT/sandbox/expo.log" 2>&1 &
 for i in $(seq 1 90); do grep -q "Tunnel ready" "$ROOT/sandbox/expo.log" && break; sleep 1; done
 sleep 3
