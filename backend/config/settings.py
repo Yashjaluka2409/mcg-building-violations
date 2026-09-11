@@ -35,7 +35,7 @@ DEBUG = os.getenv("DJANGO_DEBUG", "1") == "1"
 # DEMO_MODE: fixed OTP, demo PID records, media served by Django, SPA served from web/dist - for sandboxes only
 BVMS_DEMO_MODE = os.getenv("DEMO_MODE", "0") == "1"
 ALLOWED_HOSTS = [h.strip() for h in os.getenv("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1,*").split(",") if h.strip()]
-CSRF_TRUSTED_ORIGINS = [o for o in os.getenv("CSRF_TRUSTED_ORIGINS", "https://*.trycloudflare.com,http://localhost:5173,http://127.0.0.1:8000").split(",") if o]
+CSRF_TRUSTED_ORIGINS = [o for o in os.getenv("CSRF_TRUSTED_ORIGINS", "https://*.trycloudflare.com,https://*.ts.net,https://*.ngrok-free.app,https://*.ngrok.app,http://localhost:5173,http://127.0.0.1:8000").split(",") if o]
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 USE_X_FORWARDED_HOST = True
 # Serve the built web portal (web/dist) from Django on /building-violations/ when SERVE_SPA=1

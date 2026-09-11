@@ -36,3 +36,4 @@ sandbox/serveo.log
 sandbox/expo_token.env
 mobile/ios/
 mobile/android/
+sandbox/ngrok.env
