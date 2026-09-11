@@ -13,8 +13,13 @@ Demo logins: JE 9000000001 · AE 9000000002 · JC 9000000003 · JC clerk 9000000
 Field squad 9000000006 · Additional Commissioner 9000000007 · Admin 9000000009 · Planning branch 9000000011 ·
 Revenue branch 9000000012 · Legal branch 9000000013 · GIS lab 9000000014.
 
-Mobile app against the sandbox: `cd mobile && EXPO_PUBLIC_API_BASE=https://<host>/building-violations/api npx expo start`
-and open the QR code in Expo Go (same Wi-Fi), or build with EAS using the `uat` profile.
+Mobile app against the sandbox: `nohup sandbox/expo_supervisor.sh </dev/null >/dev/null 2>&1 &` starts the Expo dev
+server (`run_expo.sh`) against the current `PUBLIC_URL`, restarts it whenever that URL changes, and refreshes
+`LINKS.txt`, `qr-expo-go.png` (internet, via the Expo tunnel) and `qr-expo-lan.png` (same Wi-Fi as the Mac).
+Testers need the current Expo Go from the App Store / Play Store (the project is Expo SDK 57). Open Expo Go,
+scan the QR with the phone camera or use "Enter URL manually" and paste the `exp://` link. If the tunnel URL has
+changed since the app was loaded, tap "Server … change" on the app's login screen and enter the new portal
+address. For a permanent build use EAS with the `uat` profile.
 
 ## Keeping the laptop tunnel alive
 

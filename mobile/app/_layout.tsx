@@ -5,12 +5,13 @@ import { useEffect } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import "@/i18n";
 import { useAuth } from "@/store/auth";
+import { loadServer } from "@/api/client";
 
 const qc = new QueryClient({ defaultOptions: { queries: { retry: 1, staleTime: 30_000 } } });
 
 export default function RootLayout() {
   const load = useAuth((s) => s.load);
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { loadServer().then(() => load()); }, [load]);
   return (
     <SafeAreaProvider>
       <QueryClientProvider client={qc}>

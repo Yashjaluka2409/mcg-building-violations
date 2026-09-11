@@ -31,7 +31,8 @@ python manage.py runserver 127.0.0.1:8000
 # 2. Web portal (new terminal)
 cd web && npm install && npm run dev            # http://localhost:5173/building-violations/
 # 3. Mobile app (new terminal)
-cd mobile && npm install && npx expo start      # scan the QR with Expo Go, or `npx expo run:ios` / `run:android`
+cd mobile && npm install --legacy-peer-deps && npx expo start   # scan the QR with Expo Go (SDK 57), or `npx expo run:ios` / `run:android`
+# The server address can also be changed on the app's login screen ("Server … change").
 ```
 
 Demo logins (OTP is `123456` in DEBUG mode): JE `9000000001`, AE `9000000002`, JC `9000000003`,

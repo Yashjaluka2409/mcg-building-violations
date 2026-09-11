@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator, Image, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, View } from "react-native";
 import { auth } from "@/api/endpoints";
-import { deviceId, errorMessage } from "@/api/client";
+import { API_BASE, deviceId, errorMessage, setServer } from "@/api/client";
 import { Button } from "@/components/ui";
 import { useAuth } from "@/store/auth";
 import { colors, radius } from "@/theme";
@@ -19,6 +19,8 @@ export default function Login() {
   const [stage, setStage] = useState<"mobile" | "otp">("mobile");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
+  const [editServer, setEditServer] = useState(false);
+  const [server, setServerText] = useState(API_BASE.replace(/\/building-violations\/api$/, ""));
   if (loading) return <View style={s.root}><ActivityIndicator color="#fff" /></View>;
   if (user) return <Redirect href="/(tabs)/home" />;
   const send = async () => { setBusy(true); setErr(""); try { await auth.requestOtp(mobile); setStage("otp"); } catch (e) { setErr(errorMessage(e)); } setBusy(false); };
@@ -47,6 +49,15 @@ export default function Login() {
           </>
         )}
         {!!err && <Text style={{ color: colors.danger, marginTop: 10, textAlign: "center" }}>{err}</Text>}
+        {editServer ? (
+          <View style={{ marginTop: 14 }}>
+            <Text style={s.label}>Server (portal address)</Text>
+            <TextInput style={s.input} autoCapitalize="none" autoCorrect={false} keyboardType="url" value={server} onChangeText={setServerText} placeholder="https://sandbox.example.gov.in" />
+            <Button title="Save server" variant="outline" onPress={async () => { const b = await setServer(server); setServerText(b.replace(/\/building-violations\/api$/, "")); setEditServer(false); setErr(""); }} />
+          </View>
+        ) : (
+          <Text onPress={() => setEditServer(true)} style={{ color: colors.muted, fontSize: 12, textAlign: "center", marginTop: 14 }}>Server: {server.replace(/^https?:\/\//, "")}  ·  change</Text>
+        )}
       </View>
     </KeyboardAvoidingView>
   );
