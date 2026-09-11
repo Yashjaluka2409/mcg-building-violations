@@ -56,3 +56,11 @@ Set `EXPO_PUBLIC_API_BASE` per profile in `eas.json`. Bundle ids: `in.gov.mcg.bu
 ## Environment variables
 
 See `backend/.env.example` - every setting is documented inline.
+
+### Location-integrity variables (see docs/09-SECURITY-NOTES.md)
+
+`BVMS_IP_INTEL_URL`, `BVMS_TRUSTED_PROXY_HOPS`, `BVMS_PLAY_INTEGRITY_SA_JSON`, `BVMS_ANDROID_PACKAGE`,
+`BVMS_PLAY_INTEGRITY_REQUIRE_PLAY_RECOGNIZED`, `BVMS_APP_ATTEST_ROOT_CA`, `BVMS_APPLE_TEAM_ID`, `BVMS_IOS_BUNDLE_ID`,
+`BVMS_APP_ATTEST_ENV`. The mobile app needs an EAS / native build for the anti-spoofing module in
+`mobile/modules/location-integrity` (autolinked); set `extra.playIntegrityCloudProjectNumber` in `app.json`.
+Expo Go runs the app with JavaScript-only checks and is refused once `require_native_integrity_module` is on.

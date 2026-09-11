@@ -31,7 +31,7 @@ export const tasks = {
   counts: () => api.get("/inspections/tasks/counts/").then((r) => r.data as Record<string, number>),
   create: (d: Record<string, unknown>) => api.post<InspectionTask>("/inspections/tasks/", d).then((r) => r.data),
   assign: (id: number, assigned_to: number, remarks = "") => api.post<InspectionTask>(`/inspections/tasks/${id}/assign/`, { assigned_to, remarks }).then((r) => r.data),
-  start: (id: number, latitude: number, longitude: number, accuracy_m?: number) => api.post<InspectionTask>(`/inspections/tasks/${id}/start/`, { latitude, longitude, accuracy_m }).then((r) => r.data),
+  start: (id: number, latitude: number, longitude: number, accuracy_m?: number) => api.post<InspectionTask>(`/inspections/tasks/${id}/start/`, { latitude, longitude, accuracy_m, location_integrity: { source: "web", platform: "web", native_module: false, user_agent: navigator.userAgent } }).then((r) => r.data),
   distance: (id: number, lat: number, lng: number) => api.get(`/inspections/tasks/${id}/distance/`, { params: { lat, lng } }).then((r) => r.data as { distance_m: number | null; geofence_m: number; within: boolean }),
   close: (id: number, d: Record<string, unknown>) => api.post<InspectionTask>(`/inspections/tasks/${id}/close/`, d).then((r) => r.data),
   cancel: (id: number, remarks = "") => api.post<InspectionTask>(`/inspections/tasks/${id}/cancel/`, { remarks }).then((r) => r.data),
@@ -118,3 +118,8 @@ export const admin = {
   reassign: (d: Record<string, unknown>) => api.post("/admin/reassign-cases/", d).then((r) => r.data as { reassigned: number }),
 };
 export type { Appeal };
+
+export const integrity = {
+  summary: () => api.get("/integrity/checks/summary/").then((r) => r.data as { rejected: number; flagged: number; passed: number; reasons: { code: string; text: string; count: number }[]; repeat_offenders: { officer: string; rejections: number }[] }),
+  list: (p: Record<string, unknown>) => api.get("/integrity/checks/", { params: p }).then((r) => r.data),
+};

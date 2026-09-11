@@ -67,7 +67,11 @@ class InspectionTaskViewSet(viewsets.ModelViewSet):
         """Field officer on site. Body: {latitude, longitude, accuracy_m}. 400 if outside the geofence."""
         ser = s.TaskStartSerializer(data=request.data); ser.is_valid(raise_exception=True)
         d = ser.validated_data
-        ts.start_task(self.get_object(), request.user, latitude=d["latitude"], longitude=d["longitude"], accuracy_m=d.get("accuracy_m"))
+        task = self.get_object()
+        from ..services import location_integrity as li
+        li.evaluate(user=request.user, request=request, context="TASK_START", latitude=d["latitude"], longitude=d["longitude"],
+                    accuracy_m=d.get("accuracy_m"), signals=d.get("location_integrity"), task=task)
+        ts.start_task(task, request.user, latitude=d["latitude"], longitude=d["longitude"], accuracy_m=d.get("accuracy_m"))
         return self._ok(self.get_object())
 
     @action(detail=True, methods=["get"])
@@ -86,6 +90,10 @@ class InspectionTaskViewSet(viewsets.ModelViewSet):
     def close(self, request, pk=None):
         ser = s.TaskCloseSerializer(data=request.data); ser.is_valid(raise_exception=True)
         d = ser.validated_data
+        if d.get("latitude") is not None and d.get("longitude") is not None:
+            from ..services import location_integrity as li
+            li.evaluate(user=request.user, request=request, context="TASK_CLOSE", latitude=d["latitude"], longitude=d["longitude"],
+                        signals=d.get("location_integrity"), task=self.get_object())
         ts.complete_task_no_violation(self.get_object(), request.user, outcome=d["outcome"], remarks=d["remarks"], media_ids=d["media_ids"], latitude=d.get("latitude"), longitude=d.get("longitude"))
         return self._ok(self.get_object())
 

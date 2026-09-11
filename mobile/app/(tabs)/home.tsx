@@ -1,12 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import { CloudUpload, Crosshair, FileSignature, FolderKanban, Hammer, Inbox, MapPin, PlusCircle } from "lucide-react-native";
+import { CloudUpload, Crosshair, FileSignature, FolderKanban, Hammer, Inbox, MapPin, PlusCircle, ShieldAlert, ShieldCheck } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import * as Location from "expo-location";
 import { cases, dashboards } from "@/api/endpoints";
 import { Card, CardTitle, Header, Pill, Stat, Tile } from "@/components/ui";
+import { precheck, PrecheckResult } from "@/services/integrity";
 import { pending, sync } from "@/services/offline";
 import { useAuth } from "@/store/auth";
 import { colors } from "@/theme";
@@ -21,6 +22,8 @@ export default function HomeScreen() {
   const [acc, setAcc] = useState<number | null>(null);
   const [queued, setQueued] = useState(0);
   const [syncing, setSyncing] = useState(false);
+  const [trust, setTrust] = useState<PrecheckResult | null>(null);
+  useEffect(() => { precheck().then(setTrust).catch(() => null); }, []);
   useEffect(() => { (async () => { const p = await Location.requestForegroundPermissionsAsync(); if (p.granted) { const l = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }); setAcc(l.coords.accuracy ?? null); } setQueued(await pending()); })(); }, []);
   const doSync = async () => { setSyncing(true); await sync(); setQueued(await pending()); counts.refetch(); setSyncing(false); };
   const greet = new Date().getHours() < 12 ? "Good Morning!" : new Date().getHours() < 17 ? "Good Afternoon!" : "Good Evening!";
@@ -32,6 +35,17 @@ export default function HomeScreen() {
       <ScrollView refreshControl={<RefreshControl refreshing={counts.isFetching} onRefresh={() => { counts.refetch(); deadlines.refetch(); }} />} contentContainerStyle={{ paddingBottom: 30 }}>
         <Card><View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}><CardTitle>{t("locationStatus")}</CardTitle><Pill text={acc == null ? "NO FIX" : acc <= 25 ? t("good") : t("poor")} bg={acc != null && acc <= 25 ? colors.success100 : colors.secondary100} fg={acc != null && acc <= 25 ? colors.success : "#b45309"} /></View>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}><MapPin color={colors.primary} size={18} /><Text style={{ color: colors.muted }}>{t("gpsAccuracy")}: {acc == null ? "-" : `${Math.round(acc)} m`}</Text></View></Card>
+        <Card>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+            {trust?.decision === "REJECTED" ? <ShieldAlert color={colors.danger} size={26} /> : <ShieldCheck color={trust?.decision === "FLAGGED" ? colors.secondary : colors.success} size={26} />}
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontWeight: "700" }}>{!trust ? "Checking device integrity…" : trust.decision === "REJECTED" ? "Evidence capture blocked on this device" : trust.decision === "FLAGGED" ? "Device trusted with remarks" : "Device trusted for evidence"}</Text>
+              {!!trust && (trust.reasons.length > 0 || trust.flags.length > 0) && <Text style={{ color: trust.decision === "REJECTED" ? colors.danger : colors.muted, fontSize: 12, marginTop: 2 }}>{trust.explanation}</Text>}
+              {trust?.decision === "REJECTED" && <Text style={{ color: colors.muted, fontSize: 12, marginTop: 2 }}>{trust.advice}</Text>}
+            </View>
+            <Pressable onPress={() => { setTrust(null); precheck().then(setTrust).catch(() => null); }}><Text style={{ color: colors.primary, fontWeight: "600", fontSize: 12 }}>Re-check</Text></Pressable>
+          </View>
+        </Card>
         <Card><CardTitle>{t("todaysSummary")}</CardTitle><View style={{ flexDirection: "row" }}><Stat value={c.inbox ?? 0} label={t("inbox")} /><Stat value={c.to_serve ?? 0} label={t("toServe")} color={colors.accent} /><Stat value={c.execution_due ?? 0} label={t("executionDue")} color={colors.danger} /><Stat value={c.overdue ?? 0} label={t("overdue")} color={colors.secondary} /></View></Card>
         <Card><CardTitle>{t("quickActions")}</CardTitle>
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>

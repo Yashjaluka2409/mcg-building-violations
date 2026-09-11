@@ -27,6 +27,7 @@ export default function Uploader({ caseId, kind, noticeId, onUploaded, accept = 
         if (noticeId) fd.append("notice", noticeId);
         if (pos) { fd.append("latitude", pos.coords.latitude.toFixed(7)); fd.append("longitude", pos.coords.longitude.toFixed(7)); fd.append("accuracy_m", String(Math.round(pos.coords.accuracy))); }
         fd.append("captured_at", new Date(f.lastModified || Date.now()).toISOString());
+        if (pos) fd.append("location_integrity", JSON.stringify({ source: "web", platform: "web", native_module: false, user_agent: navigator.userAgent, fix_at: new Date(pos.timestamp).toISOString(), fix_age_s: Math.max(0, (Date.now() - pos.timestamp) / 1000) }));
         onUploaded(await mediaApi.upload(fd, setProgress));
       }
     } catch (e) { setErr(errorMessage(e)); }

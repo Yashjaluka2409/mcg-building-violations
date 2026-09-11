@@ -20,7 +20,7 @@ class MediaViewSet(viewsets.ModelViewSet):
     serializer_class = MediaAttachmentSerializer
     permission_classes = [HasOfficerProfile]
     parser_classes = [MultiPartParser, FormParser]
-    queryset = MediaAttachment.objects.select_related("uploaded_by")
+    queryset = MediaAttachment.objects.select_related("uploaded_by", "integrity_check")
     filterset_fields = ("case", "kind", "notice", "sanctioned_plan", "task")
     http_method_names = ["get", "post", "delete", "head", "options"]
 
@@ -33,21 +33,33 @@ class MediaViewSet(viewsets.ModelViewSet):
         media_type = "IMAGE" if ext in IMAGE_EXT else "VIDEO" if ext in VIDEO_EXT else "PDF" if ext == "pdf" else "DOC" if ext in DOC_EXT else "OTHER"
         if media_type == "OTHER":
             return Response({"detail": f"Unsupported file type .{ext}"}, status=400)
+        chk = None
+        if d.get("latitude") is not None and d.get("longitude") is not None:
+            # Anti-spoofing: refuse (HTTP 400) before anything is stored when the geotag cannot be trusted.
+            from ..services import location_integrity as li
+            chk = li.evaluate(user=request.user, request=request, context="MEDIA_UPLOAD", latitude=d["latitude"], longitude=d["longitude"],
+                              accuracy_m=d.get("accuracy_m"), altitude_m=d.get("altitude_m"), captured_at=d.get("captured_at"),
+                              signals=d.get("location_integrity"), case=d.get("case"), task=d.get("task"),
+                              device_id=d.get("device_id") or request.headers.get("X-Device-Id", ""))
         att = MediaAttachment(
             case=d.get("case"), notice=d.get("notice"), sanctioned_plan=d.get("sanctioned_plan"), task=d.get("task"), kind=d["kind"], media_type=media_type, file=f,
             original_name=f.name[:255], latitude=d.get("latitude"), longitude=d.get("longitude"), accuracy_m=d.get("accuracy_m"), altitude_m=d.get("altitude_m"),
             captured_at=d.get("captured_at") or timezone.now(), device_id=d.get("device_id") or request.headers.get("X-Device-Id", ""), caption=d.get("caption", ""),
-            uploaded_by=request.user)
+            uploaded_by=request.user, integrity_status=chk.decision if chk else "UNVERIFIED", integrity_check=chk)
         case = d.get("case")
         if case and case.latitude is not None and att.latitude is not None:
             from ..services import access
             att.distance_from_case_m = round(haversine_m(att.latitude, att.longitude, case.latitude, case.longitude), 2)
             att.geotag_verified = float(att.distance_from_case_m) <= access.geotag_tolerance_m()
         att.save()
+        if chk:
+            chk.media = att
+            chk.save(update_fields=["media"])
         if case:
             from ..services.audit import record_event
             record_event(case, "MEDIA_ADDED", actor=request.user, from_status=case.status, to_status=case.status, request=request,
-                         payload={"media_id": str(att.id), "kind": att.kind, "type": media_type, "geotag_verified": att.geotag_verified}, lat=att.latitude, lng=att.longitude)
+                         payload={"media_id": str(att.id), "kind": att.kind, "type": media_type, "geotag_verified": att.geotag_verified,
+                                  "integrity": att.integrity_status, "integrity_flags": (chk.flags if chk else [])}, lat=att.latitude, lng=att.longitude)
         return Response(MediaAttachmentSerializer(att, context={"request": request}).data, status=201)
 
     def perform_destroy(self, instance):

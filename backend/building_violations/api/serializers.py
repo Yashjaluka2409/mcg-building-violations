@@ -182,12 +182,18 @@ class SanctionedPlanSerializer(serializers.ModelSerializer):
 class MediaAttachmentSerializer(serializers.ModelSerializer):
     url = serializers.SerializerMethodField()
     uploaded_by = UserLiteSerializer(read_only=True)
+    integrity_reasons = serializers.SerializerMethodField()
 
     class Meta:
         model = m.MediaAttachment
         fields = ("id", "case", "notice", "kind", "media_type", "url", "original_name", "size_bytes", "sha256", "latitude", "longitude",
-                  "accuracy_m", "captured_at", "device_id", "distance_from_case_m", "geotag_verified", "caption", "uploaded_by", "created_at")
-        read_only_fields = ("sha256", "size_bytes", "distance_from_case_m", "geotag_verified")
+                  "accuracy_m", "captured_at", "device_id", "distance_from_case_m", "geotag_verified", "integrity_status", "integrity_reasons",
+                  "caption", "uploaded_by", "created_at")
+        read_only_fields = ("sha256", "size_bytes", "distance_from_case_m", "geotag_verified", "integrity_status")
+
+    def get_integrity_reasons(self, o):
+        c = o.integrity_check
+        return (list(c.reasons) + list(c.flags)) if c else []
 
     def get_url(self, obj):
         req = self.context.get("request")
@@ -211,6 +217,7 @@ class MediaUploadSerializer(serializers.Serializer):
     captured_at = serializers.DateTimeField(required=False, allow_null=True)
     device_id = serializers.CharField(required=False, allow_blank=True)
     caption = serializers.CharField(required=False, allow_blank=True)
+    location_integrity = serializers.JSONField(required=False, allow_null=True)   # device anti-spoofing signals (see services/location_integrity.py)
 
 
 # ---------------------------------------------------------------- case parts
@@ -344,6 +351,12 @@ class ViolationCaseListSerializer(serializers.ModelSerializer):
     thumbnail = serializers.SerializerMethodField()
     pending_referrals = serializers.SerializerMethodField()
 
+    inspector_integrity = serializers.SerializerMethodField()
+
+    def get_inspector_integrity(self, o):
+        from ..services.location_integrity import summary
+        return summary(o.integrity_checks.filter(context="CASE_CREATE").order_by("-at").first())
+
     class Meta:
         model = m.ViolationCase
         fields = ("id", "case_no", "status", "status_display", "priority", "source", "pid", "address_line", "locality", "sector", "ward", "ward_number", "zone", "zone_code",
@@ -400,7 +413,7 @@ class ViolationCaseDetailSerializer(ViolationCaseListSerializer):
             "storeys", "height_m", "use_observed", "description", "measurements", "submitted_at", "ae_forwarded_at", "jc_received_at", "scn_served_at",
             "response_received_at", "hearing_at", "decided_at", "order_issued_at", "order_served_at", "executed_at", "closed_at", "decision_reasons", "final_order",
             "closure_reason", "demolition_cost_inr", "cost_recovery_status", "violations", "media", "notices", "responses", "hearings", "appeals", "executions",
-            "events", "referrals", "task_summary", "inspector_latitude", "inspector_longitude", "inspector_distance_m", "available_actions", "available_order_types")
+            "events", "referrals", "task_summary", "inspector_latitude", "inspector_longitude", "inspector_distance_m", "inspector_integrity", "available_actions", "available_order_types")
 
     def get_task_summary(self, o):
         t = o.task
@@ -459,6 +472,7 @@ class CaseCreateSerializer(serializers.Serializer):
     task = serializers.PrimaryKeyRelatedField(queryset=m.InspectionTask.objects.all(), required=False, allow_null=True)
     inspector_latitude = serializers.DecimalField(max_digits=10, decimal_places=7, required=False, allow_null=True)
     inspector_longitude = serializers.DecimalField(max_digits=10, decimal_places=7, required=False, allow_null=True)
+    location_integrity = serializers.JSONField(required=False, allow_null=True)   # device anti-spoofing signals for the inspector position
     violations = CaseViolationInputSerializer(many=True)
     media_ids = serializers.ListField(child=serializers.UUIDField(), required=False)
     submit = serializers.BooleanField(required=False, default=False)
@@ -700,6 +714,11 @@ class AdminAuditLogSerializer(serializers.ModelSerializer):
 class InspectionTaskSerializer(serializers.ModelSerializer):
     created_by = UserLiteSerializer(read_only=True)
     assigned_to = UserLiteSerializer(read_only=True)
+    start_integrity = serializers.SerializerMethodField()
+
+    def get_start_integrity(self, o):
+        from ..services.location_integrity import summary
+        return summary(o.integrity_checks.filter(context="TASK_START").order_by("-at").first())
     ward_number = serializers.IntegerField(source="ward.number", read_only=True, default=None)
     zone_code = serializers.CharField(source="zone.code", read_only=True, default=None)
     batch_title = serializers.CharField(source="batch.title", read_only=True, default=None)
@@ -714,7 +733,7 @@ class InspectionTaskSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = m.InspectionTask
-        fields = ("id", "batch", "batch_title", "category", "category_display", "pid", "pid_snapshot", "address", "owner_name", "owner_mobile", "latitude", "longitude", "ward", "ward_number", "zone", "zone_code",
+        fields = ("start_integrity", "id", "batch", "batch_title", "category", "category_display", "pid", "pid_snapshot", "address", "owner_name", "owner_mobile", "latitude", "longitude", "ward", "ward_number", "zone", "zone_code",
                   "instructions", "priority", "created_by", "assigned_to", "assigned_at", "due_at", "status", "status_display", "related_case", "related_case_no", "started_at", "start_latitude", "start_longitude",
                   "start_distance_m", "completed_at", "outcome_remarks", "geofence_m", "case_no", "case_id", "case_status", "is_overdue", "media", "created_at", "updated_at")
 
@@ -756,6 +775,7 @@ class TaskStartSerializer(serializers.Serializer):
     latitude = serializers.DecimalField(max_digits=10, decimal_places=7)
     longitude = serializers.DecimalField(max_digits=10, decimal_places=7)
     accuracy_m = serializers.DecimalField(max_digits=8, decimal_places=2, required=False, allow_null=True)
+    location_integrity = serializers.JSONField(required=False, allow_null=True)
 
 
 class TaskCloseSerializer(serializers.Serializer):
@@ -764,7 +784,23 @@ class TaskCloseSerializer(serializers.Serializer):
     media_ids = serializers.ListField(child=serializers.UUIDField(), required=False, default=list)
     latitude = serializers.DecimalField(max_digits=10, decimal_places=7, required=False, allow_null=True)
     longitude = serializers.DecimalField(max_digits=10, decimal_places=7, required=False, allow_null=True)
+    location_integrity = serializers.JSONField(required=False, allow_null=True)
 
 
 class TaskAssignSerializer(RemarksSerializer):
     assigned_to = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
+
+
+class LocationIntegrityCheckSerializer(serializers.ModelSerializer):
+    officer = UserLiteSerializer(read_only=True)
+    context_display = serializers.CharField(source="get_context_display", read_only=True)
+    case_no = serializers.CharField(source="case.case_no", read_only=True, default=None)
+    explanation = serializers.SerializerMethodField()
+
+    class Meta:
+        model = m.LocationIntegrityCheck
+        exclude = ("signals", "ip_intel", "attestation_detail")
+
+    def get_explanation(self, o):
+        from ..services.location_integrity import explain
+        return explain(list(o.reasons) + list(o.flags))

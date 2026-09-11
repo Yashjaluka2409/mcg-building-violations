@@ -9,7 +9,7 @@ import type { Appeal, CaseDetail, Media, Notice, Referral } from "@/api/types";
 import MapView from "@/components/MapView";
 import MediaGallery from "@/components/MediaGallery";
 import Uploader from "@/components/Uploader";
-import { Alert, Card, Field, LandBadge, Modal, SeverityBadge, Spinner, StatusBadge } from "@/components/ui";
+import { Alert, Card, Field, IntegrityBadge, LandBadge, Modal, SeverityBadge, Spinner, StatusBadge } from "@/components/ui";
 import { daysLeft, fmtDate, fmtDateTime, inr } from "@/utils/format";
 import { useAuth } from "@/store/auth";
 
@@ -72,7 +72,7 @@ export default function CaseDetailPage() {
           </div>
         </div>
       )}
-      {tab === "evidence" && <div className="space-y-4">{["INSPECTION", "NOTICE_DELIVERY", "ORDER_DELIVERY", "RESPONSE", "HEARING", "EXECUTION", "COMPLIANCE", "APPEAL", "STAY_ORDER", "COURT_ORDER", "BRANCH_REFERRAL", "BRANCH_RESPONSE", "OTHER"].map((k) => c.media.some((m) => m.kind === k) && <Card key={k} title={k.replace(/_/g, " ")}><MediaGallery items={c.media} kind={k} /></Card>)}<Card title="Add evidence"><Uploader caseId={c.id} kind="OTHER" onUploaded={() => qc.invalidateQueries({ queryKey: ["case", id] })} /></Card></div>}
+      {tab === "evidence" && <div className="space-y-4">{c.inspector_integrity && <Card title="Inspector's position at the time of recording"><div className="flex flex-wrap items-center gap-2 text-sm"><IntegrityBadge status={c.inspector_integrity.decision} reasons={[...c.inspector_integrity.reasons, ...c.inspector_integrity.flags]} /><span className="text-light-text-muted">{c.inspector_integrity.platform || "app"}{c.inspector_integrity.device_model ? ` · ${c.inspector_integrity.device_model}` : ""}{c.inspector_integrity.native_module ? " · native anti-spoofing checks" : " · JavaScript checks only"}{c.inspector_integrity.attestation_status && c.inspector_integrity.attestation_status !== "NONE" ? ` · attestation ${c.inspector_integrity.attestation_status}` : ""}</span></div></Card>}{["INSPECTION", "NOTICE_DELIVERY", "ORDER_DELIVERY", "RESPONSE", "HEARING", "EXECUTION", "COMPLIANCE", "APPEAL", "STAY_ORDER", "COURT_ORDER", "BRANCH_REFERRAL", "BRANCH_RESPONSE", "OTHER"].map((k) => c.media.some((m) => m.kind === k) && <Card key={k} title={k.replace(/_/g, " ")}><MediaGallery items={c.media} kind={k} /></Card>)}<Card title="Add evidence"><Uploader caseId={c.id} kind="OTHER" onUploaded={() => qc.invalidateQueries({ queryKey: ["case", id] })} /></Card></div>}
       {tab === "notices" && <div className="space-y-3">{c.notices.length ? c.notices.map((n) => <NoticeCard key={n.id} n={n} onChanged={() => qc.invalidateQueries({ queryKey: ["case", id] })} />) : <Card><div className="text-sm text-light-text-muted">No notice issued yet.</div></Card>}</div>}
       {tab === "proceedings" && (
         <div className="grid lg:grid-cols-2 gap-4">

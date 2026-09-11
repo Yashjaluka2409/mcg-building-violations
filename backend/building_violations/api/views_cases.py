@@ -69,7 +69,19 @@ class ViolationCaseViewSet(viewsets.ModelViewSet):
         violations = d.pop("violations")
         media_ids = d.pop("media_ids", None)
         submit = d.pop("submit", False)
+        integrity = d.pop("location_integrity", None)
+        chk = None
+        if d.get("inspector_latitude") is not None and d.get("inspector_longitude") is not None:
+            # Anti-spoofing check on the inspector's position (evaluated outside create_case's transaction so a
+            # rejected attempt stays on record even though no case is created).
+            from ..services import location_integrity as li
+            t = d.get("task")
+            chk = li.evaluate(user=request.user, request=request, context="CASE_CREATE", latitude=d["inspector_latitude"], longitude=d["inspector_longitude"],
+                              accuracy_m=d.get("location_accuracy_m"), signals=integrity, task=t if hasattr(t, "pk") else None)
         case = wf.create_case(request.user, d, violations, request=request, media_ids=media_ids)
+        if chk:
+            chk.case = case
+            chk.save(update_fields=["case"])
         if submit:
             case = wf.submit_to_ae(case, request.user, request=request)
         return Response(s.ViolationCaseDetailSerializer(case, context={"request": request}).data, status=201)

@@ -7,6 +7,7 @@ import { Alert, FlatList, Modal, Pressable, ScrollView, Text, View } from "react
 import { api, errorMessage } from "@/api/client";
 import { Button, Card, Header, Input, Muted, Pill } from "@/components/ui";
 import { captureWithCamera, Fix, uploadMedia } from "@/services/capture";
+import { trustedFix } from "@/services/integrity";
 import { colors, radius, shadow } from "@/theme";
 
 const TSTAT: Record<string, { bg: string; fg: string }> = { ASSIGNED: { bg: "#fef3c7", fg: "#b45309" }, UNASSIGNED: { bg: "#f3f4f6", fg: "#6b7280" }, IN_PROGRESS: { bg: "#d1faf8", fg: "#0f766e" }, VIOLATION_RECORDED: { bg: "#fee2e2", fg: "#b91c1c" }, NO_VIOLATION: { bg: "#dcfce7", fg: "#166534" }, NOT_FOUND: { bg: "#f3f4f6", fg: "#374151" }, CANCELLED: { bg: "#f3f4f6", fg: "#9ca3af" } };
@@ -26,8 +27,8 @@ export default function TasksScreen() {
   useEffect(() => { (async () => { const p = await Location.requestForegroundPermissionsAsync(); if (p.granted) { const l = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High }); setMe([l.coords.latitude, l.coords.longitude]); } })(); }, []);
   const start = async (t: any) => {
     try {
-      const l = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Highest });
-      const res = await api.post(`/inspections/tasks/${t.id}/start/`, { latitude: l.coords.latitude.toFixed(7), longitude: l.coords.longitude.toFixed(7), accuracy_m: Math.round(l.coords.accuracy ?? 0) });
+      const l = await trustedFix();
+      const res = await api.post(`/inspections/tasks/${t.id}/start/`, { latitude: l.latitude.toFixed(7), longitude: l.longitude.toFixed(7), accuracy_m: Math.round(l.accuracy ?? 0), location_integrity: l.signals });
       qc.invalidateQueries({ queryKey: ["tasks-mine"] });
       r.push({ pathname: "/inspection/new", params: { task: String(res.data.id), pid: res.data.pid || "", address: res.data.address || "", lat: String(res.data.latitude ?? ""), lng: String(res.data.longitude ?? ""), owner: res.data.owner_name || "", mobile: res.data.owner_mobile || "", instructions: res.data.instructions || "" } });
     } catch (e) { Alert.alert("Cannot start", errorMessage(e)); }
@@ -35,7 +36,7 @@ export default function TasksScreen() {
   const capture = async () => { try { const c = await captureWithCamera(false); if (!c) return; const up = await uploadMedia({ uri: c.uri, name: c.name, type: c.type }, "TASK_EVIDENCE", { fix: c.fix }); setCaps((s) => [...s, { id: up.id, uri: c.uri, fix: c.fix }]); } catch (e) { Alert.alert("Camera", errorMessage(e)); } };
   const submitClose = async (outcome: string) => {
     setBusy(true);
-    try { const l = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Highest }); await api.post(`/inspections/tasks/${closing.id}/close/`, { outcome, remarks, media_ids: caps.map((c) => c.id), latitude: l.coords.latitude.toFixed(7), longitude: l.coords.longitude.toFixed(7) }); setClosing(null); setCaps([]); setRemarks(""); qc.invalidateQueries({ queryKey: ["tasks-mine"] }); Alert.alert("Filed", "Inspection report filed."); } catch (e) { Alert.alert("Error", errorMessage(e)); }
+    try { const l = await trustedFix(); await api.post(`/inspections/tasks/${closing.id}/close/`, { outcome, remarks, media_ids: caps.map((c) => c.id), latitude: l.latitude.toFixed(7), longitude: l.longitude.toFixed(7), location_integrity: l.signals }); setClosing(null); setCaps([]); setRemarks(""); qc.invalidateQueries({ queryKey: ["tasks-mine"] }); Alert.alert("Filed", "Inspection report filed."); } catch (e) { Alert.alert("Error", errorMessage(e)); }
     setBusy(false);
   };
   const items = q.data?.results || [];

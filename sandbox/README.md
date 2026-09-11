@@ -28,3 +28,8 @@ Wi-Fi/VPN change), and the URL then changes. `sandbox/tunnel_supervisor.sh` rest
 writes the current URL to `sandbox/PUBLIC_URL`, updates `PUBLIC_VERIFY_BASE` and reloads gunicorn. Always read
 the current link from `sandbox/PUBLIC_URL` (or `sandbox/LINKS.txt`) before sharing it, keep the laptop plugged in
 and awake (`caffeinate -dims`), and use the IT team's Docker sandbox for anything that must stay up.
+
+Anti-spoofing in the sandbox: mock GPS, root, emulator, Developer options and VPN are refused by default; browser
+locations and Expo Go builds are accepted but flagged (production switches in Admin → Location integrity; see
+docs/09-SECURITY-NOTES.md). The demo geofence for planned inspections was raised to 50 000 m on 11 Sep 2026 for the
+Commissioner demo - set it back to 100 before production.

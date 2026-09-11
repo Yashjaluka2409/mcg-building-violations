@@ -191,6 +191,17 @@ BVMS_FONTS_DIR = BASE_DIR / "building_violations" / "fonts"
 BVMS_LEGAL_DIR = BASE_DIR.parent / "shared" / "legal"
 # Geo-tag tolerance: a delivery/execution photo must be within this many metres of the case point
 BVMS_GEOTAG_TOLERANCE_M = int(os.getenv("BVMS_GEOTAG_TOLERANCE_M", "150"))
+
+# --- Location integrity / anti-spoofing (services/location_integrity.py, services/attestation.py) --------------
+BVMS_IP_INTEL_URL = os.getenv("BVMS_IP_INTEL_URL", "")            # e.g. https://ipinfo.io/{ip}?token=... ; empty = IP checks off
+BVMS_TRUSTED_PROXY_HOPS = int(os.getenv("BVMS_TRUSTED_PROXY_HOPS", "1"))   # X-Forwarded-For entries added by our own proxies
+BVMS_PLAY_INTEGRITY_SA_JSON = os.getenv("BVMS_PLAY_INTEGRITY_SA_JSON", "")  # Google service-account key with the Play Integrity API
+BVMS_ANDROID_PACKAGE = os.getenv("BVMS_ANDROID_PACKAGE", "in.gov.mcg.buildingviolations")
+BVMS_PLAY_INTEGRITY_REQUIRE_PLAY_RECOGNIZED = os.getenv("BVMS_PLAY_INTEGRITY_REQUIRE_PLAY_RECOGNIZED", "1") == "1"
+BVMS_APP_ATTEST_ROOT_CA = os.getenv("BVMS_APP_ATTEST_ROOT_CA", "")    # path to Apple_App_Attestation_Root_CA.pem
+BVMS_APPLE_TEAM_ID = os.getenv("BVMS_APPLE_TEAM_ID", "")
+BVMS_IOS_BUNDLE_ID = os.getenv("BVMS_IOS_BUNDLE_ID", "in.gov.mcg.buildingviolations")
+BVMS_APP_ATTEST_ENV = os.getenv("BVMS_APP_ATTEST_ENV", "production")   # production | development
 BVMS_OTP_DEMO_CODE = os.getenv("BVMS_OTP_DEMO_CODE", "123456")  # standalone demo only (used when DEBUG or DEMO_MODE)
 
 LOGGING = {

@@ -34,7 +34,8 @@
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION",
         "READ_MEDIA_IMAGES",
-        "READ_MEDIA_VIDEO"
+        "READ_MEDIA_VIDEO",
+        "ACCESS_NETWORK_STATE"
       ]
     },
     "plugins": [
@@ -61,7 +62,8 @@
       "apiBase": "https://sms-be.austere.biz/building-violations/api",
       "eas": {
         "projectId": "REPLACE-WITH-EAS-PROJECT-ID"
-      }
+      },
+      "playIntegrityCloudProjectNumber": ""
     }
   }
 }

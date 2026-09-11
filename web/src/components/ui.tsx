@@ -96,3 +96,20 @@ export function Pager({ count, page, pageSize, onPage }: { count: number; page: 
     </div>
   );
 }
+
+
+/** Anti-spoofing verdict for a geotag (see backend services/location_integrity.py). */
+export const INTEGRITY_TEXT: Record<string, string> = {
+  MOCK_LOCATION: "mock / fake GPS app", SIMULATED_LOCATION: "software-simulated location", ROOTED_DEVICE: "rooted / jailbroken device", EMULATOR: "emulator",
+  DEVELOPER_OPTIONS: "Developer options on", VPN_ACTIVE: "VPN active", PROXY_CONFIGURED: "proxy configured", IP_VPN_OR_PROXY: "VPN / proxy IP", IP_HOSTING: "hosting IP",
+  HTTP_PROXY_HEADERS: "HTTP proxy headers", IP_FAR_FROM_GPS: "IP far from GPS", STALE_FIX: "stale GPS fix", FUTURE_TIMESTAMP: "device clock ahead", POOR_ACCURACY: "poor GPS accuracy",
+  STATIC_FIX: "identical consecutive fixes", IMPLAUSIBLE_TRAVEL: "impossible travel speed", NO_NATIVE_INTEGRITY: "no native anti-spoofing checks", NATIVE_CHECKS_UNAVAILABLE: "native checks unavailable (Expo Go)",
+  WEB_UNVERIFIED: "browser location (unverified)", WEB_GEOTAG: "browser geotag refused", ATTESTATION_MISSING: "no device attestation", ATTESTATION_FAILED: "device attestation failed", NO_SIGNALS: "no device signals",
+};
+export function IntegrityBadge({ status, reasons = [], compact }: { status?: string | null; reasons?: string[]; compact?: boolean }) {
+  if (!status || status === "UNVERIFIED") return null;
+  const tone = status === "PASS" ? "bg-success-50 text-success-600" : status === "FLAGGED" ? "bg-warning-50 text-warning-600" : "bg-danger-50 text-danger-600";
+  const label = status === "PASS" ? "Location trusted" : status === "FLAGGED" ? "Location flagged" : "Location rejected";
+  const why = reasons.map((r) => INTEGRITY_TEXT[r] || r).join(", ");
+  return <span className={`badge ${tone}`} title={why || label}>{compact ? label : `${label}${why ? ` · ${why}` : ""}`}</span>;
+}

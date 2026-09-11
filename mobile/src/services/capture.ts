@@ -5,16 +5,15 @@
  * Gallery uploads are allowed only for documents (replies, sanction letters).
  */
 import * as ImagePicker from "expo-image-picker";
-import * as Location from "expo-location";
 import { api, deviceId } from "@/api/client";
+import { IntegritySignals, trustedFix } from "@/services/integrity";
 
-export interface Fix { latitude: number; longitude: number; accuracy: number | null; altitude: number | null; at: string; }
+/** A GPS fix plus the device-integrity signals collected with it (see services/integrity.ts). */
+export interface Fix { latitude: number; longitude: number; accuracy: number | null; altitude: number | null; at: string; signals?: IntegritySignals; }
 
+/** Fresh, anti-spoofing-checked fix. Throws IntegrityError when a mock provider / root / emulator is detected. */
 export async function currentFix(): Promise<Fix> {
-  const { status } = await Location.requestForegroundPermissionsAsync();
-  if (status !== "granted") throw new Error("Location permission is required to record evidence");
-  const p = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Highest, mayShowUserSettingsDialog: true });
-  return { latitude: p.coords.latitude, longitude: p.coords.longitude, accuracy: p.coords.accuracy ?? null, altitude: p.coords.altitude ?? null, at: new Date(p.timestamp).toISOString() };
+  return trustedFix();
 }
 
 export async function captureWithCamera(video = false): Promise<{ uri: string; name: string; type: string; fix: Fix } | null> {
@@ -42,7 +41,13 @@ export async function uploadMedia(file: { uri: string; name: string; type: strin
   fd.append("kind", kind);
   if (opts.caseId) fd.append("case", opts.caseId);
   if (opts.noticeId) fd.append("notice", opts.noticeId);
-  if (opts.fix) { fd.append("latitude", opts.fix.latitude.toFixed(7)); fd.append("longitude", opts.fix.longitude.toFixed(7)); if (opts.fix.accuracy != null) fd.append("accuracy_m", String(Math.round(opts.fix.accuracy))); if (opts.fix.altitude != null) fd.append("altitude_m", String(Math.round(opts.fix.altitude))); fd.append("captured_at", opts.fix.at); }
+  if (opts.fix) {
+    fd.append("latitude", opts.fix.latitude.toFixed(7)); fd.append("longitude", opts.fix.longitude.toFixed(7));
+    if (opts.fix.accuracy != null) fd.append("accuracy_m", String(Math.round(opts.fix.accuracy)));
+    if (opts.fix.altitude != null) fd.append("altitude_m", String(Math.round(opts.fix.altitude)));
+    fd.append("captured_at", opts.fix.at);
+    if (opts.fix.signals) fd.append("location_integrity", JSON.stringify(opts.fix.signals));   // anti-spoofing signals, judged by the server
+  }
   fd.append("device_id", deviceId());
   if (opts.caption) fd.append("caption", opts.caption);
   const r = await api.post("/media/", fd, { headers: { "Content-Type": "multipart/form-data" } });

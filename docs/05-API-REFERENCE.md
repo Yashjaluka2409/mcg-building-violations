@@ -49,3 +49,27 @@ Base path: `/building-violations/api/` · Auth: `Authorization: Bearer <access_t
 ```
 `order_type` must be in the case's `available_order_types` (derived from the violations recorded);
 `days` below the statutory minimum is rejected with 400.
+
+### Location integrity (anti-GPS-spoofing)
+
+| Endpoint | Purpose |
+|---|---|
+| `POST integrity/nonce/` → `{nonce, ttl_s}` | Single-use nonce the app binds into a Play Integrity / App Attest request |
+| `POST integrity/precheck/` body `{latitude, longitude, accuracy_m, location_integrity}` → `{decision, reasons, flags, explanation, advice, …}` | Home-screen device check; never blocks, but is recorded |
+| `GET integrity/checks/?decision=REJECTED&officer=&context=&platform=` · `GET integrity/checks/summary/` | Register of checks / 30-day counts, top reasons and repeat offenders (permission REPORTS_EXPORT) |
+| `GET reports/location-integrity/?export=xlsx&decision=REJECTED` | Same data as a register export |
+
+`location_integrity` is accepted (JSON, or a JSON string in multipart) by `POST media/`, `POST cases/` (with
+`inspector_latitude/longitude`), `POST inspections/tasks/{id}/start/` and `…/close/`. Shape sent by the app:
+
+```json
+{"source": "app", "platform": "android", "native_module": true, "app_version": "1.0.0", "build_number": "12",
+ "os_version": "15", "device_model": "Pixel 8", "device_id": "…", "is_physical_device": true, "rooted": false,
+ "developer_options": false, "mock_location": false, "mock_apps_installed": [], "vpn_active": false,
+ "proxy_configured": false, "simulated_by_software": null, "produced_by_accessory": null, "provider": "fused",
+ "speed_mps": 0.3, "heading": 120, "fix_at": "2026-09-11T06:30:00Z", "fix_age_s": 1.8, "jitter_m": 0.6,
+ "attestation": {"type": "play_integrity", "token": "…", "nonce": "…"}}
+```
+A REJECTED evaluation answers `400 {"detail": "Location integrity check failed: <reasons>. …"}` and nothing is stored as
+evidence; the attempt itself is kept in `integrity/checks/`. Responses of `media/` carry `integrity_status`
+(PASS | FLAGGED | UNVERIFIED) and `integrity_reasons`; case detail carries `inspector_integrity`; tasks `start_integrity`.

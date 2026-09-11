@@ -3,6 +3,7 @@
 import csv
 import io
 
+from django.db import models
 from django.http import HttpResponse
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -117,6 +118,29 @@ def branch_referrals(qs, params):
     rows = []
     for r in m.BranchReferral.objects.filter(case__in=qs).select_related("case", "branch", "referred_by", "responded_by"):
         rows.append([r.case.case_no, r.case.status, r.case.address_line, r.branch.name_en, _name(r.referred_by), r.referred_at, r.query, r.due_at, r.hold_case, r.status, r.responded_at, _name(r.responded_by), r.recommendation, r.response])
+    return cols, rows
+
+
+@report("location-integrity")
+def location_integrity(qs, params):
+    """Every location-integrity check (accepted, flagged and rejected). Rejected rows are spoofing incidents."""
+    from ..services.location_integrity import explain
+    cols = ["at", "officer", "role", "context", "decision", "reasons", "flags", "explanation", "case_no", "task_id", "platform", "source", "app_version",
+            "device_model", "os_version", "device_id", "latitude", "longitude", "accuracy_m", "fix_age_s", "native_module", "mock_location", "rooted",
+            "emulator", "developer_options", "vpn_active", "proxy_configured", "simulated_by_software", "attestation_status", "client_ip",
+            "ip_vpn_or_proxy", "ip_distance_km", "travel_distance_km", "travel_speed_kmph"]
+    rows = []
+    checks = m.LocationIntegrityCheck.objects.select_related("officer__bvms_profile", "case", "task").filter(
+        models.Q(case__in=qs) | models.Q(case__isnull=True))
+    if params.get("decision"):
+        checks = checks.filter(decision=params["decision"])
+    for c in checks[:5000]:
+        prof = getattr(c.officer, "bvms_profile", None)
+        rows.append([c.at, _name(c.officer), prof.role if prof else "", c.get_context_display(), c.decision, "; ".join(c.reasons), "; ".join(c.flags),
+                     explain(list(c.reasons) + list(c.flags)), c.case.case_no if c.case else "", c.task_id or "", c.platform, c.source, c.app_version,
+                     c.device_model, c.os_version, c.device_id, c.latitude, c.longitude, c.accuracy_m, c.fix_age_s, c.native_module, c.mock_location, c.rooted,
+                     (c.is_physical_device is False) if c.is_physical_device is not None else None, c.developer_options, c.vpn_active, c.proxy_configured,
+                     c.simulated_by_software, c.attestation_status, c.client_ip, (c.ip_intel or {}).get("privacy"), c.ip_distance_km, c.travel_distance_km, c.travel_speed_kmph])
     return cols, rows
 
 

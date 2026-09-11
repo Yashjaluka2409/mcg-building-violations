@@ -45,8 +45,8 @@ export default function NewInspection() {
     setBusy(true);
     const data: any = { ...f, violations: Object.entries(sel).map(([code, remarks], i) => ({ code, remarks, is_primary: i === 0 })), submit: send };
     if (prm.task) {
-      try { const here = await currentFix(); data.task = Number(prm.task); data.inspector_latitude = here.latitude.toFixed(7); data.inspector_longitude = here.longitude.toFixed(7); }
-      catch (e) { setBusy(false); return Alert.alert("Location", "Your location is required to record a planned inspection (must be within 100 m of the property)."); }
+      try { const here = await currentFix(); data.task = Number(prm.task); data.inspector_latitude = here.latitude.toFixed(7); data.inspector_longitude = here.longitude.toFixed(7); data.location_integrity = here.signals; }
+      catch (e: any) { setBusy(false); return Alert.alert("Location", e?.codes ? errorMessage(e) : "Your location is required to record a planned inspection (must be within the geofence of the property)."); }
     }
     try {
       const ids: string[] = [];

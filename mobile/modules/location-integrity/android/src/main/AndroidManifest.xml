@@ -1,0 +1,8 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <!-- VPN / proxy detection -->
+  <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+  <!-- Lists installed apps that request ACCESS_MOCK_LOCATION (FlyGPS, Fake GPS ...). Needed on Android 11+ to see
+       other packages. Google Play only permits this permission for apps whose core purpose requires it; the MCG app is
+       distributed to staff (managed / internal track). Remove this line to fall back to per-fix mock detection only. -->
+  <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
+</manifest>

@@ -49,3 +49,13 @@ Please raise questions as GitHub issues on the repository so that they are track
 
 Regards,
 Yash Jaluka, Additional Commissioner, MCG
+
+## Added 11 Sep 2026: location integrity (anti-GPS-spoofing)
+
+Every geotag (evidence photo, inspector position, planned-inspection start/close) is now checked before it is
+accepted: mock / fake GPS apps, software-simulated locations, rooted phones, emulators, Developer options, VPN /
+proxy, stale fixes and impossible travel speeds are refused and logged; supervisors are notified; browser locations
+are flagged (refused in production). Hardware attestation (Play Integrity / App Attest) and an IP-intelligence hook are
+built in and switched on by configuration. **Action for the IT team:** build the app with EAS (the native module in
+`mobile/modules/location-integrity` is compiled there, not in Expo Go), run UAT scenarios 37-41 on real devices, then
+turn on the production switches listed in `docs/09-SECURITY-NOTES.md` → "Location integrity".

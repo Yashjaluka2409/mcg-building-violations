@@ -5,7 +5,7 @@ import { masters, reports } from "@/api/endpoints";
 import { api } from "@/api/client";
 import { Card, Empty, Spinner } from "@/components/ui";
 
-const DESC: Record<string, string> = { "case-register": "Every case with all key dates (inspection → closure)", "notice-register": "All notices/orders with service and signature status", "order-register": "Final demolition / sealing / eviction orders", "execution-register": "Demolitions and sealings carried out, cost and recovery", pendency: "Open cases by officer with SLA position", "govt-land": "Cases on MCG / Government land with parcel details", "sla-breach": "Stage-wise SLA breaches and escalations", "sanctioned-plans": "Sanctioned plans / licences register with linked cases" };
+const DESC: Record<string, string> = { "location-integrity": "Every location-integrity check with device signals; REJECTED rows are GPS-spoofing / VPN incidents", "case-register": "Every case with all key dates (inspection → closure)", "notice-register": "All notices/orders with service and signature status", "order-register": "Final demolition / sealing / eviction orders", "execution-register": "Demolitions and sealings carried out, cost and recovery", pendency: "Open cases by officer with SLA position", "govt-land": "Cases on MCG / Government land with parcel details", "sla-breach": "Stage-wise SLA breaches and escalations", "sanctioned-plans": "Sanctioned plans / licences register with linked cases" };
 
 export default function ReportsPage() {
   const [name, setName] = useState("case-register");

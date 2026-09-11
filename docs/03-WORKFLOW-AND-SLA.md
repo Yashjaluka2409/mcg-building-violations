@@ -74,6 +74,15 @@ executions but cannot create or decide cases.
 * Evidence cannot be deleted after the case leaves DRAFT; every file is SHA-256 hashed.
 
 
+## Location integrity (anti-spoofing) - applies to every geotag above
+
+Every device location (evidence photo, inspector position, planned-inspection start/close) is evaluated by
+`services/location_integrity.py` before it is accepted: mock / fake GPS apps, software-simulated locations, rooted
+phones, emulators, Developer options, VPN / proxy, stale fixes and impossible travel speeds are refused (HTTP 400) and
+the attempt is logged and reported to the officer's supervisor. Browser locations are accepted but flagged in the
+sandbox, and refused in production. The admin controls each rule in Admin → Location integrity. Details, production
+switches and attestation setup: docs/09-SECURITY-NOTES.md.
+
 ## Branch referrals (Planning / Revenue / Legal / Engineering / Fire)
 
 * AE, XEN or JC (permission `BRANCH_REFER`) can **refer a case to a branch** at any time before closure:

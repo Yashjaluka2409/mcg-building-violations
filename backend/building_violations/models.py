@@ -442,6 +442,9 @@ class MediaAttachment(TimeStamped):
     device_id = models.CharField(max_length=120, blank=True)
     distance_from_case_m = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     geotag_verified = models.BooleanField(default=False)
+    # Anti-spoofing verdict for the geotag (see services/location_integrity.py): PASS | FLAGGED | UNVERIFIED (no geotag)
+    integrity_status = models.CharField(max_length=12, default="UNVERIFIED", db_index=True)
+    integrity_check = models.ForeignKey("LocationIntegrityCheck", null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
     caption = models.CharField(max_length=300, blank=True)
     uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL, related_name="+")
 
@@ -1097,3 +1100,106 @@ class InspectionTask(TimeStamped):
 
     def __str__(self):
         return f"Task {self.id} {self.pid or self.address[:30]}"
+
+
+# ============================================================================
+# 13. Location integrity (anti-GPS-spoofing) - see services/location_integrity.py
+# ============================================================================
+class LocationIntegrityCheck(models.Model):
+    """One row per device location the server was asked to trust (evidence upload, inspection recorded,
+    planned inspection started/closed, app pre-check). Rejected attempts stay on record as incidents."""
+
+    class Decision(models.TextChoices):
+        PASS = "PASS", "Pass"
+        FLAGGED = "FLAGGED", "Flagged"
+        REJECTED = "REJECTED", "Rejected"
+
+    class Context(models.TextChoices):
+        PRECHECK = "PRECHECK", "Pre-check"
+        MEDIA_UPLOAD = "MEDIA_UPLOAD", "Evidence upload"
+        CASE_CREATE = "CASE_CREATE", "Inspection recorded"
+        TASK_START = "TASK_START", "Planned inspection started"
+        TASK_CLOSE = "TASK_CLOSE", "Planned inspection closed"
+
+    id = models.BigAutoField(primary_key=True)
+    at = models.DateTimeField(default=timezone.now, db_index=True)
+    officer = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
+    context = models.CharField(max_length=14, choices=Context.choices)
+    decision = models.CharField(max_length=10, choices=Decision.choices, db_index=True)
+    reasons = models.JSONField(default=list, blank=True)     # codes that blocked
+    flags = models.JSONField(default=list, blank=True)       # codes that only flagged
+    case = models.ForeignKey("ViolationCase", null=True, blank=True, on_delete=models.SET_NULL, related_name="integrity_checks")
+    task = models.ForeignKey("InspectionTask", null=True, blank=True, on_delete=models.SET_NULL, related_name="integrity_checks")
+    media = models.ForeignKey("MediaAttachment", null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
+    # the fix
+    latitude = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True)
+    accuracy_m = models.DecimalField(max_digits=10, decimal_places=3, null=True, blank=True)
+    altitude_m = models.DecimalField(max_digits=10, decimal_places=3, null=True, blank=True)
+    speed_mps = models.DecimalField(max_digits=10, decimal_places=3, null=True, blank=True)
+    heading = models.DecimalField(max_digits=10, decimal_places=3, null=True, blank=True)
+    provider = models.CharField(max_length=30, blank=True)               # gps | fused | network | web ...
+    fix_at = models.DateTimeField(null=True, blank=True, db_index=True)   # device timestamp of the fix
+    fix_age_s = models.DecimalField(max_digits=10, decimal_places=3, null=True, blank=True)
+    jitter_m = models.DecimalField(max_digits=10, decimal_places=3, null=True, blank=True)
+    # the device
+    device_id = models.CharField(max_length=120, blank=True)
+    platform = models.CharField(max_length=10, blank=True)               # ios | android | web
+    source = models.CharField(max_length=10, blank=True)                 # app | web | unknown
+    app_version = models.CharField(max_length=40, blank=True)
+    build_number = models.CharField(max_length=40, blank=True)
+    os_version = models.CharField(max_length=40, blank=True)
+    device_model = models.CharField(max_length=80, blank=True)
+    native_module = models.BooleanField(default=False)                   # native anti-spoofing module was available
+    is_physical_device = models.BooleanField(null=True, blank=True)
+    mock_location = models.BooleanField(null=True, blank=True)
+    rooted = models.BooleanField(null=True, blank=True)
+    developer_options = models.BooleanField(null=True, blank=True)
+    vpn_active = models.BooleanField(null=True, blank=True)
+    proxy_configured = models.BooleanField(null=True, blank=True)
+    simulated_by_software = models.BooleanField(null=True, blank=True)   # iOS CLLocationSourceInformation
+    produced_by_accessory = models.BooleanField(null=True, blank=True)
+    attestation_type = models.CharField(max_length=20, blank=True)       # play_integrity | app_attest
+    attestation_status = models.CharField(max_length=12, default="NONE") # NONE | VALID | INVALID | UNSUPPORTED | ERROR
+    attestation_detail = models.JSONField(default=dict, blank=True)
+    # server-side
+    client_ip = models.GenericIPAddressField(null=True, blank=True)
+    ip_intel = models.JSONField(default=dict, blank=True)
+    ip_distance_km = models.DecimalField(max_digits=8, decimal_places=1, null=True, blank=True)
+    previous = models.ForeignKey("self", null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
+    travel_distance_km = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    travel_speed_kmph = models.DecimalField(max_digits=10, decimal_places=1, null=True, blank=True)
+    signals = models.JSONField(default=dict, blank=True)                 # raw payload from the client
+
+    class Meta:
+        db_table = "bvms_location_integrity"
+        ordering = ["-at"]
+        indexes = [models.Index(fields=["officer", "at"]), models.Index(fields=["decision", "at"])]
+
+    def __str__(self):
+        return f"{self.get_context_display()} {self.decision} {self.at:%Y-%m-%d %H:%M}"
+
+
+class IntegrityNonce(models.Model):
+    """Single-use server nonce that binds a Play Integrity / App Attest attestation to one capture."""
+    nonce = models.CharField(max_length=64, primary_key=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="+")
+    created_at = models.DateTimeField(auto_now_add=True)
+    used_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "bvms_integrity_nonce"
+
+
+class AppAttestKey(models.Model):
+    """Public key attested by Apple App Attest for one officer's device (key id = base64 sha256 of the key)."""
+    key_id = models.CharField(max_length=64, primary_key=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="+")
+    public_key_pem = models.TextField()
+    counter = models.PositiveBigIntegerField(default=0)
+    environment = models.CharField(max_length=12, default="production")
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_used_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "bvms_app_attest_key"

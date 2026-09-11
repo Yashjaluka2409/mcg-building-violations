@@ -75,6 +75,9 @@ class SummaryView(_Base):
             "tasks_violation_found": m.InspectionTask.objects.filter(status="VIOLATION_RECORDED").count(),
             "tasks_no_violation": m.InspectionTask.objects.filter(status__in=["NO_VIOLATION", "NOT_FOUND"]).count(),
             "referrals_overdue": m.BranchReferral.objects.filter(case__in=qs, status="PENDING", due_at__lt=now).count(),
+            "integrity_rejected_30d": m.LocationIntegrityCheck.objects.filter(decision="REJECTED", at__gte=now - timedelta(days=30)).count(),
+            "integrity_flagged_30d": m.LocationIntegrityCheck.objects.filter(decision="FLAGGED", at__gte=now - timedelta(days=30)).count(),
+            "integrity_checked_30d": m.LocationIntegrityCheck.objects.filter(at__gte=now - timedelta(days=30)).exclude(context="PRECHECK").count(),
             "cost_recovery_pending": qs.filter(cost_recovery_status__in=["PENDING", "DEMANDED"]).count(),
         })
 

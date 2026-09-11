@@ -45,6 +45,7 @@ export default function NewCasePage() {
         const pos = await new Promise<GeolocationPosition | null>((res) => navigator.geolocation ? navigator.geolocation.getCurrentPosition(res, () => res(null), { enableHighAccuracy: true, timeout: 10000 }) : res(null));
         if (!pos) throw new Error("Device location is required to record a planned inspection (allow location access or use the mobile app)");
         payload.inspector_latitude = pos.coords.latitude.toFixed(7); payload.inspector_longitude = pos.coords.longitude.toFixed(7);
+        payload.location_integrity = { source: "web", platform: "web", native_module: false, user_agent: navigator.userAgent, fix_at: new Date(pos.timestamp).toISOString() };
       }
       if (!payload.latitude) delete payload.latitude; if (!payload.longitude) delete payload.longitude;
       for (const k of Object.keys(payload)) if (payload[k] === "" || payload[k] === null) delete payload[k];

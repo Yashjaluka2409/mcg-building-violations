@@ -21,6 +21,7 @@ pyshp>=2.3
 openpyxl>=3.1
 python-dotenv>=1.0
 requests>=2.32
+cbor2>=5.6            # Apple App Attest objects (services/attestation.py)
 gunicorn>=23
 whitenoise>=6.8
 # Bilingual (Hindi) PDF rendering with proper Devanagari shaping. Needs Pango on the host:

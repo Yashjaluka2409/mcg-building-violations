@@ -1,0 +1,19 @@
+apply plugin: 'com.android.library'
+apply plugin: 'expo-module-gradle-plugin'
+
+group = 'gov.mcg.bvms'
+version = '1.0.0'
+
+android {
+  namespace "gov.mcg.bvms.integrity"
+  defaultConfig {
+    versionCode 1
+    versionName "1.0.0"
+  }
+  lintOptions { abortOnError false }
+}
+
+dependencies {
+  // Google Play Integrity API (standard requests) - hardware-backed attestation of app + device
+  implementation 'com.google.android.play:integrity:1.4.0'
+}
