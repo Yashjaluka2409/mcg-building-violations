@@ -32,7 +32,7 @@ export default function Shell() {
     { to: "/referrals", icon: Share2, label: isBranch ? "Branch inbox" : "Branch referrals", badge: refCounts.data?.pending, show: has("BRANCH_RESPOND", "BRANCH_REFER", "REFERRALS_VIEW_ALL") },
     { to: "/tasks", icon: Crosshair, label: "Planned inspections", badge: has("TASKS_ASSIGN") ? taskCounts.data?.open : taskCounts.data?.assigned_to_me, show: has("TASKS_ASSIGN", "TASKS_VIEW_ALL", "TASKS_EXECUTE") },
     { to: "/legacy-orders", icon: Archive, label: "Orders before the system", show: has("LEGACY_ORDERS_MANAGE", "CASE_VIEW_ALL", "DASHBOARD_VIEW") || ["JC", "JC_CLERK", "XEN", "ADMIN", "COMMISSIONER", "ADDL_COMMISSIONER", "SUPER_ADMIN"].includes(role) },
-    { to: "/cases/new", icon: PlusCircle, label: t("nav.new_case"), show: ["JE", "AE", "FIELD_STAFF", "ADMIN", "COMMISSIONER", "ADDL_COMMISSIONER"].includes(role) },
+    { to: "/cases/new", icon: PlusCircle, label: t("nav.new_case"), show: user?.can_create_case ?? ["JE", "AE", "FIELD_STAFF", "ADMIN", "COMMISSIONER", "ADDL_COMMISSIONER"].includes(role) },
     { to: "/cases", icon: FolderKanban, label: isBranch ? "Referred cases" : t("nav.cases") },
     { to: "/map", icon: MapPinned, label: "Enforcement map", show: has("DASHBOARD_VIEW") },
     { to: "/notices", icon: FileSignature, label: t("nav.notices"), show: !isBranch },
@@ -80,7 +80,7 @@ export default function Shell() {
               </div>
             )}
           </div>
-          <div className="hidden sm:block text-right leading-tight"><div className="text-sm font-semibold">{user?.name}</div><div className="text-[11px] opacity-80">{user?.designation || user?.role}</div></div>
+          <div className="hidden sm:block text-right leading-tight"><div className="text-sm font-semibold">{user?.name}</div><div className="text-[11px] opacity-80">{user?.designation || user?.role_label || user?.role}</div></div>
           <div className="h-9 w-9 rounded-full bg-white/20 flex items-center justify-center font-bold">{(user?.name || "?").slice(0, 1)}</div>
           <button className="p-2 rounded hover:bg-white/10" title={t("nav.logout")} onClick={() => { logout(); nav("/login"); }}><LogOut className="h-5 w-5" /></button>
         </header>

@@ -11,6 +11,7 @@ from app.models import building_violations as m
 from app.db.util import to_uuid
 from app.services.building_violations import location_integrity as li
 from app.services.building_violations import workflow as wf
+from app.services.building_violations import hierarchy as H
 from app.services.building_violations.audit import verify_chain
 from app.schemas.building_violations import inputs as s
 from app.schemas.building_violations import outputs as ser
@@ -71,7 +72,7 @@ def counts(request: Request, user: Officer, db: DB):
     C = m.ViolationCase
     n = lambda *f: q.filter(*f).order_by(None).count()  # noqa: E731
     return resp({
-        "inbox": n(C.current_owner_role == (role if role != "JC_CLERK" else "JC"), C.status.notin_(OPEN_EXCLUDE)),
+        "inbox": n(C.current_owner_role == (role if role != "JC_CLERK" else H.authority_role(db)), C.status.notin_(OPEN_EXCLUDE)),
         "drafts": n(C.status == "DRAFT", C.reported_by_id == user.id),
         "to_serve": n(C.status.in_(["SCN_ISSUED", "ORDER_ISSUED"])),
         "execution_due": n(C.status == "EXECUTION_DUE"),

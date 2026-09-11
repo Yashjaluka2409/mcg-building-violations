@@ -10,6 +10,7 @@ from app.core.errors import WorkflowError
 from app.models import building_violations as m
 from app.db.util import update_or_create
 from app.services.building_violations import access
+from app.services.building_violations import hierarchy as H
 from app.services.building_violations import workflow as wf
 from app.schemas.building_violations import inputs as s
 from app.schemas.building_violations import outputs as ser
@@ -87,7 +88,7 @@ def _rules_payload(db):
     for r in db.query(m.WorkflowRule).filter(m.WorkflowRule.allowed == True).order_by(m.WorkflowRule.id):  # noqa: E712
         matrix.setdefault(r.status, {}).setdefault(r.role, []).append(r.action)
     return {"statuses": ["*"] + [c[0] for c in m.CaseStatus.choices], "status_labels": {"*": "Any status", **m.STATUS_LABELS},
-            "roles": [c[0] for c in m.Role.choices], "role_labels": m.ROLE_LABELS, "actions": access.ALL_ACTIONS, "action_labels": access.ACTION_LABELS,
+            "roles": H.role_codes(db), "role_labels": H.role_labels(db), "role_short": {c: H.role_short(db, c) for c in H.role_codes(db)}, "actions": access.ALL_ACTIONS, "action_labels": access.ACTION_LABELS,
             "management_roles": list(access.MANAGEMENT_ROLES), "matrix": matrix}
 
 
@@ -102,7 +103,7 @@ def rules_put(body: dict, request: Request, user: Officer, db: DB):
         return resp({"detail": "Requires permission WORKFLOW_CONFIGURE"}, 403)
     changed = []
     for r in body.get("rules") or []:
-        if r.get("action") not in access.ALL_ACTIONS or r.get("role") not in m.ROLE_LABELS or (r.get("status") != "*" and r.get("status") not in m.STATUS_LABELS):
+        if r.get("action") not in access.ALL_ACTIONS or r.get("role") not in H.role_codes(db, active_only=False) or (r.get("status") != "*" and r.get("status") not in m.STATUS_LABELS):
             return resp({"detail": f"Invalid rule {r}"}, 400)
         obj, _ = update_or_create(db, m.WorkflowRule, defaults={"allowed": bool(r.get("allowed", True)), "updated_by_id": user.id}, status=r["status"], role=r["role"], action=r["action"])
         changed.append({"status": obj.status, "role": obj.role, "action": obj.action, "allowed": obj.allowed})
@@ -119,6 +120,36 @@ def rules_reset(request: Request, user: Officer, db: DB, body: dict | None = Non
     access.seed_rules(db, force=True)
     access.log_admin(db, user, "RULES_RESET", "WorkflowRule", "", order_reference=(body or {}).get("order_reference", ""), request=request)
     return resp(_rules_payload(db))
+
+
+# ---------------------------------------------------------------- review hierarchy (roles + stages)
+@router.get("/admin/hierarchy/")
+def hierarchy_get(user: Officer, db: DB):
+    return resp(H.admin_payload(db))
+
+
+@router.put("/admin/hierarchy/")
+def hierarchy_put(body: dict, request: Request, user: Officer, db: DB):
+    """Replace the review chain and edit the role catalogue. Body: {stages:[{slot, role, label_en, label_hi}],
+    roles:[{code, label_en, label_hi, short_label, kind, active}], order_reference, remarks}."""
+    if not access.has_perm(db, user, "WORKFLOW_CONFIGURE"):
+        return resp({"detail": "Requires permission WORKFLOW_CONFIGURE"}, 403)
+    before = {"stages": [s.as_dict() for s in H.chain(db)], "roles": H.roles(db)}
+    H.save(db, stages=body.get("stages") or [], roles_in=body.get("roles") or [], actor=user)
+    access.invalidate()
+    after = {"stages": [s.as_dict() for s in H.chain(db)], "roles": H.roles(db)}
+    access.log_admin(db, user, "HIERARCHY_UPDATE", "ReviewStage", "", before=before, after=after, order_reference=body.get("order_reference", ""), remarks=body.get("remarks", ""), request=request)
+    return resp(H.admin_payload(db))
+
+
+@router.post("/admin/hierarchy/reset/")
+def hierarchy_reset(request: Request, user: Officer, db: DB, body: dict | None = None):
+    if not access.has_perm(db, user, "WORKFLOW_CONFIGURE"):
+        return resp({"detail": "Requires permission WORKFLOW_CONFIGURE"}, 403)
+    H.reset(db)
+    access.invalidate()
+    access.log_admin(db, user, "HIERARCHY_RESET", "ReviewStage", "", order_reference=(body or {}).get("order_reference", ""), request=request)
+    return resp(H.admin_payload(db))
 
 
 # ---------------------------------------------------------------- settings
@@ -164,7 +195,7 @@ def _perms_payload(db):
     for r in db.query(m.RolePermission).filter(m.RolePermission.allowed == True).order_by(m.RolePermission.id):  # noqa: E712
         matrix.setdefault(r.role, []).append(r.permission)
     return {"permissions": [{"code": c, "label": l, "group": g, "default_roles": roles} for c, (l, g, roles) in access.PERMISSIONS.items()],
-            "roles": [c[0] for c in m.Role.choices], "role_labels": m.ROLE_LABELS, "management_roles": list(access.MANAGEMENT_ROLES), "matrix": matrix}
+            "roles": H.role_codes(db), "role_labels": H.role_labels(db), "role_short": {c: H.role_short(db, c) for c in H.role_codes(db)}, "management_roles": list(access.MANAGEMENT_ROLES), "matrix": matrix}
 
 
 @router.get("/admin/permissions/")
@@ -178,7 +209,7 @@ def perms_put(body: dict, request: Request, user: Officer, db: DB):
         return resp({"detail": "Requires permission ACCESS_CONFIGURE"}, 403)
     changed = []
     for g in body.get("grants") or []:
-        if g.get("permission") not in access.PERMISSIONS or g.get("role") not in m.ROLE_LABELS:
+        if g.get("permission") not in access.PERMISSIONS or g.get("role") not in H.role_codes(db, active_only=False):
             return resp({"detail": f"Invalid grant {g}"}, 400)
         if g["role"] in access.MANAGEMENT_ROLES:
             continue

@@ -9,10 +9,12 @@ import MapView from "@/components/MapView";
 import MediaGallery from "@/components/MediaGallery";
 import Uploader from "@/components/Uploader";
 import { Alert, Card, Field, SeverityBadge } from "@/components/ui";
+import { useWorkflowConfig } from "@/hooks/useWorkflowConfig";
 
 /** New inspection (JE). Mirrors the mobile flow: PID → property auto-fill → location → land check →
  *  violations → measurements → evidence → submit to AE. */
 export default function NewCasePage() {
+  const wf = useWorkflowConfig();
   const nav = useNavigate();
   const { id } = useParams();
   const vtypes = useQuery({ queryKey: ["vtypes"], queryFn: masters.violationTypes });
@@ -39,6 +41,7 @@ export default function NewCasePage() {
   const locate = () => navigator.geolocation?.getCurrentPosition((p) => { set("location_accuracy_m", Math.round(p.coords.accuracy)); check(p.coords.latitude, p.coords.longitude); }, () => setErr("Could not read device location"), { enableHighAccuracy: true, timeout: 10000 });
   const save = useMutation({
     mutationFn: async (submit: boolean) => {
+      if (f.alternate_mobile && !/^\d{10}$/.test(f.alternate_mobile)) throw new Error("Alternate mobile must be a 10-digit number (digits only)");
       const payload: any = { ...f, violations: Object.entries(sel).map(([code, v], i) => ({ code, remarks: v.remarks, details: v.details, is_primary: i === 0 })), media_ids: media.map((m) => m.id), submit };
       if (taskId) {
         payload.task = taskId;
@@ -60,7 +63,7 @@ export default function NewCasePage() {
   const wardOpts = wards.data?.filter((w) => !f.zone || w.zone === Number(f.zone)) || [];
   return (
     <div className="space-y-4 max-w-6xl">
-      <div><h1 className="page-title">{id ? "Edit inspection" : "New inspection"}</h1><p className="page-sub">Record a building violation for review by the Assistant Engineer</p></div>
+      <div><h1 className="page-title">{id ? "Edit inspection" : "New inspection"}</h1><p className="page-sub">Record a building violation for review by the {wf.stageLabel(wf.reviewEnabled ? "REVIEWER" : "AUTHORITY")}</p></div>
       {err && <Alert kind="error">{err}</Alert>}
       {task.data && <Alert kind="info"><b>Planned inspection #{task.data.id}</b> pushed by {task.data.created_by?.name} · {task.data.category_display} · due {task.data.due_at?.slice(0, 10)}. Instructions: {task.data.instructions}. Your device location will be checked against the property (within {task.data.geofence_m} m) when you save.</Alert>}
       <div className="grid lg:grid-cols-2 gap-4">
@@ -80,7 +83,7 @@ export default function NewCasePage() {
               <Field label="Owner name"><input className="input" value={f.owner_name || ""} onChange={(e) => set("owner_name", e.target.value)} /></Field>
               <Field label="Father's / husband's name"><input className="input" value={f.owner_father_name || ""} onChange={(e) => set("owner_father_name", e.target.value)} /></Field>
               <Field label="Mobile linked to PID"><input className="input" value={f.pid_linked_mobile || ""} onChange={(e) => set("pid_linked_mobile", e.target.value)} /></Field>
-              <Field label="Alternate mobile (for notice)"><input className="input" value={f.alternate_mobile || ""} onChange={(e) => set("alternate_mobile", e.target.value)} /></Field>
+              <Field label="Alternate mobile (for notice)" hint={f.alternate_mobile && f.alternate_mobile.length < 10 ? `${10 - f.alternate_mobile.length} more digit(s) needed` : "10 digits, numbers only"}><input className="input" inputMode="numeric" pattern="[0-9]{10}" maxLength={10} placeholder="10-digit mobile" value={f.alternate_mobile || ""} onChange={(e) => set("alternate_mobile", e.target.value.replace(/\D/g, "").slice(0, 10))} /></Field>
               <Field label="Occupier / builder"><input className="input" value={f.builder_name || ""} onChange={(e) => set("builder_name", e.target.value)} /></Field>
               <Field label="Person present on site"><input className="input" value={f.person_on_site || ""} onChange={(e) => set("person_on_site", e.target.value)} /></Field>
             </div>

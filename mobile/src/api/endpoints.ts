@@ -9,6 +9,7 @@ export const masters = {
   violationTypes: () => api.get("/masters/violation-types/").then((r) => r.data),
   wards: () => api.get("/masters/wards/").then((r) => r.data),
   orderTypes: () => api.get("/masters/order-types/").then((r) => r.data),
+  workflowConfig: () => api.get("/masters/workflow-config/").then((r) => r.data),
 };
 export const property = {
   lookupPid: (pid: string) => api.get(`/property/pid/${encodeURIComponent(pid)}/`).then((r) => r.data),

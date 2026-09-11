@@ -52,7 +52,11 @@ layout mirrors the platform's (`app/routers`, `app/services`, `app/models`, `app
     (GeoJSON / KML / zipped shapefile in EPSG:4326) from the portal - or run a nightly sync from the platform
     GIS into `bvms_govt_land_parcel` keyed by `layer_key`. Branch officers: role `BRANCH_OFFICER` with
     `branch` = PLANNING / REVENUE / LEGAL / ENGINEERING / FIRE.
-12. Create `OfficerProfile` rows for existing users (`POST /building-violations/api/officers/`). Role and
+12. Review hierarchy: `bvms_role` / `bvms_review_stage` hold the role catalogue and the reporter → reviewer(s)
+    → authority chain (`services/building_violations/hierarchy.py`). Seeded with JE → AE → JC; the admin edits it
+    at Administration → Hierarchy (`PUT /admin/hierarchy/`). Clients read `GET /masters/workflow-config/` for every
+    role / stage / status / action label - map your own designations there instead of changing code.
+13. Create `OfficerProfile` rows for existing users (`POST /building-violations/api/officers/`). Role and
     zones drive every permission. For the Joint Commissioner enter the Commissioner's delegation order
     number (s.401(2)) - it is printed on every notice.
 
@@ -67,6 +71,7 @@ layout mirrors the platform's (`app/routers`, `app/services`, `app/models`, `app
 | Push notifications | `app/services/building_violations/notify.py` | `Notification` rows are created; wire `notify_user` to the platform's FCM sender to push to the app. |
 | Building plan module | `models.SanctionedPlan` (`source=PLATFORM_SYNC`) | If the platform's *Citizen Building Plan Service* stores sanctions, write a nightly sync into `SanctionedPlan` keyed by `plan_no` (fields listed in 06-DATABASE-SCHEMA.md). |
 | Government land | `/building-violations/api/gis/land-layers/` | Upload GeoJSON (WGS84) exported from the platform GIS / QGIS; or point `GovtLandParcel` at the platform's PostGIS layer table. |
+| Designations / review chain | `services/building_violations/hierarchy.py` | No code: rename stages and roles or add reviewer stages at Administration → Hierarchy; the portal and the app relabel themselves from `/masters/workflow-config/`. |
 | Wards / zones | `Ward.boundary`, `Zone` | Load the ward polygons the platform already has (`/geo/wards`) so the app auto-detects the ward; or map `Zone` / `Ward` onto the platform's tables in `repositories/building_violations.py` and `services/geo.py`. |
 | Device attestation | `app/services/building_violations/attestation.py` | Play Integrity service account + App Attest root CA (docs/09). |
 

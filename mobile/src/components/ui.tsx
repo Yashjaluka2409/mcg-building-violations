@@ -1,4 +1,5 @@
 import { ArrowLeft, Menu } from "lucide-react-native";
+import { useWorkflowConfig } from "@/hooks/useWorkflowConfig";
 import React from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View, ViewStyle } from "react-native";
 import { useRouter } from "expo-router";
@@ -20,7 +21,7 @@ export function Header({ title, subtitle, back, right }: { title: string; subtit
 export function Card({ children, style }: { children: React.ReactNode; style?: ViewStyle }) { return <View style={[s.card, style]}>{children}</View>; }
 export function CardTitle({ children }: { children: React.ReactNode }) { return <Text style={s.cardTitle}>{children}</Text>; }
 export function Pill({ text, bg = colors.success100, fg = colors.success }: { text: string; bg?: string; fg?: string }) { return <View style={[s.pill, { backgroundColor: bg }]}><Text style={{ color: fg, fontWeight: "600", fontSize: 12 }}>{text}</Text></View>; }
-export function StatusPill({ status }: { status: string }) { const c = STATUS_COLORS[status] || { bg: "#f3f4f6", fg: "#374151" }; return <Pill text={status.replace(/_/g, " ")} bg={c.bg} fg={c.fg} />; }
+export function StatusPill({ status, display }: { status: string; display?: string | null }) { const c = STATUS_COLORS[status] || { bg: "#f3f4f6", fg: "#374151" }; const wf = useWorkflowConfig(); return <Pill text={wf.statusLabel(status, status.replace(/_/g, " "), display)} bg={c.bg} fg={c.fg} />; }
 export function Button({ title, onPress, variant = "primary", disabled, loading, icon }: { title: string; onPress: () => void; variant?: "primary" | "outline" | "danger" | "accent"; disabled?: boolean; loading?: boolean; icon?: React.ReactNode }) {
   const bg = variant === "primary" ? colors.primary : variant === "danger" ? colors.danger : variant === "accent" ? colors.accent : colors.surface;
   const fg = variant === "outline" ? colors.text : "#fff";

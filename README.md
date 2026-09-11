@@ -88,3 +88,5 @@ Legal Branch `9000000013`, GIS lab `9000000014`.
 
 See `docs/02-INTEGRATION-GUIDE.md` for the exact steps to mount the module inside the existing
 MCG platform backend and portal, and the MCG HARYANA app.
+
+**Configurable review hierarchy** (12 Sep 2026): Administration → Hierarchy lets the admin rename JE / AE / JC, add or remove reviewer stages and create roles; the portal and the field app relabel themselves from `/masters/workflow-config/`.

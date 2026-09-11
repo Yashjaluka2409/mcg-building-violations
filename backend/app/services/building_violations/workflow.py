@@ -26,6 +26,7 @@ from app.models.building_violations import (Appeal, AppealStatus, Branch, Branch
                          MediaAttachment, Notice, OfficerProfile, OrderType, ReferralStatus, Role, SanctionedPlan, StayScope, ViolationCase, ViolationType, Ward, Zone)
 from app.db.util import uuids
 from app.services.building_violations import access
+from app.services.building_violations import hierarchy as H
 from app.services.building_violations.audit import record_event
 from app.services.building_violations.geo import haversine_m, parcels_containing, ward_for_point
 from app.services.building_violations.notices import ORDER_KINDS_FINAL, SCN_TYPES, build_notice, dispatch_sms
@@ -86,8 +87,34 @@ def _first_profile(db: Session, role: str, *, zone=None, ward=None):
     return q.order_by(OfficerProfile.id).first()
 
 
+def _pick_reviewer(db: Session, case, role: str, prof: OfficerProfile | None = None):
+    """Officer of a reviewer stage for this case: first active officer of that role in the case zone
+    (setting auto_assign_ae_by_zone), else the submitting officer's supervisor when they hold that role."""
+    rev = None
+    if access.get_setting(db, "auto_assign_ae_by_zone", True) and case.zone_id:
+        rev = _first_profile(db, role, zone=case.zone)
+    if rev is None and prof is not None and prof.reports_to and prof.reports_to.role == role and prof.reports_to.active:
+        rev = prof.reports_to
+    return rev
+
+
+def _current_stage_ok(db: Session, case, prof: OfficerProfile) -> bool:
+    """With more than one reviewer stage only the stage the case is at may act (management always may;
+    roles outside the chain keep whatever the rules matrix grants them)."""
+    if prof.role in access.MANAGEMENT_ROLES or len(H.reviewers(db, raw=True)) < 2:
+        return True
+    st = H.current_stage(db, case)
+    return st is None or prof.role == st.role or H.stage_of_role(db, prof.role) is None
+
+
+def _require_current_stage(db: Session, case, prof: OfficerProfile):
+    if not _current_stage_ok(db, case, prof):
+        st = H.current_stage(db, case)
+        raise WorkflowError(f"Case {case.case_no} is with the {st.label_en} stage; your role ({H.role_label(db, prof.role)}) acts at a different stage", 403)
+
+
 # ---------------------------------------------------------------------------
-# 1. Creation (JE / field)
+# 1. Creation (reporter stage: JE / field)
 # ---------------------------------------------------------------------------
 def create_case(db: Session, user, data: dict, violation_codes: list[dict], request=None, media_ids: list | None = None) -> ViolationCase:
     prof = _authorize(db, user, "create", status="*")
@@ -97,7 +124,7 @@ def create_case(db: Session, user, data: dict, violation_codes: list[dict], requ
     case = ViolationCase(
         case_no=next_case_no(db, zone.code if zone else None), reported_by=user, ward=ward, zone=zone,
         division=data.get("division") or (ward.division if ward else None),
-        current_owner_role=Role.JE, status=S.DRAFT, inspected_at=now(), status_changed_at=now(),
+        current_owner_role=H.reporter_role(db), status=S.DRAFT, inspected_at=now(), status_changed_at=now(),
     )
     db.add(case)
     for f in ("source", "complaint_ref", "priority", "pid", "pid_snapshot", "pid_linked_mobile", "alternate_mobile",
@@ -201,31 +228,33 @@ def submit_to_ae(db: Session, case, user, request=None, remarks=""):
     if access.get_setting(db, "require_inspection_media", True) and not db.query(MediaAttachment.id).filter(MediaAttachment.case_id == case.id, MediaAttachment.kind == "INSPECTION").first():
         raise WorkflowError("Upload at least one geotagged inspection photo/video before submitting")
     case.submitted_at = now()
-    if not access.get_setting(db, "require_ae_review", True):
-        # admin switched the AE stage off: straight to the Joint Commissioner
+    revs = H.reviewers(db)
+    if not revs:
+        # no reviewer stage in the hierarchy (or review switched off): straight to the competent authority
         case.assigned_jc = case.assigned_jc or _pick_jc(db, case)
         case.jc_received_at = now()
-        _set_status(db, case, S.PENDING_JC, user, "SUBMIT_TO_JC", request, remarks, owner_role=Role.JC)
+        case.review_stage = 0
+        _set_status(db, case, S.PENDING_JC, user, "SUBMIT_TO_JC", request, remarks, owner_role=H.authority_role(db))
         notify_user(db, case.assigned_jc, case, f"New violation case {case.case_no} for orders", case.address_line)
         return case
+    first = revs[0]
     if not case.assigned_ae_id:
-        ae = None
-        if access.get_setting(db, "auto_assign_ae_by_zone", True) and case.zone_id:
-            ae = _first_profile(db, Role.AE, zone=case.zone)
-        ae = ae or (prof.reports_to if prof.reports_to and prof.reports_to.role == Role.AE else None)
-        case.assigned_ae = ae.user if ae else None
-    _set_status(db, case, S.PENDING_AE, user, "SUBMIT_TO_AE", request, remarks, owner_role=Role.AE)
+        rev = _pick_reviewer(db, case, first.role, prof)
+        case.assigned_ae = rev.user if rev else None
+    case.review_stage = 1
+    _set_status(db, case, S.PENDING_AE, user, "SUBMIT_TO_AE", request, remarks, owner_role=first.role)
     notify_user(db, case.assigned_ae, case, f"New violation case {case.case_no} for review", case.address_line)
     if not case.assigned_ae_id:
-        notify_role(db, Role.AE, case, f"Unassigned case {case.case_no} pending AE review", zone=case.zone)
+        notify_role(db, first.role, case, f"Unassigned case {case.case_no} pending {first.label_en} review", zone=case.zone)
     return case
 
 
 def _pick_jc(db: Session, case):
     jc = None
+    role = H.authority_role(db)
     if access.get_setting(db, "auto_assign_jc_by_zone", True) and case.zone_id:
-        jc = _first_profile(db, Role.JC, zone=case.zone)
-    jc = jc or _first_profile(db, Role.JC)
+        jc = _first_profile(db, role, zone=case.zone)
+    jc = jc or _first_profile(db, role)
     return jc.user if jc else None
 
 
@@ -233,26 +262,43 @@ def _pick_jc(db: Session, case):
 # 2. AE review
 # ---------------------------------------------------------------------------
 def ae_forward(db: Session, case, user, request=None, remarks="", jc_user=None, recommendation=""):
-    _authorize(db, user, "ae_forward", case)
+    prof = _authorize(db, user, "ae_forward", case)
     _require_status(case, S.PENDING_AE)
+    _require_current_stage(db, case, prof)
     if not case.assigned_ae_id:
         case.assigned_ae = user
+    revs = H.reviewers(db)
+    idx = case.review_stage or 1
+    if idx < len(revs):
+        # another reviewer stage follows (e.g. JE -> AE -> XEN -> JC): hand the case to it
+        nxt = revs[idx]
+        rev = _pick_reviewer(db, case, nxt.role)
+        case.assigned_ae = rev.user if rev else None
+        case.review_stage = idx + 1
+        _set_status(db, case, S.PENDING_AE, user, "AE_FORWARD", request, remarks, payload={"recommendation": recommendation, "to_stage": nxt.label_en}, owner_role=nxt.role)
+        notify_user(db, case.assigned_ae, case, f"Case {case.case_no} forwarded for your review", remarks)
+        if not case.assigned_ae_id:
+            notify_role(db, nxt.role, case, f"Unassigned case {case.case_no} pending {nxt.label_en} review", zone=case.zone)
+        return case
     if jc_user is None:
         jc_user = _pick_jc(db, case)
     case.assigned_jc = jc_user
     case.ae_forwarded_at = now()
     case.jc_received_at = now()
-    _set_status(db, case, S.PENDING_JC, user, "AE_FORWARD", request, remarks, payload={"recommendation": recommendation}, owner_role=Role.JC)
-    notify_user(db, jc_user, case, f"Case {case.case_no} forwarded by AE for orders", remarks)
+    case.review_stage = 0
+    _set_status(db, case, S.PENDING_JC, user, "AE_FORWARD", request, remarks, payload={"recommendation": recommendation}, owner_role=H.authority_role(db))
+    notify_user(db, jc_user, case, f"Case {case.case_no} forwarded by {H.role_label(db, prof.role)} for orders", remarks)
     return case
 
 
 def ae_return(db: Session, case, user, request=None, remarks=""):
-    _authorize(db, user, "ae_return", case)
+    prof = _authorize(db, user, "ae_return", case)
     _require_status(case, S.PENDING_AE)
+    _require_current_stage(db, case, prof)
     if not remarks:
         raise WorkflowError("Remarks are mandatory when returning a case")
-    _set_status(db, case, S.RETURNED_TO_JE, user, "AE_RETURN", request, remarks, owner_role=Role.JE)
+    case.review_stage = 0
+    _set_status(db, case, S.RETURNED_TO_JE, user, "AE_RETURN", request, remarks, owner_role=H.reporter_role(db))
     notify_user(db, case.reported_by, case, f"Case {case.case_no} returned for re-inspection", remarks)
     return case
 
@@ -314,7 +360,7 @@ def jc_issue_notice(db: Session, case, user, request=None, *, order_type_code: s
         case.response_due_at = n.response_due_at
         if hearing_at:
             case.hearing_at = hearing_at
-        _set_status(db, case, S.SCN_ISSUED, user, "JC_ISSUE_SCN", request, remarks, payload={"notice": n.notice_no, "order_type": ot.code, "days": days}, owner_role=Role.JE)
+        _set_status(db, case, S.SCN_ISSUED, user, "JC_ISSUE_SCN", request, remarks, payload={"notice": n.notice_no, "order_type": ot.code, "days": days}, owner_role=H.reporter_role(db))
         notify_user(db, case.reported_by, case, f"Serve SCN {n.notice_no} for case {case.case_no}", "Deliver the notice and upload geotagged proof of delivery.")
     elif ot.code == "STOP_WORK_262":
         case.stop_work_issued = True
@@ -336,7 +382,7 @@ def jc_issue_notice(db: Session, case, user, request=None, *, order_type_code: s
         case.compliance_due_at = n.compliance_due_at
         if ot.code == "SEALING_263A":
             case.sealed = True
-        _set_status(db, case, S.ORDER_ISSUED, user, "JC_ISSUE_FINAL_ORDER", request, remarks, payload={"notice": n.notice_no, "order_type": ot.code, "days": days}, owner_role=Role.JE)
+        _set_status(db, case, S.ORDER_ISSUED, user, "JC_ISSUE_FINAL_ORDER", request, remarks, payload={"notice": n.notice_no, "order_type": ot.code, "days": days}, owner_role=H.reporter_role(db))
         notify_user(db, case.reported_by, case, f"Final order {n.notice_no} for case {case.case_no} - serve and upload proof", remarks)
         notify_role(db, Role.FIELD_STAFF, case, f"Order {n.notice_no}: execution due after {days} days", zone=case.zone)
     else:  # memos / referrals
@@ -353,7 +399,7 @@ def jc_drop(db: Session, case, user, request=None, remarks="", regularised=False
     case.decision = "REGULARISE" if regularised else "DROP"
     case.decision_reasons = remarks
     case.closed_at = now()
-    _set_status(db, case, S.REGULARISED if regularised else S.DROPPED, user, "JC_REGULARISE" if regularised else "JC_DROP", request, remarks, owner_role=Role.JC)
+    _set_status(db, case, S.REGULARISED if regularised else S.DROPPED, user, "JC_REGULARISE" if regularised else "JC_DROP", request, remarks, owner_role=H.authority_role(db))
     notify_user(db, case.reported_by, case, f"Case {case.case_no} {'regularised' if regularised else 'dropped'} by JC", remarks)
     return case
 
@@ -383,7 +429,7 @@ def record_service(db: Session, notice: Notice, user, request=None, *, mode: str
         if notice.response_days:
             notice.response_due_at = notice.served_at + timedelta(days=notice.response_days)
             case.response_due_at = notice.response_due_at
-        _set_status(db, case, S.SCN_SERVED, user, "SCN_SERVED", request, remarks, payload={"notice": notice.notice_no, "mode": mode}, owner_role=Role.JC)
+        _set_status(db, case, S.SCN_SERVED, user, "SCN_SERVED", request, remarks, payload={"notice": notice.notice_no, "mode": mode}, owner_role=H.authority_role(db))
     elif notice.is_final_order and case.status == S.ORDER_ISSUED:
         case.order_served_at = notice.served_at
         if notice.compliance_days:
@@ -414,32 +460,53 @@ def record_response(db: Session, case, user, request=None, *, notice: Notice | N
     if media_ids:
         attach_media(db, case, media_ids, user, kind="RESPONSE")
     case.response_received_at = now()
-    # Route: JE-uploaded responses travel via AE to JC (configurable); clerk/JC uploads go straight to JC.
-    if prof.role in (Role.JE, Role.FIELD_STAFF) and access.get_setting(db, "route_je_response_via_ae", True) and access.get_setting(db, "require_ae_review", True):
-        _set_status(db, case, S.RESPONSE_PENDING_AE, user, "RESPONSE_RECORDED", request, remarks, payload={"response_id": resp.id, "via": received_via}, owner_role=Role.AE)
+    # Route: replies uploaded at the reporter stage travel through the reviewer stage(s) to the authority
+    # (setting route_je_response_via_ae); clerk / authority uploads go straight to the authority.
+    revs = H.reviewers(db)
+    if H.canonical_role(db, prof.role) in (Role.JE, Role.FIELD_STAFF) and access.get_setting(db, "route_je_response_via_ae", True) and revs:
+        first = revs[0]
+        if not case.assigned_ae_id:
+            rev = _pick_reviewer(db, case, first.role, prof)
+            case.assigned_ae = rev.user if rev else None
+        case.review_stage = 1
+        _set_status(db, case, S.RESPONSE_PENDING_AE, user, "RESPONSE_RECORDED", request, remarks, payload={"response_id": resp.id, "via": received_via}, owner_role=first.role)
         notify_user(db, case.assigned_ae, case, f"Response received on {case.case_no} - add comments and forward", summary[:200])
     else:
-        _set_status(db, case, S.RESPONSE_PENDING_JC, user, "RESPONSE_RECORDED", request, remarks, payload={"response_id": resp.id, "via": received_via}, owner_role=Role.JC)
+        case.review_stage = 0
+        _set_status(db, case, S.RESPONSE_PENDING_JC, user, "RESPONSE_RECORDED", request, remarks, payload={"response_id": resp.id, "via": received_via}, owner_role=H.authority_role(db))
         notify_user(db, case.assigned_jc, case, f"Response received on {case.case_no} - decision pending", summary[:200])
     return resp
 
 
 def ae_forward_response(db: Session, response: CaseResponse, user, request=None, comments=""):
     case = response.case
-    _authorize(db, user, "ae_forward_response", case)
+    prof = _authorize(db, user, "ae_forward_response", case)
     _require_status(case, S.RESPONSE_PENDING_AE)
-    response.ae_comments = comments or ""
+    _require_current_stage(db, case, prof)
+    revs = H.reviewers(db)
+    idx = case.review_stage or 1
+    # with several reviewer stages every stage's comments are kept, prefixed with the stage name
+    response.ae_comments = f"{response.ae_comments}\n[{H.role_label(db, prof.role)}] {comments or ''}".strip() if len(revs) > 1 and response.ae_comments else (comments or "")
     response.ae_commented_at = now()
     db.flush()
-    _set_status(db, case, S.RESPONSE_PENDING_JC, user, "AE_FORWARD_RESPONSE", request, comments, payload={"response_id": response.id}, owner_role=Role.JC)
-    notify_user(db, case.assigned_jc, case, f"Response on {case.case_no} forwarded with AE comments", (comments or "")[:200])
+    if idx < len(revs):
+        nxt = revs[idx]
+        rev = _pick_reviewer(db, case, nxt.role)
+        case.assigned_ae = rev.user if rev else None
+        case.review_stage = idx + 1
+        _set_status(db, case, S.RESPONSE_PENDING_AE, user, "AE_FORWARD_RESPONSE", request, comments, payload={"response_id": response.id, "to_stage": nxt.label_en}, owner_role=nxt.role)
+        notify_user(db, case.assigned_ae, case, f"Response on {case.case_no} forwarded for your comments", (comments or "")[:200])
+        return response
+    case.review_stage = 0
+    _set_status(db, case, S.RESPONSE_PENDING_JC, user, "AE_FORWARD_RESPONSE", request, comments, payload={"response_id": response.id}, owner_role=H.authority_role(db))
+    notify_user(db, case.assigned_jc, case, f"Response on {case.case_no} forwarded with {H.role_label(db, prof.role)} comments", (comments or "")[:200])
     return response
 
 
 def mark_no_response(db: Session, case, actor=None):
     if case.status != S.SCN_SERVED or not case.response_due_at or case.response_due_at > now():
         return case
-    _set_status(db, case, S.NO_RESPONSE, actor, "NO_RESPONSE_DEADLINE", None, "Response period expired without reply", owner_role=Role.JC)
+    _set_status(db, case, S.NO_RESPONSE, actor, "NO_RESPONSE_DEADLINE", None, "Response period expired without reply", owner_role=H.authority_role(db))
     notify_user(db, case.assigned_jc, case, f"No response on {case.case_no} - period expired", "Decide ex parte or fix a hearing.")
     return case
 
@@ -458,7 +525,7 @@ def schedule_hearing(db: Session, case, user, request=None, *, scheduled_at, ven
     db.add(h)
     db.flush()
     case.hearing_at = scheduled_at
-    _set_status(db, case, S.HEARING_SCHEDULED, user, "HEARING_SCHEDULED", request, remarks, payload={"hearing_id": h.id, "at": str(scheduled_at)}, owner_role=Role.JC)
+    _set_status(db, case, S.HEARING_SCHEDULED, user, "HEARING_SCHEDULED", request, remarks, payload={"hearing_id": h.id, "at": str(scheduled_at)}, owner_role=H.authority_role(db))
     notify_user(db, case.reported_by, case, f"Hearing fixed on {case.case_no}", f"{scheduled_at:%d-%m-%Y %H:%M} at {venue}. Inform the noticee.")
     return h
 
@@ -478,7 +545,7 @@ def record_hearing(db: Session, hearing: Hearing, user, request=None, *, proceed
         db.flush()
         record_event(db, case, "HEARING_ADJOURNED", actor=user, from_status=case.status, to_status=case.status, remarks=proceedings, payload={"next_date": str(next_date)}, request=request)
     else:
-        _set_status(db, case, S.RESPONSE_PENDING_JC, user, "HEARING_HELD", request, proceedings, payload={"hearing_id": hearing.id, "outcome": outcome}, owner_role=Role.JC)
+        _set_status(db, case, S.RESPONSE_PENDING_JC, user, "HEARING_HELD", request, proceedings, payload={"hearing_id": hearing.id, "outcome": outcome}, owner_role=H.authority_role(db))
     return hearing
 
 
@@ -526,7 +593,7 @@ def record_appeal(db: Session, case, user, request=None, *, filed_on, authority,
     _sync_litigation_flag(db, case)
     payload = {"appeal_id": ap.id, "authority": authority, "appeal_no": appeal_no, "stay": stay_granted, "stay_until": str(stay_until) if stay_until else None, "stay_order_media": str(stay_order_media.id) if stay_order_media else None}
     if stay_granted:
-        _set_status(db, case, S.APPEAL_STAY, user, "APPEAL_STAY", request, remarks or f"Stay by {ap.get_authority_display()} ({appeal_no})", payload=payload, owner_role=Role.JC)
+        _set_status(db, case, S.APPEAL_STAY, user, "APPEAL_STAY", request, remarks or f"Stay by {ap.get_authority_display()} ({appeal_no})", payload=payload, owner_role=H.authority_role(db))
         notify_user(db, case.reported_by, case, f"STAY on {case.case_no} by {ap.get_authority_display()}", "No further action till the stay is vacated / expires. Order is on the case file.")
         notify_role(db, Role.FIELD_STAFF, case, f"STAY on {case.case_no} - do not execute", zone=case.zone, level="WARNING")
     else:
@@ -575,11 +642,11 @@ def update_appeal(db: Session, appeal: Appeal, user, request=None, *, status: st
         _set_status(db, case, S.ORDER_SERVED if case.order_served_at else S.PENDING_JC, user, "STAY_LIFTED", request, decision_summary or remarks, payload=payload, owner_role=Role.FIELD_STAFF if case.order_served_at else Role.JC)
         notify_user(db, case.reported_by, case, f"Stay lifted on {case.case_no} - compliance clock resumed", f"Comply by {case.compliance_due_at:%d-%m-%Y}" if case.compliance_due_at else "")
     elif appeal.status == AppealStatus.STAYED and case.status != S.APPEAL_STAY and case.status not in (S.CLOSED, S.DROPPED, S.REGULARISED):
-        _set_status(db, case, S.APPEAL_STAY, user, "APPEAL_STAY", request, remarks, payload=payload, owner_role=Role.JC)
+        _set_status(db, case, S.APPEAL_STAY, user, "APPEAL_STAY", request, remarks, payload=payload, owner_role=H.authority_role(db))
     elif appeal.status == AppealStatus.ALLOWED:
         case.closure_reason = f"Order set aside by {appeal.get_authority_display()}: {decision_summary}"
         case.closed_at = now()
-        _set_status(db, case, S.CLOSED, user, "APPEAL_ALLOWED", request, decision_summary, payload=payload, owner_role=Role.JC)
+        _set_status(db, case, S.CLOSED, user, "APPEAL_ALLOWED", request, decision_summary, payload=payload, owner_role=H.authority_role(db))
     else:
         record_event(db, case, "APPEAL_UPDATED", actor=user, from_status=case.status, to_status=case.status, remarks=decision_summary or remarks, payload=payload, request=request)
     return appeal
@@ -633,7 +700,7 @@ def record_execution(db: Session, case, user, request=None, *, action: str, mode
         db.flush()
         record_event(db, case, "EXECUTION_RECORDED", actor=user, from_status=case.status, to_status=case.status, remarks=remarks, payload={"execution_id": ex.id, "action": action}, request=request)
     else:
-        _set_status(db, case, new_status, user, "EXECUTION_RECORDED", request, remarks, payload={"execution_id": ex.id, "action": action, "mode": mode}, owner_role=Role.JC)
+        _set_status(db, case, new_status, user, "EXECUTION_RECORDED", request, remarks, payload={"execution_id": ex.id, "action": action, "mode": mode}, owner_role=H.authority_role(db))
     notify_user(db, case.assigned_jc, case, f"{action.title()} recorded on {case.case_no} - verify and close", remarks)
     return ex
 
@@ -646,7 +713,7 @@ def verify_and_close(db: Session, case, user, request=None, remarks=""):
         ex.verified_by, ex.verified_at = user, now()
     case.closed_at = now()
     case.closure_reason = remarks or case.closure_reason
-    _set_status(db, case, S.CLOSED, user, "CLOSE", request, remarks, owner_role=Role.JC)
+    _set_status(db, case, S.CLOSED, user, "CLOSE", request, remarks, owner_role=H.authority_role(db))
     return case
 
 
@@ -656,7 +723,7 @@ def reopen(db: Session, case, user, request=None, remarks=""):
     if not remarks:
         raise WorkflowError("Reasons are mandatory to reopen a case")
     case.closed_at = None
-    _set_status(db, case, S.PENDING_JC, user, "REOPEN", request, remarks, owner_role=Role.JC)
+    _set_status(db, case, S.PENDING_JC, user, "REOPEN", request, remarks, owner_role=H.authority_role(db))
     return case
 
 
@@ -762,6 +829,8 @@ def available_actions(db: Session, case, user) -> list[str]:
         acts.discard("reassign")
     if "create" in acts:
         acts.discard("create")
+    if case.status in (S.PENDING_AE, S.RESPONSE_PENDING_AE) and not _current_stage_ok(db, case, prof):
+        acts -= {"ae_forward", "ae_return", "ae_forward_response", "add_media"}
     return sorted(acts)
 
 

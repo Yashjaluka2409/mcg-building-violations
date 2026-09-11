@@ -45,6 +45,25 @@ def _choice(name: str, choices: tuple, allow_blank: bool = False):
     return field_validator(name, mode="after")(check)
 
 
+def _mobile10(v):
+    """Indian mobile number stored as exactly 10 digits. Accepts "+91 98765 43210", "098765 43210" or
+    "98765-43210"; anything that does not reduce to 10 digits is rejected. Blank stays blank."""
+    if v is None or v == "":
+        return v
+    digits = "".join(ch for ch in str(v) if ch.isdigit())
+    if len(digits) == 12 and digits.startswith("91"):
+        digits = digits[2:]
+    elif len(digits) == 11 and digits.startswith("0"):
+        digits = digits[1:]
+    if len(digits) != 10:
+        raise ValueError("Enter a 10-digit mobile number (digits only).")
+    return digits
+
+
+Mobile10 = Annotated[str, AfterValidator(_mobile10)]
+OptMobile10 = Annotated[Optional[str], AfterValidator(_mobile10)]
+
+
 # ---------------------------------------------------------------- auth
 class OTPRequestIn(In):
     mobile: str
@@ -75,7 +94,7 @@ class CaseCreateIn(In):
     pid: str = ""
     pid_snapshot: dict | None = None
     pid_linked_mobile: str = ""
-    alternate_mobile: str = ""
+    alternate_mobile: Mobile10 = ""
     address_line: str
     locality: str = ""
     sector: str = ""
@@ -129,7 +148,7 @@ class CaseDraftUpdateIn(In):
     pid: str | None = None
     pid_snapshot: dict | None = None
     pid_linked_mobile: str | None = None
-    alternate_mobile: str | None = None
+    alternate_mobile: OptMobile10 = None
     address_line: str | None = None
     locality: str | None = None
     sector: str | None = None

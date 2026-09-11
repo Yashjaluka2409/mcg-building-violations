@@ -31,7 +31,7 @@ export default function HomeScreen() {
   const c = counts.data || {};
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <Header title={greet} subtitle={`${user?.name || ""} · ${user?.designation || role || ""}`} />
+      <Header title={greet} subtitle={`${user?.name || ""} · ${user?.designation || user?.role_label || role || ""}`} />
       <ScrollView refreshControl={<RefreshControl refreshing={counts.isFetching} onRefresh={() => { counts.refetch(); deadlines.refetch(); }} />} contentContainerStyle={{ paddingBottom: 30 }}>
         <Card><View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}><CardTitle>{t("locationStatus")}</CardTitle><Pill text={acc == null ? "NO FIX" : acc <= 25 ? t("good") : t("poor")} bg={acc != null && acc <= 25 ? colors.success100 : colors.secondary100} fg={acc != null && acc <= 25 ? colors.success : "#b45309"} /></View>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}><MapPin color={colors.primary} size={18} /><Text style={{ color: colors.muted }}>{t("gpsAccuracy")}: {acc == null ? "-" : `${Math.round(acc)} m`}</Text></View></Card>
@@ -49,7 +49,7 @@ export default function HomeScreen() {
         <Card><CardTitle>{t("todaysSummary")}</CardTitle><View style={{ flexDirection: "row" }}><Stat value={c.inbox ?? 0} label={t("inbox")} /><Stat value={c.to_serve ?? 0} label={t("toServe")} color={colors.accent} /><Stat value={c.execution_due ?? 0} label={t("executionDue")} color={colors.danger} /><Stat value={c.overdue ?? 0} label={t("overdue")} color={colors.secondary} /></View></Card>
         <Card><CardTitle>{t("quickActions")}</CardTitle>
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
-            {["JE", "AE", "FIELD_STAFF", "ADMIN"].includes(role) && <Tile icon={<PlusCircle color={colors.secondary} size={30} />} label={t("newInspection")} onPress={() => r.push("/inspection/new")} />}
+            {(user?.can_create_case ?? ["JE", "AE", "FIELD_STAFF", "ADMIN"].includes(role)) && <Tile icon={<PlusCircle color={colors.secondary} size={30} />} label={t("newInspection")} onPress={() => r.push("/inspection/new")} />}
             <Tile icon={<Crosshair color={colors.secondary} size={30} />} label="Planned inspections" badge={taskCounts.data?.assigned_to_me} onPress={() => r.push("/tasks")} />
             <Tile icon={<Inbox color={colors.secondary} size={30} />} label={t("inbox")} badge={c.inbox} onPress={() => r.push({ pathname: "/(tabs)/cases", params: { inbox: "1" } })} />
             <Tile icon={<FileSignature color={colors.secondary} size={30} />} label={t("toServe")} badge={c.to_serve} onPress={() => r.push({ pathname: "/(tabs)/cases", params: { status: "SCN_ISSUED,ORDER_ISSUED" } })} />

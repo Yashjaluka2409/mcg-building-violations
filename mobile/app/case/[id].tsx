@@ -12,6 +12,7 @@ import { Button, Card, CardTitle, Header, Input, Muted, Pill, StatusPill } from 
 import { captureWithCamera, Fix, pickDocument, uploadMedia } from "@/services/capture";
 import { enqueue } from "@/services/offline";
 import { colors, radius } from "@/theme";
+import { useWorkflowConfig } from "@/hooks/useWorkflowConfig";
 
 type Sheet = null | "service" | "response" | "execution";
 
@@ -19,6 +20,7 @@ export default function CaseScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t } = useTranslation();
   const qc = useQueryClient();
+  const wf = useWorkflowConfig();
   const q = useQuery({ queryKey: ["case", id], queryFn: () => cases.get(id!) });
   const [sheet, setSheet] = useState<Sheet>(null);
   const [f, setF] = useState<any>({});
@@ -35,10 +37,10 @@ export default function CaseScreen() {
   const ids = caps.map((x) => x.id).filter(Boolean);
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <Header title={c.case_no} subtitle={`Ward ${c.ward_number ?? "-"} · ${c.current_owner_role}`} back />
+      <Header title={c.case_no} subtitle={`Ward ${c.ward_number ?? "-"} · ${c.current_owner_label || wf.roleLabel(c.current_owner_role)}`} back />
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
         <Card>
-          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginBottom: 8 }}><StatusPill status={c.status} /><Pill text={c.land_type.startsWith("GOVT") ? t("governmentLand") : t("private")} bg={c.land_type.startsWith("GOVT") ? colors.danger100 : "#f3f4f6"} fg={c.land_type.startsWith("GOVT") ? colors.danger : colors.muted} />{c.stop_work_issued && <Pill text={t("stopWork")} bg={colors.danger100} fg={colors.danger} />}{c.sealed && <Pill text={t("sealedPremises")} bg={colors.secondary100} fg="#b45309" />}</View>
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginBottom: 8 }}><StatusPill status={c.status} display={wf.hi ? c.status_display_hi || c.status_display : c.status_display} /><Pill text={c.land_type.startsWith("GOVT") ? t("governmentLand") : t("private")} bg={c.land_type.startsWith("GOVT") ? colors.danger100 : "#f3f4f6"} fg={c.land_type.startsWith("GOVT") ? colors.danger : colors.muted} />{c.stop_work_issued && <Pill text={t("stopWork")} bg={colors.danger100} fg={colors.danger} />}{c.sealed && <Pill text={t("sealedPremises")} bg={colors.secondary100} fg="#b45309" />}</View>
           <Text style={{ fontSize: 17, fontWeight: "700" }}>{c.address_line}</Text>
           <Muted>{c.pid ? `PID ${c.pid} · ` : ""}{c.owner_name || "-"} · {c.pid_linked_mobile || c.alternate_mobile || "no mobile"}</Muted>
           {c.response_due_at && c.status === "SCN_SERVED" && <Text style={{ color: colors.danger, marginTop: 6, fontWeight: "600" }}>Reply due {String(c.response_due_at).slice(0, 10)}</Text>}
@@ -49,7 +51,7 @@ export default function CaseScreen() {
         {c.referrals?.length > 0 && <Card><CardTitle>Branch referrals</CardTitle>{c.referrals.map((r: any) => <View key={r.id} style={{ borderTopWidth: 1, borderColor: colors.border, paddingVertical: 8 }}><View style={{ flexDirection: "row", gap: 6, alignItems: "center" }}><Text style={{ fontWeight: "700" }}>{r.branch.name_en}</Text><Pill text={r.status} bg={r.status === "PENDING" ? colors.secondary100 : colors.success100} fg={r.status === "PENDING" ? "#b45309" : colors.success} />{r.hold_case && <Pill text="holds order" bg={colors.danger100} fg={colors.danger} />}</View><Muted>{r.query}</Muted>{!!r.response && <Text style={{ marginTop: 4 }}>{r.recommendation ? `[${r.recommendation.replace(/_/g, " ")}] ` : ""}{r.response}</Text>}</View>)}</Card>}
         {c.notices.length > 0 && <Card><CardTitle>Notices & orders</CardTitle>{c.notices.map((n: any) => <View key={n.id} style={{ borderTopWidth: 1, borderColor: colors.border, paddingVertical: 8 }}><Text style={{ fontWeight: "700", color: colors.primary }}>{n.notice_no}</Text><Text>{n.order_type.title_en}</Text><Muted>{String(n.issued_at).slice(0, 10)} · {n.is_legacy ? "paper order (before the system)" : n.signature_status === "SIGNED" ? "digitally signed" : n.signature_status} · {n.served_at ? `served ${n.served_mode} ${String(n.served_at).slice(0, 10)}` : "NOT SERVED"}</Muted>{!n.is_legacy && <Pressable onPress={() => openPdf(n.id)} style={{ flexDirection: "row", gap: 6, alignItems: "center", marginTop: 6 }}><Download color={colors.accent} size={18} /><Text style={{ color: colors.accent, fontWeight: "600" }}>Open / print PDF</Text></Pressable>}</View>)}</Card>}
         <Card><CardTitle>Actions</CardTitle>
-          {can("submit_to_ae") && <Button title={t("submit")} icon={<Send color="#fff" size={18} />} onPress={() => act.mutate({ action: "submit", data: {} })} />}
+          {can("submit_to_ae") && <Button title={c.action_labels?.submit_to_ae || wf.actionLabel("submit_to_ae", t("submit"))} icon={<Send color="#fff" size={18} />} onPress={() => act.mutate({ action: "submit", data: {} })} />}
           {can("record_service") && <Button title={t("recordDelivery")} variant="accent" icon={<FileSignature color="#fff" size={18} />} onPress={() => setSheet("service")} />}
           {can("record_response") && <Button title={t("uploadReply")} variant="outline" icon={<MessageSquareReply color={colors.text} size={18} />} onPress={() => setSheet("response")} />}
           {can("record_execution") && <Button title={t("recordExecution")} variant="danger" icon={<Hammer color="#fff" size={18} />} onPress={() => setSheet("execution")} />}

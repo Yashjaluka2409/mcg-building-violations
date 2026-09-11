@@ -18,6 +18,7 @@ from sqlalchemy.orm import Session
 from app.core.config import settings as app_settings
 from app.models.building_violations import AdminAuditLog, Branch, CaseStatus as S, RolePermission, WorkflowRule, WorkflowSetting
 from app.models.building_violations import Role
+from app.services.building_violations import hierarchy
 from app.db.util import client_ip, get_or_create
 
 MANAGEMENT_ROLES = (Role.ADMIN, Role.COMMISSIONER, Role.ADDL_COMMISSIONER)
@@ -88,7 +89,7 @@ PERMISSIONS: dict[str, tuple[str, str, list[str]]] = {
 
 # ---------------------------------------------------------------------------- settings
 DEFAULT_SETTINGS = [
-    ("require_ae_review", True, "bool", "AE review before JC", "If off, a JE submission goes straight to the Joint Commissioner (no AE stage).", "Routing", []),
+    ("require_ae_review", True, "bool", "Review stage(s) before the competent authority", "If off, a submission skips every reviewer stage of the hierarchy (Administration > Hierarchy) and goes straight to the competent authority.", "Routing", []),
     ("route_je_response_via_ae", True, "bool", "JE-uploaded replies go via AE", "If off, replies uploaded by the JE go directly to the JC.", "Routing", []),
     ("auto_assign_ae_by_zone", True, "bool", "Auto-assign AE by zone", "Pick the first active AE of the case zone when the JE submits.", "Routing", []),
     ("auto_assign_jc_by_zone", True, "bool", "Auto-assign JC by zone", "Pick the first active JC of the case zone when the AE forwards.", "Routing", []),
@@ -127,6 +128,7 @@ TTL = 30.0
 
 def invalidate():
     _cache.update({"rules": None, "perms": None, "settings": None, "at": 0.0})
+    hierarchy.invalidate()
 
 
 def _fresh():
@@ -154,10 +156,12 @@ def rules_matrix(db: Session) -> dict[tuple[str, str], set[str]]:
 
 
 def is_action_allowed(db: Session, status: str, role: str, action: str) -> bool:
+    """A role that fills a stage of the review hierarchy also inherits the rules of the slot's canonical role
+    (JE / AE / JC) - see hierarchy.lookup_roles - so a renamed or new stage role works without re-ticking the matrix."""
     if role in MANAGEMENT_ROLES:
         return True
     m = rules_matrix(db)
-    return action in m.get((status, role), set()) or action in m.get(("*", role), set())
+    return any(action in m.get((status, r), set()) or action in m.get(("*", r), set()) for r in hierarchy.lookup_roles(db, role))
 
 
 def actions_for(db: Session, status: str, role: str) -> list[str]:
@@ -168,7 +172,10 @@ def actions_for(db: Session, status: str, role: str) -> list[str]:
                 acts.update(a)
         return sorted(acts)
     m = rules_matrix(db)
-    return sorted(m.get((status, role), set()) | m.get(("*", role), set()))
+    acts = set()
+    for r in hierarchy.lookup_roles(db, role):
+        acts |= m.get((status, r), set()) | m.get(("*", r), set())
+    return sorted(acts)
 
 
 def seed_rules(db: Session, force: bool = False) -> int:
@@ -208,7 +215,9 @@ def permissions_for(db: Session, user) -> set[str]:
         return set()
     if prof.role in MANAGEMENT_ROLES:
         return set(PERMISSIONS)
-    perms = set(role_permissions(db).get(prof.role, set()))
+    perms: set[str] = set()
+    for r in hierarchy.lookup_roles(db, prof.role):      # own grants + those of the inherited canonical role
+        perms |= role_permissions(db).get(r, set())
     for o in prof.permission_overrides:
         if o.allowed:
             perms.add(o.permission)
@@ -280,7 +289,7 @@ def seed_branches(db: Session) -> int:
 
 
 def seed_all(db: Session) -> dict:
-    return {"rules": seed_rules(db), "permissions": seed_permissions(db), "settings": seed_settings(db), "branches": seed_branches(db)}
+    return {"rules": seed_rules(db), "permissions": seed_permissions(db), "settings": seed_settings(db), "branches": seed_branches(db), "hierarchy": hierarchy.seed(db)}
 
 
 def log_admin(db: Session, actor, action: str, target_type: str = "", target_id="", before=None, after=None, order_reference: str = "", remarks: str = "", request=None):

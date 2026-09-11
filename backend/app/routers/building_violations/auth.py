@@ -20,6 +20,7 @@ from app.models import building_violations as m
 from app.db.util import get_or_create, to_uuid
 from app.integrations.sms import get_gateway, normalise_mobile
 from app.services.building_violations import access
+from app.services.building_violations import hierarchy as H
 from app.schemas.building_violations import inputs as s
 from app.schemas.building_violations import outputs as ser
 from app.core.http import apply_filters, apply_search, paginate, resp
@@ -139,6 +140,8 @@ def officers_dropdown(request: Request, user: Officer, db: DB):
     q = db.query(m.OfficerProfile).filter(m.OfficerProfile.active == True)  # noqa: E712
     if p.get("role"):
         q = q.filter(m.OfficerProfile.role == p["role"])
+    if p.get("slot"):        # REPORTER | REVIEWER | AUTHORITY -> officers of the role(s) filling that stage of the hierarchy
+        q = q.filter(m.OfficerProfile.role.in_(H.slot_roles(db, p["slot"].upper())))
     if p.get("zone"):
         q = q.filter(or_(m.OfficerProfile.zones.any(m.Zone.id == int(p["zone"])), ~m.OfficerProfile.zones.any()))
     return resp([{"user_id": x.user_id, "name": x.display_name, "role": x.role, "designation": x.designation} for x in q.order_by(m.OfficerProfile.id)])
@@ -179,7 +182,7 @@ def officer_create(body: s.OfficerIn, request: Request, user: Officer, db: DB):
     me_prof = user.bvms_profile
     if not d.get("role") or not d.get("mobile"):
         raise WorkflowError("role and mobile are required")
-    if d["role"] not in m.ROLE_LABELS:
+    if d["role"] not in H.role_codes(db):
         raise WorkflowError(f'"{d["role"]}" is not a valid choice.')
     parent = None
     if access.has_perm(db, user, "OFFICERS_MANAGE"):
@@ -233,7 +236,7 @@ def officer_update(pk: int, body: s.OfficerIn, request: Request, user: Officer, 
     if prof.id == me_prof.id and not access.has_perm(db, user, "OFFICERS_MANAGE"):
         for k in ("role", "zones", "wards", "divisions", "reports_to", "branch", "active", "delegation_order_no"):
             d.pop(k, None)   # an officer may edit only contact details of own profile
-    if d.get("role") and d["role"] not in m.ROLE_LABELS:
+    if d.get("role") and d["role"] not in H.role_codes(db):
         raise WorkflowError(f'"{d["role"]}" is not a valid choice.')
     before = _officer_snapshot(prof)
     _apply_scalars(db, prof, d)

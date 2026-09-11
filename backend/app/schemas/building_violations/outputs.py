@@ -9,6 +9,7 @@ from app.integrations import storage
 from app.core.timeutil import now
 from app.models import building_violations as m
 from app.services.building_violations import access
+from app.services.building_violations import hierarchy as H
 from app.services.building_violations.location_integrity import explain, summary as integrity_summary
 
 
@@ -59,12 +60,12 @@ def user_lite(u):
     if u is None:
         return None
     p = getattr(u, "bvms_profile", None)
-    return {"id": u.id, "username": u.username, "name": p.display_name if p else u.username, "role": p.role if p else None, "designation": p.designation if p else ""}
+    return {"id": u.id, "username": u.username, "name": p.display_name if p else u.username, "role": p.role if p else None, "role_label": H.role_label(None, p.role) if p else None, "designation": p.designation if p else ""}
 
 
 def officer_profile(db: Session, p: m.OfficerProfile) -> dict:
     return {
-        "id": p.id, "user": user_lite(p.user), "display_name": p.display_name, "role": p.role, "designation": p.designation, "employee_code": p.employee_code,
+        "id": p.id, "user": user_lite(p.user), "display_name": p.display_name, "role": p.role, "role_label": H.role_label(db, p.role), "designation": p.designation, "employee_code": p.employee_code,
         "mobile": p.mobile, "email": p.email, "zones": [z.id for z in p.zones], "wards": [w.id for w in p.wards], "divisions": [d.id for d in p.divisions],
         "reports_to": p.reports_to_id, "reports_to_name": p.reports_to.display_name if p.reports_to else None, "delegation_order_no": p.delegation_order_no,
         "delegation_order_date": p.delegation_order_date, "parent_profile": p.parent_profile_id, "branch": p.branch_id, "branch_name": p.branch.name_en if p.branch else None,
@@ -79,7 +80,9 @@ def me(db: Session, user) -> dict:
     unread = db.query(func.count(m.Notification.id)).filter(m.Notification.user_id == user.id, m.Notification.read_at.is_(None)).scalar() or 0
     return {
         "id": user.id, "username": user.username, "name": prof.display_name if prof else user.username,
-        "role": prof.role if prof else None, "designation": prof.designation if prof else "", "mobile": prof.mobile if prof else "",
+        "role": prof.role if prof else None, "role_label": H.role_label(db, prof.role) if prof else None, "role_label_hi": H.role_label(db, prof.role, "hi") if prof else None,
+        "slot": H.slot_of_role(db, prof.role) if prof else None, "can_create_case": bool(prof and prof.active and access.is_action_allowed(db, "*", prof.role, "create")),
+        "designation": prof.designation if prof else "", "mobile": prof.mobile if prof else "",
         "zones": [zone(z) for z in prof.zones] if prof else [], "wards": [ward(w) for w in prof.wards] if prof else [],
         "delegation_order_no": prof.delegation_order_no if prof else "",
         "unread_notifications": unread,
@@ -175,15 +178,34 @@ def notification(n):
 
 
 # ---------------------------------------------------------------- the case
+def _owner_of(c):
+    """The officer on whose desk the case is (by the slot the current owner role fills)."""
+    slot = H.slot_of_role(None, c.current_owner_role)
+    return {"REPORTER": c.reported_by, "REVIEWER": c.assigned_ae, "AUTHORITY": c.assigned_jc}.get(slot or "")
+
+
+def people(db: Session, c) -> list[dict]:
+    """Stage-by-stage officers of a case, labelled under the current hierarchy (portal 'People' card)."""
+    revs = H.reviewers(db, raw=True)
+    cur = (c.review_stage or 0) if c.status in ("PENDING_AE", "RESPONSE_PENDING_AE") else 0
+    out = [{"slot": "REPORTER", **H.reporter(db).as_dict(), "user": user_lite(c.reported_by)}]
+    for i, st in enumerate(revs, 1):
+        holder = c.assigned_ae if (len(revs) == 1 or i == cur or (cur == 0 and i == len(revs))) else None
+        out.append({"slot": "REVIEWER", **st.as_dict(), "user": user_lite(holder), "current": i == cur})
+    out.append({"slot": "AUTHORITY", **H.authority(db).as_dict(), "user": user_lite(c.assigned_jc)})
+    return out
+
+
 def case_list(c, request=None):
     cv = next((x for x in c.violations if x.is_primary), None) or (c.violations[0] if c.violations else None)
     thumb = next((x for x in c.media if x.media_type == "IMAGE"), None)
     return {
-        "id": c.id, "case_no": c.case_no, "status": c.status, "status_display": c.get_status_display(), "priority": c.priority, "source": c.source, "pid": c.pid,
+        "id": c.id, "case_no": c.case_no, "status": c.status, "status_display": H.case_status_label(None, c), "status_display_hi": H.case_status_label(None, c, "hi"), "priority": c.priority, "source": c.source, "pid": c.pid,
         "address_line": c.address_line, "locality": c.locality, "sector": c.sector, "ward": c.ward_id, "ward_number": c.ward.number if c.ward else None, "zone": c.zone_id,
         "zone_code": c.zone.code if c.zone else None, "latitude": c.latitude, "longitude": c.longitude, "land_type": c.land_type, "owner_name": c.owner_name,
         "construction_stage": c.construction_stage, "reported_by": user_lite(c.reported_by), "assigned_ae": user_lite(c.assigned_ae), "assigned_jc": user_lite(c.assigned_jc),
-        "current_owner_role": c.current_owner_role, "stage_due_at": c.stage_due_at, "sla_breached": c.sla_breached, "inspected_at": c.inspected_at, "scn_issued_at": c.scn_issued_at,
+        "current_owner_role": c.current_owner_role, "current_owner_label": H.role_label(None, c.current_owner_role), "current_owner_slot": H.slot_of_role(None, c.current_owner_role),
+        "current_owner": user_lite(_owner_of(c)), "review_stage": c.review_stage, "stage_due_at": c.stage_due_at, "sla_breached": c.sla_breached, "inspected_at": c.inspected_at, "scn_issued_at": c.scn_issued_at,
         "response_due_at": c.response_due_at, "compliance_due_at": c.compliance_due_at, "decision": c.decision, "stop_work_issued": c.stop_work_issued, "sealed": c.sealed,
         "litigation_status": c.litigation_status, "litigation_authority": c.litigation_authority, "stay_until": c.stay_until, "next_hearing_on": c.next_hearing_on,
         "violation_codes": [x.violation_type_id for x in c.violations],
@@ -206,7 +228,9 @@ def task_summary(t):
 
 def case_detail(db: Session, c, request=None, user=None):
     from app.services.building_violations.workflow import available_actions
+    H.chain(db)   # warm the hierarchy cache so the labels below follow the admin configuration
     d = case_list(c, request)
+    acts = available_actions(db, c, user) if user is not None else []
     codes = set()
     for cv in c.violations:
         codes.update(cv.violation_type.orders_available or [])
@@ -224,7 +248,10 @@ def case_detail(db: Session, c, request=None, user=None):
         "responses": [case_response(x) for x in c.responses], "hearings": [hearing(x) for x in c.hearings], "appeals": [appeal(x, request) for x in c.appeals],
         "executions": [execution(x) for x in c.executions], "events": [case_event(x) for x in c.events], "referrals": [referral(x) for x in c.referrals],
         "task_summary": task_summary(c.task), "inspector_latitude": c.inspector_latitude, "inspector_longitude": c.inspector_longitude, "inspector_distance_m": c.inspector_distance_m,
-        "inspector_integrity": integrity_summary(chk), "available_actions": available_actions(db, c, user) if user is not None else [],
+        "inspector_integrity": integrity_summary(chk), "available_actions": acts,
+        "action_labels": {a: (H.action_label(db, a, "en", case=c) or access.ACTION_LABELS.get(a, a)) for a in acts},
+        "action_labels_hi": {a: H.action_label(db, a, "hi", case=c) for a in acts if H.action_label(db, a, "hi", case=c)},
+        "people": people(db, c), "current_stage": (H.current_stage(db, c).as_dict() if H.current_stage(db, c) else None),
         "available_order_types": [columns(o) for o in db.query(m.OrderType).filter(m.OrderType.code.in_(codes), m.OrderType.active == True).order_by(m.OrderType.code)] if codes else [],  # noqa: E712
     })
     return d

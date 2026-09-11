@@ -12,6 +12,7 @@ from app.models.building_violations import InspectionBatch, InspectionTask, Medi
 from app.db.util import uuids
 from app.integrations.pid import get_pid_client
 from app.services.building_violations import access
+from app.services.building_violations import hierarchy as H
 from app.services.building_violations.geo import haversine_m, ward_for_point
 from app.services.building_violations.notify import notify_user
 
@@ -24,12 +25,12 @@ def pick_je(db: Session, ward: Ward | None, zone=None):
     if not access.get_setting(db, "auto_assign_tasks_by_ward", True):
         return None
     if ward:
-        p = db.query(OfficerProfile).filter(OfficerProfile.role == Role.JE, OfficerProfile.active == True, OfficerProfile.wards.any(Ward.id == ward.id)).order_by(OfficerProfile.id).first()  # noqa: E712
+        p = db.query(OfficerProfile).filter(OfficerProfile.role.in_(H.slot_roles(db, "REPORTER")), OfficerProfile.active == True, OfficerProfile.wards.any(Ward.id == ward.id)).order_by(OfficerProfile.id).first()  # noqa: E712
         if p:
             return p.user
     z = zone or (ward.zone if ward else None)
     if z:
-        p = db.query(OfficerProfile).filter(OfficerProfile.role == Role.JE, OfficerProfile.active == True, OfficerProfile.zones.any(Zone.id == z.id)).order_by(OfficerProfile.id).first()  # noqa: E712
+        p = db.query(OfficerProfile).filter(OfficerProfile.role.in_(H.slot_roles(db, "REPORTER")), OfficerProfile.active == True, OfficerProfile.zones.any(Zone.id == z.id)).order_by(OfficerProfile.id).first()  # noqa: E712
         if p:
             return p.user
     return None

@@ -50,7 +50,15 @@ npx expo prebuild                       # generates ios/ and android/ native pro
 eas build -p android --profile uat      # or: npx expo run:android (local SDK)
 eas build -p ios --profile uat          # requires Apple Developer account of MCG
 ```
-Set `EXPO_PUBLIC_API_BASE` per profile in `eas.json`. Bundle ids: `in.gov.mcg.buildingviolations`
+Set `EXPO_PUBLIC_API_BASE` per profile in `eas.json`.
+
+Evidence is compressed on the phone before upload (`mobile/src/services/capture.ts`): photos are resized to
+1600 px on the long edge and re-encoded as JPEG at quality 0.6 (`PHOTO_MAX_EDGE` / `PHOTO_QUALITY`), videos are
+recorded at medium quality and capped at 30 s (`VIDEO_MAX_SECONDS`). `react-native-compressor` (native, autolinked
+by `expo prebuild`) additionally re-encodes videos to ~720p in EAS builds; Expo Go has no native compressor, so
+there only the picker settings apply. The map inside the app loads Leaflet from the API server
+(`/building-violations/static/leaflet/`, mounted in `app/main.py`) with unpkg as fallback, because some mobile
+networks block public CDNs. Bundle ids: `in.gov.mcg.buildingviolations`
 (change to the MCG HARYANA app's ids when merged into that app).
 
 ## Certificates for digital signing

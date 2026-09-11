@@ -9,6 +9,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app.core.errors import WorkflowError
 from app.models import building_violations as m
+from app.services.building_violations import hierarchy as H
 from app.schemas.building_violations import outputs as ser
 from app.core.http import apply_filters, apply_search, resp
 from app.routers.building_violations.deps import DB, Officer, check_perm
@@ -92,6 +93,13 @@ def wards_geojson(user: Officer, db: DB):
     feats = [{"type": "Feature", "geometry": w.boundary, "properties": {"number": w.number, "name": w.name_en, "zone": w.zone.code}}
              for w in db.query(m.Ward).filter(m.Ward.boundary.isnot(None)).order_by(m.Ward.number)]
     return resp({"type": "FeatureCollection", "features": feats})
+
+
+@router.get("/workflow-config/")
+def workflow_config(user: Officer, db: DB):
+    """Roles, review stages and the status / action labels derived from them - fetched once by the portal
+    and the app so every label follows the hierarchy configured in Administration."""
+    return resp(H.client_config(db))
 
 
 @router.get("/legal-sections/statutes/")

@@ -1,5 +1,5 @@
 import { API_BASE, api } from "./client";
-import type { AdminLog, Appeal, Branch, CaseDetail, CaseListItem, GovtParcel, InspectionBatch, InspectionTask, LandLayer, LegalSection, Me, Media, Notice, Notification, OrderType, Paginated, PermMatrix, Referral, RulesMatrix, SanctionedPlan, ViolationType, Ward, WorkflowSetting, Zone } from "./types";
+import type { AdminLog, Appeal, Branch, CaseDetail, CaseListItem, GovtParcel, InspectionBatch, InspectionTask, LandLayer, LegalSection, Me, Media, Notice, Notification, OrderType, Paginated, PermMatrix, Referral, RulesMatrix, SanctionedPlan, ViolationType, Ward, WorkflowConfig, WorkflowRole, WorkflowSetting, WorkflowStage, Zone } from "./types";
 
 export const auth = {
   requestOtp: (mobile: string) => api.post("/auth/otp/request/", { mobile }).then((r) => r.data),
@@ -15,6 +15,7 @@ export const masters = {
   statutes: () => api.get("/masters/legal-sections/statutes/").then((r) => r.data as { code: string; title: string; citation: string; jurisdiction: string; primary: boolean; sections: number }[]),
   sla: () => api.get("/masters/sla/").then((r) => r.data),
   officers: (params?: Record<string, string | number>) => api.get("/officers/dropdown/", { params }).then((r) => r.data as { user_id: string; name: string; role: string; designation: string }[]),
+  workflowConfig: () => api.get<WorkflowConfig>("/masters/workflow-config/").then((r) => r.data),
 };
 export const property = {
   lookupPid: (pid: string) => api.get(`/property/pid/${encodeURIComponent(pid)}/`).then((r) => r.data),
@@ -116,6 +117,9 @@ export const admin = {
   saveOfficerOverrides: (id: number, overrides: { permission: string; allowed: boolean; reason?: string }[], order_reference: string) => api.put(`/officers/${id}/permissions/`, { overrides, order_reference }).then((r) => r.data),
   auditLog: (params?: Record<string, string>) => api.get<AdminLog[]>("/admin/audit-log/", { params }).then((r) => r.data),
   reassign: (d: Record<string, unknown>) => api.post("/admin/reassign-cases/", d).then((r) => r.data as { reassigned: number }),
+  hierarchy: () => api.get<WorkflowConfig>("/admin/hierarchy/").then((r) => r.data),
+  saveHierarchy: (d: { stages: Partial<WorkflowStage>[]; roles: Partial<WorkflowRole>[]; order_reference: string; remarks?: string }) => api.put<WorkflowConfig>("/admin/hierarchy/", d).then((r) => r.data),
+  resetHierarchy: (order_reference: string) => api.post<WorkflowConfig>("/admin/hierarchy/reset/", { order_reference }).then((r) => r.data),
 };
 export type { Appeal };
 

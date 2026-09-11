@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, Bell, Building, CalendarClock, FileSignature, Gavel, Hammer, Landmark, Lock, MailWarning, Scale, ShieldAlert, Timer, TrendingUp } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useWorkflowConfig } from "@/hooks/useWorkflowConfig";
 import { useNavigate } from "react-router-dom";
 import { Bar, BarChart, CartesianGrid, Cell, Legend, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { dashboards, masters } from "@/api/endpoints";
@@ -13,6 +14,7 @@ const PALETTE = ["#782669", "#0d9488", "#f59e0b", "#2563eb", "#dc2626", "#16a34a
 
 export default function DashboardPage() {
   const { t } = useTranslation();
+  const wf = useWorkflowConfig();
   const nav = useNavigate();
   const [f, setF] = useState<Record<string, string>>({});
   const zones = useQuery({ queryKey: ["zones"], queryFn: masters.zones });
@@ -45,7 +47,7 @@ export default function DashboardPage() {
           <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
             <KPI label="Open cases" value={num(s.cases_open)} sub={`${num(s.cases_total)} total · ${num(s.cases_new_30d)} new in 30 days`} icon={<Building className="h-5 w-5" />} onClick={() => go({})} />
             <KPI label="On government land" value={num(s.govt_land_cases)} sub="MCG + State land" icon={<Landmark className="h-5 w-5" />} tone="danger" onClick={() => go({ land_type: "GOVT_MCG" })} />
-            <KPI label="Pending with AE / JC" value={`${num(s.pending_ae)} / ${num(s.pending_jc)}`} sub="awaiting review / orders" icon={<Scale className="h-5 w-5" />} tone="accent" onClick={() => go({ status: "PENDING_JC" })} />
+            <KPI label={`Pending with ${wf.stageShort("REVIEWER")} / ${wf.stageShort("AUTHORITY")}`} value={`${num(s.pending_ae)} / ${num(s.pending_jc)}`} sub="awaiting review / orders" icon={<Scale className="h-5 w-5" />} tone="accent" onClick={() => go({ status: "PENDING_JC" })} />
             <KPI label="SCN issued" value={num(s.scn_issued)} sub={`${num(s.scn_pending_service)} to be served · ${num(s.responses_awaited)} replies awaited`} icon={<FileSignature className="h-5 w-5" />} onClick={() => go({ status: "SCN_ISSUED" })} />
             <KPI label="Demolition / sealing orders" value={`${num(s.demolition_orders)} / ${num(s.sealing_orders)}`} sub={`${num(s.stop_work_orders)} stop-work orders`} icon={<Gavel className="h-5 w-5" />} tone="secondary" onClick={() => go({ status: "ORDER_SERVED" })} />
             <KPI label="Execution due" value={num(s.execution_due)} sub={`${num(s.compliance_running)} in compliance period · ${num(s.stayed)} stayed`} icon={<Hammer className="h-5 w-5" />} tone="danger" onClick={() => go({ status: "EXECUTION_DUE" })} />

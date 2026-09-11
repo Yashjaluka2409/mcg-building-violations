@@ -407,3 +407,15 @@ server that has to happen on a separate thread, which `services/signing.py` now 
 * **Migration** - a recorded change to the database structure.
 * **Tunnel** - a service that gives a machine behind a home router a public address.
 * **Virtual environment (`.venv`)** - a private set of Python libraries for one project.
+
+## 15. Making the hierarchy configurable (12 Sep 2026)
+
+Asked for during the demo: "the hierarchy should be fluid - the admin should be able to change it and the app and
+portal should reflect it". The JE → AE → JC chain had been baked into status codes, three owner columns,
+transition functions and button labels in both clients. Rather than rewrite the state machine, the chain became
+*data on top of it*: `bvms_review_stage` (reporter → reviewer(s) → authority, each filled by a role) and
+`bvms_role` (labels, short label, kind). `hierarchy.py` derives every label from that configuration and maps any
+stage role onto the slot's built-in role for rules, permissions and scoping, so a new role such as SUPERVISOR
+works everywhere the moment it is placed in a stage. `ViolationCase.review_stage` lets several reviewer stages be
+visited in order. The clients fetch `/masters/workflow-config/` once and render from it (the app caches it
+offline). Six tests cover renaming, two-stage review, no-review, a custom role and validation.

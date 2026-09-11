@@ -14,6 +14,7 @@ from app.services.building_violations import access
 from app.core.http import resp
 from app.routers.building_violations.deps import DB, Officer, check_perm
 from app.repositories.building_violations import dashboard_criteria
+from app.services.building_violations import hierarchy as H
 
 router = SyncRouter(prefix="/dashboards")
 
@@ -166,14 +167,14 @@ def officers(request: Request, user: Officer, db: DB):
     def fmt(rows):
         return [{"user_id": r[0], "name": f"{r[1] or ''} {r[2] or ''}".strip(), **r[3]} for r in rows]
 
-    je_rows = (db.query(U.id, U.first_name, U.last_name, func.count(C.id), func.count(case((C.status != "DRAFT", C.id))), func.count(case((and_(C.sla_breached == True, C.current_owner_role == "JE"), C.id))))  # noqa: E712
+    je_rows = (db.query(U.id, U.first_name, U.last_name, func.count(C.id), func.count(case((C.status != "DRAFT", C.id))), func.count(case((and_(C.sla_breached == True, C.current_owner_role.in_(H.slot_roles(db, "REPORTER"))), C.id))))  # noqa: E712
                .select_from(C).join(U, C.reported_by_id == U.id).filter(*crit).group_by(U.id, U.first_name, U.last_name).all())
     returned = dict(db.query(C.reported_by_id, func.count(m.CaseEvent.id)).join(m.CaseEvent, m.CaseEvent.case_id == C.id).filter(*crit, m.CaseEvent.action == "AE_RETURN").group_by(C.reported_by_id).all())
     je = fmt([(r[0], r[1], r[2], {"cases": r[3], "submitted": r[4], "returned": returned.get(r[0], 0), "overdue": r[5]}) for r in je_rows])
-    ae_rows = (db.query(U.id, U.first_name, U.last_name, func.count(C.id), func.count(case((C.status.in_(["PENDING_AE", "RESPONSE_PENDING_AE"]), C.id))), func.count(case((and_(C.sla_breached == True, C.current_owner_role == "AE"), C.id))))  # noqa: E712
+    ae_rows = (db.query(U.id, U.first_name, U.last_name, func.count(C.id), func.count(case((C.status.in_(["PENDING_AE", "RESPONSE_PENDING_AE"]), C.id))), func.count(case((and_(C.sla_breached == True, C.current_owner_role.in_(H.slot_roles(db, "REVIEWER"))), C.id))))  # noqa: E712
                .select_from(C).join(U, C.assigned_ae_id == U.id).filter(*crit).group_by(U.id, U.first_name, U.last_name).all())
     ae = fmt([(r[0], r[1], r[2], {"cases": r[3], "pending": r[4], "overdue": r[5]}) for r in ae_rows])
-    jc_rows = (db.query(U.id, U.first_name, U.last_name, func.count(C.id), func.count(case((and_(C.current_owner_role == "JC", C.status.notin_(OPEN_EXCLUDE)), C.id))), func.count(case((and_(C.sla_breached == True, C.current_owner_role == "JC"), C.id))))  # noqa: E712
+    jc_rows = (db.query(U.id, U.first_name, U.last_name, func.count(C.id), func.count(case((and_(C.current_owner_role.in_(H.slot_roles(db, "AUTHORITY")), C.status.notin_(OPEN_EXCLUDE)), C.id))), func.count(case((and_(C.sla_breached == True, C.current_owner_role.in_(H.slot_roles(db, "AUTHORITY"))), C.id))))  # noqa: E712
                .select_from(C).join(U, C.assigned_jc_id == U.id).filter(*crit).group_by(U.id, U.first_name, U.last_name).all())
     notices = dict(db.query(C.assigned_jc_id, func.count(m.Notice.id)).join(m.Notice, m.Notice.case_id == C.id).filter(*crit, C.assigned_jc_id.isnot(None)).group_by(C.assigned_jc_id).all())
     orders = dict(db.query(C.assigned_jc_id, func.count(m.Notice.id)).join(m.Notice, m.Notice.case_id == C.id).filter(*crit, C.assigned_jc_id.isnot(None), m.Notice.is_final_order == True).group_by(C.assigned_jc_id).all())  # noqa: E712

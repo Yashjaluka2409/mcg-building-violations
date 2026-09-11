@@ -4,10 +4,12 @@ import { X } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { LAND_COLORS, SEVERITY_COLORS, STATUS_COLORS } from "@/utils/format";
+import { useWorkflowConfig } from "@/hooks/useWorkflowConfig";
 
-export function StatusBadge({ status }: { status: string }) {
+export function StatusBadge({ status, display }: { status: string; display?: string | null }) {
   const { t } = useTranslation();
-  return <span className={clsx("badge whitespace-nowrap", STATUS_COLORS[status] || "bg-gray-100 text-gray-700")}>{t(`status.${status}`, status)}</span>;
+  const wf = useWorkflowConfig();   // chain statuses ("Pending with …") follow the configured hierarchy; `display` = this case's own label
+  return <span className={clsx("badge whitespace-nowrap", STATUS_COLORS[status] || "bg-gray-100 text-gray-700")}>{wf.statusLabel(status, t(`status.${status}`, status), display)}</span>;
 }
 export function LandBadge({ land }: { land: string }) {
   const { t } = useTranslation();

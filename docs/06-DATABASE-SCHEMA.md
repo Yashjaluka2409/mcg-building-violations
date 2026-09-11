@@ -261,6 +261,35 @@ is produced by `python -m app.cli migrate` (Alembic) on PostgreSQL or SQLite. Ge
 | branch_id | FK → bvms_branch | yes |  |
 | active | Boolean | no |  |
 
+## `bvms_review_stage` - ReviewStage
+
+| Column | Type | Null | Description |
+|---|---|---|---|
+| id | Integer | no | primary key |
+| position | Integer | no |  |
+| slot | String(10) | no |  |
+| role | String(24) | no |  |
+| label_en | String(120) | no |  |
+| label_hi | String(120) | no |  |
+| active | Boolean | no |  |
+| updated_by_id | FK → users | yes |  |
+| updated_at | DateTime(tz) | no |  |
+
+## `bvms_role` - RoleDef
+
+| Column | Type | Null | Description |
+|---|---|---|---|
+| code | String(24) | no | primary key |
+| label_en | String(120) | no |  |
+| label_hi | String(120) | no |  |
+| short_label | String(24) | no |  |
+| kind | String(12) | no |  |
+| sort_order | Integer | no |  |
+| active | Boolean | no |  |
+| builtin | Boolean | no |  |
+| updated_by_id | FK → users | yes |  |
+| updated_at | DateTime(tz) | no |  |
+
 ## `bvms_role_permission` - RolePermission
 
 | Column | Type | Null | Description |
@@ -497,6 +526,7 @@ is produced by `python -m app.cli migrate` (Alembic) on PostgreSQL or SQLite. Ge
 | assigned_ae_id | FK → users | yes |  |
 | assigned_jc_id | FK → users | yes |  |
 | current_owner_role | String(24) | no |  |
+| review_stage | Integer | no |  |
 | stage_due_at | DateTime(tz) | yes |  |
 | sla_breached | Boolean | no |  |
 | inspected_at | DateTime(tz) | no |  |

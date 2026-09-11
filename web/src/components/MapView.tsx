@@ -1,6 +1,7 @@
 import L from "leaflet";
 import { GoogleMap, useJsApiLoader } from "@react-google-maps/api";
 import { useEffect, useRef } from "react";
+import { useWorkflowConfig } from "@/hooks/useWorkflowConfig";
 
 /** Map of cases, planned inspections and government-land polygons.
  *  Google Maps JavaScript API (the platform's primary map library) when VITE_GOOGLE_MAPS_API_KEY is set;
@@ -70,10 +71,11 @@ function usePopupLinks(el: React.RefObject<HTMLElement>, cb: React.MutableRefObj
 }
 
 function Legend() {
+  const wf = useWorkflowConfig();
   return (
     <div className="absolute bottom-3 left-3 z-[400] card p-2 text-[10px] space-y-1 max-w-[220px] hidden md:block">
       <div className="font-semibold">Case status</div>
-      <div className="grid grid-cols-2 gap-x-2">{[["PENDING_JC", "With JC"], ["SCN_SERVED", "SCN served"], ["ORDER_SERVED", "Order served"], ["EXECUTION_DUE", "Execution due"], ["APPEAL_STAY", "Stayed"], ["EXECUTED", "Demolished/sealed"], ["CLOSED", "Closed"]].map(([k, l]) => <div key={k} className="flex items-center gap-1"><span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: STATUS_PIN[k] }} />{l}</div>)}</div>
+      <div className="grid grid-cols-2 gap-x-2">{[["PENDING_JC", `With ${wf.stageShort("AUTHORITY")}`], ["SCN_SERVED", "SCN served"], ["ORDER_SERVED", "Order served"], ["EXECUTION_DUE", "Execution due"], ["APPEAL_STAY", "Stayed"], ["EXECUTED", "Demolished/sealed"], ["CLOSED", "Closed"]].map(([k, l]) => <div key={k} className="flex items-center gap-1"><span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: STATUS_PIN[k] }} />{l}</div>)}</div>
       <div className="font-semibold pt-1">Planned inspection ◆</div>
       <div className="grid grid-cols-2 gap-x-2">{[["ASSIGNED", "Assigned"], ["IN_PROGRESS", "On site"], ["VIOLATION_RECORDED", "Violation"], ["NO_VIOLATION", "No violation"]].map(([k, l]) => <div key={k} className="flex items-center gap-1"><span className="inline-block h-2.5 w-2.5 rotate-45" style={{ background: TASK_PIN[k] }} />{l}</div>)}</div>
       <div className="font-semibold pt-1">Government land</div><div>coloured by agency · red fill = open encroachment case</div>

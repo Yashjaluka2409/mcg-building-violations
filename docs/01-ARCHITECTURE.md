@@ -7,7 +7,7 @@
               ▼                                   ▼                                    ▼
  ┌──────────────────────────────────────────────────────────────────────────────────────────────┐
  │  FastAPI routers `app/routers/building_violations/*`  (prefix /building-violations/api/)      │
- │    cases, notices, media, property/gis, sanctions, masters, dashboards, reports, admin,        │
+ │    cases, notices, media, property/gis, sanctions, masters (+workflow-config), dashboards, reports, admin (+hierarchy),        │
  │    referrals, inspections (tasks), integrity, legacy-orders, auth (OTP only when standalone)   │
  │  app/services/building_violations/  workflow (state machine), notices (render+hash+sign+SMS), │
  │    pdf, signing, sla, audit (hash chain), geo (shapely), numbering, notify, tasks, geo_import, │
@@ -58,6 +58,12 @@
    (upload replies, fix hearings only), XEN, ADDL_COMMISSIONER / COMMISSIONER / ADMIN (all + masters),
    FIELD_STAFF (service and execution evidence), BRANCH_OFFICER, GIS_LAB, VIEWER (MIS) - all
    admin-configurable through workflow rules, permissions and per-officer overrides.
+9. **Configurable review hierarchy.** The reporter → reviewer(s) → authority chain and the role catalogue
+   are tables (`bvms_review_stage`, `bvms_role`; `services/building_violations/hierarchy.py`). Status codes stay
+   fixed (`PENDING_AE` = "under review", `PENDING_JC` = "with the authority"), `ViolationCase.review_stage` says
+   which reviewer stage a case is at, and every label the clients show is derived from the configuration
+   (`GET /masters/workflow-config/`). A role filling a stage inherits the rules / permissions / scoping of the
+   stage's built-in role until refined.
 
 ## Folder map
 

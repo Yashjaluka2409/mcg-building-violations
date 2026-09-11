@@ -16,7 +16,7 @@ export default function ProfileScreen() {
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <Header title={t("profile")} back />
       <Card>
-        <View style={{ flexDirection: "row", gap: 14, alignItems: "center" }}><View style={{ width: 84, height: 84, borderRadius: 42, backgroundColor: colors.primary, alignItems: "center", justifyContent: "center" }}><User color="#fff" size={40} /></View><View><Text style={{ fontSize: 22, fontWeight: "800", color: colors.text }}>{user?.name}</Text><Pill text={user?.role || ""} bg={colors.primary100} fg={colors.primary} /></View></View>
+        <View style={{ flexDirection: "row", gap: 14, alignItems: "center" }}><View style={{ width: 84, height: 84, borderRadius: 42, backgroundColor: colors.primary, alignItems: "center", justifyContent: "center" }}><User color="#fff" size={40} /></View><View><Text style={{ fontSize: 22, fontWeight: "800", color: colors.text }}>{user?.name}</Text><Pill text={user?.role_label || user?.role || ""} bg={colors.primary100} fg={colors.primary} /></View></View>
         <View style={{ marginTop: 16, gap: 10 }}>
           <View style={{ flexDirection: "row", gap: 10, alignItems: "center" }}><Phone color={colors.muted} size={18} /><Text style={{ fontSize: 16 }}>{user?.mobile}</Text></View>
           <View style={{ flexDirection: "row", gap: 10, alignItems: "center" }}><ShieldCheck color={colors.muted} size={18} /><Text style={{ fontSize: 16 }}>{user?.designation} · Zones {user?.zones?.map((z: any) => z.code).join(", ") || "all"}</Text></View>

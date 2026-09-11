@@ -80,6 +80,27 @@ The portal now uses Redux Toolkit + redux-persist for the session, Radix UI dial
 Zod, Vite 5 and Google Maps (Leaflet fallback). Every URL, JSON shape and login the web portal and the app use is
 unchanged; the 40 automated tests were ported and pass. The Django edition is kept in `backend-django/` for reference.
 
+## Added 12 Sep 2026: configurable review hierarchy
+
+The chain a case travels is data, not code. **Administration → Hierarchy** (permission `WORKFLOW_CONFIGURE`) shows:
+
+* **Review chain** - ordered stages: one *reporter* stage (records the inspection), zero or more *reviewer*
+  stages (review, forward or return) and one *authority* stage (issues notices and orders). Default
+  Junior Engineer → Assistant Engineer → Joint Commissioner. Rename a stage ("Building Inspector",
+  "Supervisor"), change the role that fills it, add a second reviewer (e.g. Executive Engineer after the AE)
+  or remove the reviewer stage altogether (submissions then go straight to the authority).
+* **Roles** - the role catalogue with English / Hindi names, a short label and an on/off switch; new role codes
+  (e.g. `SUPERVISOR`) can be created here and then given to officers on the Officers page.
+
+Everything downstream follows automatically: the "Submit to …" / "Forward to …" / "Return to …" buttons,
+the status texts ("Pending with Supervisor"), the People card, officer pickers, dashboards and the field app
+read `GET /masters/workflow-config/` (cached 5 min on the portal, cached on the phone for offline use).
+A role placed in a stage inherits the workflow rules, permissions and jurisdiction scoping of that stage's
+built-in role (JE / AE / JC) until the admin refines them on the other tabs. With several reviewer stages a
+case visits them in order and only the stage it is at can act. Every save needs the office-order reference
+and is written to the admin audit log; "Reset to default" restores the shipped chain.
+Tables: `bvms_role`, `bvms_review_stage`; case column `review_stage`. Tests: `backend/tests/test_hierarchy.py`.
+
 ## Configuration the IT team enters (no code changes)
 
 Everything below is a setting, not a change to the code. Enter the values, restart the server (and rebuild the

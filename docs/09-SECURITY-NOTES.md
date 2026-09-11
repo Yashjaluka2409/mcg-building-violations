@@ -88,3 +88,10 @@ intelligence.
   still passes Play Integrity / App Attest, which is not a realistic threat for this system.
 * VPNs do not change GPS; they are blocked because they hide the network origin and are commonly used together with
   spoofing tools. Officers on official corporate VPNs should capture evidence with the VPN off.
+
+### Operational note: teleport detection and test calls
+
+The impossible-travel check compares each new device fix with the officer's previous accepted fix (24 h window).
+A test or monitoring call made with an officer's token and a fabricated coordinate (for example a `curl` to
+`integrity/precheck/`) becomes that officer's "previous position" and blocks their next real upload. Use a
+dedicated test officer for synthetic calls, or delete the row from `bvms_location_integrity` afterwards.

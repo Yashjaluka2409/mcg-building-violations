@@ -44,7 +44,7 @@ export default function LoginPage() {
             ))}
           </div>
           <ul className="text-sm text-light-text-muted space-y-1">
-            <li className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-primary-500" />JE → AE → Joint Commissioner workflow with SLA escalation</li>
+            <li className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-primary-500" />Configurable review chain (default JE → AE → Joint Commissioner) with SLA escalation</li>
             <li className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-accent-500" />PID-linked SMS delivery and affixation proof</li>
             <li className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-secondary-500" />Tamper-evident audit trail (s.403, HMC Act)</li>
           </ul>

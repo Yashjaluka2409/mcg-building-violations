@@ -615,6 +615,7 @@ class ViolationCase(UuidPK, Base):
     assigned_ae_id: Mapped[Optional[uuid.UUID]] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     assigned_jc_id: Mapped[Optional[uuid.UUID]] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     current_owner_role: Mapped[str] = mapped_column(String(24), default="JE")
+    review_stage: Mapped[int] = mapped_column(Integer, default=0)   # 1-based reviewer stage while under review (see services/hierarchy.py); 0 otherwise
     stage_due_at: Mapped[Optional[datetime]] = mapped_column(UTCDateTime, nullable=True)
     sla_breached: Mapped[bool] = mapped_column(Boolean, default=False)
     # key dates
@@ -979,6 +980,36 @@ class BranchReferral(Base):
 # ============================================================================
 # 8. Admin-configurable workflow, permissions and audit of admin changes
 # ============================================================================
+class RoleDef(Base):
+    """Admin-editable role catalogue: labels, short label and kind of every role code used by officers,
+    workflow rules and permissions (see services/building_violations/hierarchy.py)."""
+    __tablename__ = "bvms_role"
+    code: Mapped[str] = mapped_column(String(24), primary_key=True)
+    label_en: Mapped[str] = mapped_column(String(120))
+    label_hi: Mapped[str] = mapped_column(String(120), default="")
+    short_label: Mapped[str] = mapped_column(String(24), default="")
+    kind: Mapped[str] = mapped_column(String(12), default="SUPPORT")   # CHAIN | SUPPORT | MANAGEMENT
+    sort_order: Mapped[int] = mapped_column(Integer, default=100)
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+    builtin: Mapped[bool] = mapped_column(Boolean, default=False)
+    updated_by_id: Mapped[Optional[uuid.UUID]] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(UTCDateTime, default=now, onupdate=now)
+
+
+class ReviewStage(Base):
+    """One stage of the review hierarchy: REPORTER -> REVIEWER* -> AUTHORITY, each filled by a role."""
+    __tablename__ = "bvms_review_stage"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    position: Mapped[int] = mapped_column(Integer, default=1)
+    slot: Mapped[str] = mapped_column(String(10))       # REPORTER | REVIEWER | AUTHORITY
+    role: Mapped[str] = mapped_column(String(24), index=True)
+    label_en: Mapped[str] = mapped_column(String(120))
+    label_hi: Mapped[str] = mapped_column(String(120), default="")
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+    updated_by_id: Mapped[Optional[uuid.UUID]] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(UTCDateTime, default=now, onupdate=now)
+
+
 class WorkflowRule(Base):
     __tablename__ = "bvms_workflow_rule"
     __table_args__ = (UniqueConstraint("status", "role", "action"),)

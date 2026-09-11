@@ -94,6 +94,8 @@ async def _validation_error(request: Request, exc: RequestValidationError):
 # ---------------------------------------------------------------- routes
 app.include_router(router)
 app.include_router(public_router)
+# Map library served from this server so the mobile app's map works on networks that block public CDNs.
+app.mount("/building-violations/static", StaticFiles(directory=str(Path(__file__).resolve().parent / "static")), name="bvms-static")
 
 
 @app.get("/healthz", include_in_schema=False)

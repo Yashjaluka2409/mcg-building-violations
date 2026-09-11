@@ -8,6 +8,7 @@ from sqlalchemy.orm import selectinload
 
 from app.core.timeutil import now
 from app.models import building_violations as m
+from app.services.building_violations import hierarchy as H
 from app.services.building_violations.location_integrity import explain
 from app.core.http import csv_response, resp, xlsx_response
 from app.routers.building_violations.deps import DB, Officer, check_perm
@@ -81,7 +82,7 @@ def pendency(db, crit, params):
     cols = ["case_no", "status", "current_owner_role", "owner_name_officer", "zone", "ward", "address", "days_in_stage", "stage_due_at", "overdue_days", "sla_breached"]
     rows = []
     for c in _cases(db, crit).filter(C.status.notin_(["CLOSED", "DROPPED", "REGULARISED"])).order_by(C.stage_due_at):
-        owner = {"JE": c.reported_by, "AE": c.assigned_ae, "JC": c.assigned_jc}.get(c.current_owner_role)
+        owner = {"REPORTER": c.reported_by, "REVIEWER": c.assigned_ae, "AUTHORITY": c.assigned_jc}.get(H.slot_of_role(db, c.current_owner_role) or "")
         overdue = (t - c.stage_due_at).days if c.stage_due_at and c.stage_due_at < t else 0
         rows.append([c.case_no, c.status, c.current_owner_role, _name(owner), c.zone.code if c.zone else "", c.ward.number if c.ward else "", c.address_line, (t - c.status_changed_at).days, c.stage_due_at, overdue, c.sla_breached])
     return cols, rows

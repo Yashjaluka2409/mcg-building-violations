@@ -9,7 +9,7 @@ from sqlalchemy.orm import Query, Session, selectinload
 
 from app.core.timeutil import as_date, make_aware_local, now
 from app.models import building_violations as m
-from app.services.building_violations import access
+from app.services.building_violations import access, hierarchy as H
 
 OPEN_EXCLUDE = ["CLOSED", "DROPPED", "REGULARISED"]
 
@@ -21,6 +21,7 @@ def _in(col, ids):
 def case_criteria(db: Session, user) -> list:
     prof = user.bvms_profile
     role = prof.role
+    crole = H.canonical_role(db, role)   # a stage role is scoped like the slot it fills (JE / AE / JC)
     C = m.ViolationCase
     zone_ids = [z.id for z in prof.zones]
     ward_ids = [w.id for w in prof.wards]
@@ -31,11 +32,11 @@ def case_criteria(db: Session, user) -> list:
         if access.has_perm(db, user, "CASE_VIEW_BRANCH"):
             return [C.referrals.any(or_(m.BranchReferral.branch_id == prof.branch_id, m.BranchReferral.assigned_to_id == user.id))]
         return [false()]
-    if role == "JE":
+    if crole == "JE":
         return [or_(C.reported_by_id == user.id, _in(C.ward_id, ward_ids), _in(C.zone_id, zone_ids))]
-    if role in ("AE", "XEN"):
+    if crole in ("AE", "XEN"):
         return [or_(C.assigned_ae_id == user.id, _in(C.zone_id, zone_ids), _in(C.division_id, div_ids))]
-    if role == "JC":
+    if crole == "JC":
         return [or_(C.assigned_jc_id == user.id, _in(C.zone_id, zone_ids))]
     if role == "JC_CLERK":
         parent = prof.parent_profile
@@ -55,7 +56,7 @@ def list_criteria(db: Session, user, params) -> list:
     if params.get("mine") == "1":
         crit.append(or_(C.reported_by_id == user.id, C.assigned_ae_id == user.id, C.assigned_jc_id == user.id))
     if params.get("inbox") == "1":
-        crit.append(C.current_owner_role == (role if role != "JC_CLERK" else "JC"))
+        crit.append(C.current_owner_role == (role if role != "JC_CLERK" else H.authority_role(db)))
     if params.get("overdue") == "1":
         crit.append(C.stage_due_at < now())
         crit.append(C.status.notin_(OPEN_EXCLUDE))
