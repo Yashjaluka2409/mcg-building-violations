@@ -29,6 +29,9 @@ writes the current URL to `sandbox/PUBLIC_URL`, updates `PUBLIC_VERIFY_BASE` and
 the current link from `sandbox/PUBLIC_URL` (or `sandbox/LINKS.txt`) before sharing it, keep the laptop plugged in
 and awake (`caffeinate -dims`), and use the IT team's Docker sandbox for anything that must stay up.
 
+`sandbox/tunnel_watchdog.sh` (run with nohup) restarts cloudflared when the edge drops a quick tunnel without the
+process exiting ("Unauthorized: Tunnel not found"); the URL changes each time - the app's login screen shows the current one.
+
 Anti-spoofing in the sandbox: mock GPS, root, emulator, Developer options and VPN are refused by default; browser
 locations and Expo Go builds are accepted but flagged (production switches in Admin → Location integrity; see
 docs/09-SECURITY-NOTES.md). The demo geofence for planned inspections was raised to 50 000 m on 11 Sep 2026 for the
