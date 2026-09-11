@@ -144,6 +144,24 @@ def location_integrity(qs, params):
     return cols, rows
 
 
+@report("legacy-orders")
+def legacy_orders(qs, params):
+    """Orders issued on paper before the system, with their current status (services/legacy.py)."""
+    cols = ["case_no", "order_no", "order_type", "order_date", "signatory", "pid", "address", "ward", "owner", "served_on", "served_mode", "compliance_due",
+            "status", "executed_on", "execution_action", "appeal_authority", "stay_until", "closed_on", "legacy_reference", "batch", "recorded_by", "recorded_at"]
+    rows = []
+    for c in qs.filter(source="LEGACY_ORDER").select_related("final_order__order_type", "ward", "reported_by", "legacy_batch").prefetch_related("executions", "appeals"):
+        n = c.final_order
+        ex = c.executions.order_by("-executed_on").first()
+        ap = c.appeals.order_by("-filed_on").first()
+        rows.append([c.case_no, n.notice_no if n else "", n.order_type_id if n else "", n.issued_at.date() if n else "", n.signer_name if n else "", c.pid, c.address_line,
+                     c.ward.number if c.ward else "", c.owner_name, c.order_served_at.date() if c.order_served_at else "", n.served_mode if n else "",
+                     c.compliance_due_at.date() if c.compliance_due_at else "", c.status, c.executed_at.date() if c.executed_at else "", ex.action if ex else "",
+                     ap.get_authority_display() if ap else "", c.stay_until, c.closed_at.date() if c.closed_at else "", c.legacy_reference,
+                     c.legacy_batch.title if c.legacy_batch else "", _name(c.reported_by), c.created_at])
+    return cols, rows
+
+
 @report("planned-inspections")
 def planned_inspections(qs, params):
     cols = ["task_id", "batch", "category", "pid", "address", "ward", "assigned_to", "assigned_at", "due_at", "status", "started_at", "start_distance_m", "completed_at", "case_no", "outcome_remarks", "created_by"]

@@ -7,7 +7,7 @@ from django.conf import settings
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from .api import views_admin, views_auth, views_cases, views_dashboards, views_masters, views_media, views_notices, views_property, views_referrals, views_reports, views_sanctions, views_tasks, views_integrity
+from .api import views_admin, views_auth, views_cases, views_dashboards, views_masters, views_media, views_notices, views_property, views_referrals, views_reports, views_sanctions, views_tasks, views_integrity, views_legacy
 
 router = DefaultRouter()
 router.register("cases", views_cases.ViolationCaseViewSet, basename="case")
@@ -30,6 +30,7 @@ router.register("inspections/batches", views_tasks.InspectionBatchViewSet, basen
 router.register("branches", views_admin.BranchViewSet, basename="branch")
 router.register("notifications", views_auth.NotificationViewSet, basename="notification")
 router.register("integrity/checks", views_integrity.LocationIntegrityCheckViewSet, basename="integrity-check")
+router.register("legacy-orders", views_legacy.LegacyOrderViewSet, basename="legacy-order")
 
 api_urls = [
     path("users/me/", views_auth.MeView.as_view(), name="me"),

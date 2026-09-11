@@ -73,3 +73,16 @@ Base path: `/building-violations/api/` · Auth: `Authorization: Bearer <access_t
 A REJECTED evaluation answers `400 {"detail": "Location integrity check failed: <reasons>. …"}` and nothing is stored as
 evidence; the attempt itself is kept in `integrity/checks/`. Responses of `media/` carry `integrity_status`
 (PASS | FLAGGED | UNVERIFIED) and `integrity_reasons`; case detail carries `inspector_integrity`; tasks `start_integrity`.
+
+### Orders issued before the system (paper orders)
+
+| Endpoint | Purpose |
+|---|---|
+| `POST legacy-orders/` (LegacyOrderSerializer: order_no, order_date, order_type, issued_by_name/designation, pid or address, ward_number, owner…, violations[], compliance_days, served_on, served_mode, current_status, executed_on, execution_action/mode, cost_incurred_inr, appeal_authority, appeal_no, stay_granted, stay_until, closed_on, legacy_reference, media_ids, order_reference) | Record one paper order → case detail (permission LEGACY_ORDERS_MANAGE) |
+| `POST legacy-orders/bulk/` multipart {file (CSV/XLSX), title, order_reference} → batch {imported, errors[]} · `GET legacy-orders/template/` | Register import |
+| `GET legacy-orders/?status=&ward=&search=` · `GET legacy-orders/summary/` · `GET legacy-orders/batches/` | Register of imported orders (jurisdiction-scoped), counts, upload history |
+| `POST legacy-orders/{case_id}/status/` {status, on_date, remarks, order_reference, served_mode, execution_action, execution_mode, cost_incurred_inr, appeal_authority, appeal_no, stay_until, closure_reason, media_ids} | Record a historical status change from the paper file |
+| `GET reports/legacy-orders/?export=xlsx` | Register export |
+
+Imported cases carry `source = "LEGACY_ORDER"` and `legacy_reference`; their order carries `is_legacy = true`
+(no `pdf_url`; the scanned copy is media of kind `LEGACY_ORDER`).

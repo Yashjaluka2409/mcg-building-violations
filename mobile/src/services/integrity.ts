@@ -78,6 +78,8 @@ export const TEXT: Record<string, string> = {
   ATTESTATION_MISSING: "device attestation is missing",
   ATTESTATION_FAILED: "device attestation failed",
   WEB_UNVERIFIED: "browser locations cannot be verified",
+  NO_LOCATION: "no GPS position was available",
+  NO_SIGNALS: "device signals were not reported",
 };
 export const ADVICE = "Evidence with a spoofed or untrusted location is not accepted. Disable mock-location apps, VPN / proxy and Developer options, then try again.";
 

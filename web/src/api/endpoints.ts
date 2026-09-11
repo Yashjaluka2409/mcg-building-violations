@@ -123,3 +123,14 @@ export const integrity = {
   summary: () => api.get("/integrity/checks/summary/").then((r) => r.data as { rejected: number; flagged: number; passed: number; reasons: { code: string; text: string; count: number }[]; repeat_offenders: { officer: string; rejections: number }[] }),
   list: (p: Record<string, unknown>) => api.get("/integrity/checks/", { params: p }).then((r) => r.data),
 };
+
+/** Orders issued before the system (paper demolition / sealing / eviction orders) - backend services/legacy.py */
+export const legacy = {
+  list: (params: Record<string, unknown>) => api.get<Paginated<CaseListItem>>("/legacy-orders/", { params }).then((r) => r.data),
+  create: (d: Record<string, unknown>) => api.post<CaseDetail>("/legacy-orders/", d).then((r) => r.data),
+  updateStatus: (caseId: string, d: Record<string, unknown>) => api.post<CaseDetail>(`/legacy-orders/${caseId}/status/`, d).then((r) => r.data),
+  summary: () => api.get("/legacy-orders/summary/").then((r) => r.data as { total: number; open: number; execution_due: number; stayed: number; by_status: Record<string, number>; batches: number }),
+  batches: () => api.get("/legacy-orders/batches/").then((r) => r.data as { id: number; title: string; created_at: string; created_by: { name: string } | null; total_rows: number; imported: number; errors: { row: number; order_no: string; error: string }[] }[]),
+  bulk: (fd: FormData) => api.post("/legacy-orders/bulk/", fd, { headers: { "Content-Type": "multipart/form-data" } }).then((r) => r.data),
+  templateUrl: `${api.defaults.baseURL}/legacy-orders/template/`,
+};

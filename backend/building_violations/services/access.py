@@ -68,6 +68,7 @@ PERMISSIONS: dict[str, tuple[str, str, list[str]]] = {
     "PLANS_VIEW": ("View sanctioned plans register", "Masters", ["JE", "AE", "XEN", "JC", "JC_CLERK", "FIELD_STAFF", "VIEWER", "BRANCH_OFFICER", "GIS_LAB"]),
     "PLANS_MANAGE": ("Add / edit / bulk-upload sanctioned plans", "Masters", ["JE", "AE", "XEN", "JC", "BRANCH_OFFICER"]),
     "LAND_LAYERS_MANAGE": ("Upload / version government-land layers (GIS lab)", "Masters", ["GIS_LAB"]),
+    "LEGACY_ORDERS_MANAGE": ("Record and update orders issued before the system (paper demolition / sealing orders)", "Cases", ["JC", "JC_CLERK", "XEN"]),
     "TASKS_ASSIGN": ("Create and assign planned inspections (push PIDs / map points to the field)", "Inspections", ["JC", "AE", "XEN"]),
     "TASKS_VIEW_ALL": ("View all planned inspections", "Inspections", ["JC", "AE", "XEN", "VIEWER", "GIS_LAB"]),
     "TASKS_EXECUTE": ("Receive and execute planned inspections", "Inspections", ["JE", "FIELD_STAFF"]),

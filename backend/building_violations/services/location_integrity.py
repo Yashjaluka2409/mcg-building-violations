@@ -64,6 +64,7 @@ TEXT = {
     "ATTESTATION_MISSING": "no device attestation (Play Integrity / App Attest) was supplied",
     "ATTESTATION_FAILED": "device attestation failed (modified app or compromised device)",
     "NO_SIGNALS": "the app did not report its device-integrity signals",
+    "NO_LOCATION": "no GPS position was available",
 }
 
 ADVICE = ("Evidence captured with a spoofed or untrusted location is not accepted. Disable mock-location apps, "
@@ -248,7 +249,7 @@ def evaluate(*, user, request, context: str, latitude, longitude, accuracy_m=Non
         if cond:
             (block if S(setting_key, default) else flag).append(code)
 
-    if latitude is None or longitude is None:
+    if (latitude is None or longitude is None) and context != "PRECHECK":
         block.append("NO_LOCATION")
 
     # 1. device-reported signals -------------------------------------------------

@@ -59,3 +59,11 @@ are flagged (refused in production). Hardware attestation (Play Integrity / App 
 built in and switched on by configuration. **Action for the IT team:** build the app with EAS (the native module in
 `mobile/modules/location-integrity` is compiled there, not in Expo Go), run UAT scenarios 37-41 on real devices, then
 turn on the production switches listed in `docs/09-SECURITY-NOTES.md` → "Location integrity".
+
+## Added 11 Sep 2026: orders issued before the system
+
+Portal → "Orders before the system" lets the JC office record the backlog of paper demolition / sealing /
+eviction orders (single entry or register upload) and keep their status current; they then flow through the same
+service / stay / execution / closure machinery as new cases. See docs/03 (section "Orders issued before the
+system"), docs/05 (endpoints) and UAT scenarios 42-45. Data-entry task for MCG: collect the zone-wise order
+registers in the CSV template before go-live.

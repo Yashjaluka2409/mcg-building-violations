@@ -288,6 +288,7 @@ class LandOwningAgency(models.TextChoices):
     RAILWAYS = "RAILWAYS", "Railways"
     NHAI = "NHAI", "NHAI"
     DEFENCE = "DEFENCE", "Defence"
+    LEGACY_ORDER = "LEGACY_ORDER", "Scanned copy of an order issued before the system"
     OTHER = "OTHER", "Other"
 
 
@@ -507,7 +508,9 @@ class ViolationCase(TimeStamped):
     case_no = models.CharField(max_length=40, unique=True, db_index=True)
     status = models.CharField(max_length=30, choices=CaseStatus.choices, default=CaseStatus.DRAFT, db_index=True)
     status_changed_at = models.DateTimeField(default=timezone.now)
-    source = models.CharField(max_length=20, default="FIELD_INSPECTION")  # FIELD_INSPECTION | COMPLAINT | DRONE | COURT | OTHER
+    source = models.CharField(max_length=20, default="FIELD_INSPECTION")  # FIELD_INSPECTION | COMPLAINT | DRONE | COURT | LEGACY_ORDER | OTHER
+    legacy_reference = models.CharField(max_length=120, blank=True, help_text="Register / file reference of an order issued before the system")
+    legacy_batch = models.ForeignKey("LegacyOrderBatch", null=True, blank=True, on_delete=models.SET_NULL, related_name="cases")
     complaint_ref = models.CharField(max_length=80, blank=True)
     priority = models.CharField(max_length=10, default="NORMAL")            # LOW | NORMAL | HIGH | URGENT
 
@@ -683,6 +686,7 @@ class Notice(TimeStamped):
     service_remarks = models.TextField(blank=True)
     superseded_by = models.ForeignKey("self", null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
     is_final_order = models.BooleanField(default=False)
+    is_legacy = models.BooleanField(default=False, help_text="Issued on paper before the system; original number / date / signatory kept, scanned copy attached")
 
     class Meta:
         db_table = "bvms_notice"
@@ -1203,3 +1207,21 @@ class AppAttestKey(models.Model):
 
     class Meta:
         db_table = "bvms_app_attest_key"
+
+
+# ============================================================================
+# 14. Orders issued before the system (legacy register imports) - services/legacy.py
+# ============================================================================
+class LegacyOrderBatch(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    title = models.CharField(max_length=200)
+    source_file = models.FileField(upload_to="bvms/legacy/%Y/%m/", null=True, blank=True)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL, related_name="+")
+    created_at = models.DateTimeField(auto_now_add=True)
+    total_rows = models.PositiveIntegerField(default=0)
+    imported = models.PositiveIntegerField(default=0)
+    errors = models.JSONField(default=list, blank=True)
+
+    class Meta:
+        db_table = "bvms_legacy_batch"
+        ordering = ["-created_at"]

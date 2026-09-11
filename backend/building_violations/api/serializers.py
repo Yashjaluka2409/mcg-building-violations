@@ -263,7 +263,7 @@ class NoticeSerializer(serializers.ModelSerializer):
         fields = ("id", "case", "case_no", "order_type", "notice_no", "kind", "issued_by", "issued_at", "addressee_name", "addressee_address", "addressee_mobiles",
                   "response_days", "response_due_at", "compliance_days", "compliance_due_at", "hearing_at", "hearing_venue", "operative_text_en", "operative_text_hi",
                   "pdf_url", "signed_pdf_url", "document_hash", "verification_code", "qr_payload", "signature_status", "signer_name", "signer_cert_subject", "signed_at",
-                  "signature_error", "served_at", "served_mode", "served_by", "service_remarks", "is_final_order", "dispatches", "delivery_media", "created_at")
+                  "signature_error", "served_at", "served_mode", "served_by", "service_remarks", "is_final_order", "is_legacy", "dispatches", "delivery_media", "created_at")
 
     def _abs(self, f):
         req = self.context.get("request")
@@ -339,6 +339,7 @@ class NotificationSerializer(serializers.ModelSerializer):
 
 # ---------------------------------------------------------------- the case
 class ViolationCaseListSerializer(serializers.ModelSerializer):
+    final_order_no = serializers.CharField(source="final_order.notice_no", read_only=True, default=None)
     ward_number = serializers.IntegerField(source="ward.number", read_only=True, default=None)
     zone_code = serializers.CharField(source="zone.code", read_only=True, default=None)
     reported_by = UserLiteSerializer(read_only=True)
@@ -351,19 +352,13 @@ class ViolationCaseListSerializer(serializers.ModelSerializer):
     thumbnail = serializers.SerializerMethodField()
     pending_referrals = serializers.SerializerMethodField()
 
-    inspector_integrity = serializers.SerializerMethodField()
-
-    def get_inspector_integrity(self, o):
-        from ..services.location_integrity import summary
-        return summary(o.integrity_checks.filter(context="CASE_CREATE").order_by("-at").first())
-
     class Meta:
         model = m.ViolationCase
         fields = ("id", "case_no", "status", "status_display", "priority", "source", "pid", "address_line", "locality", "sector", "ward", "ward_number", "zone", "zone_code",
                   "latitude", "longitude", "land_type", "owner_name", "construction_stage", "reported_by", "assigned_ae", "assigned_jc", "current_owner_role",
                   "stage_due_at", "sla_breached", "inspected_at", "scn_issued_at", "response_due_at", "compliance_due_at", "decision", "stop_work_issued", "sealed",
                   "litigation_status", "litigation_authority", "stay_until", "next_hearing_on",
-                  "violation_codes", "primary_violation", "days_in_stage", "thumbnail", "pending_referrals", "created_at", "updated_at")
+                  "violation_codes", "primary_violation", "days_in_stage", "thumbnail", "pending_referrals", "created_at", "updated_at", "legacy_reference", "order_issued_at", "order_served_at", "final_order_no")
 
     def get_pending_referrals(self, o):
         return [r.branch_id for r in o.referrals.all() if r.status == "PENDING"]
@@ -391,6 +386,12 @@ class ViolationCaseListSerializer(serializers.ModelSerializer):
 
 
 class ViolationCaseDetailSerializer(ViolationCaseListSerializer):
+    inspector_integrity = serializers.SerializerMethodField()
+
+    def get_inspector_integrity(self, o):
+        from ..services.location_integrity import summary
+        return summary(o.integrity_checks.filter(context="CASE_CREATE").order_by("-at").first())
+
     violations = CaseViolationSerializer(many=True, read_only=True)
     media = MediaAttachmentSerializer(many=True, read_only=True)
     notices = NoticeSerializer(many=True, read_only=True)
@@ -413,7 +414,7 @@ class ViolationCaseDetailSerializer(ViolationCaseListSerializer):
             "storeys", "height_m", "use_observed", "description", "measurements", "submitted_at", "ae_forwarded_at", "jc_received_at", "scn_served_at",
             "response_received_at", "hearing_at", "decided_at", "order_issued_at", "order_served_at", "executed_at", "closed_at", "decision_reasons", "final_order",
             "closure_reason", "demolition_cost_inr", "cost_recovery_status", "violations", "media", "notices", "responses", "hearings", "appeals", "executions",
-            "events", "referrals", "task_summary", "inspector_latitude", "inspector_longitude", "inspector_distance_m", "inspector_integrity", "available_actions", "available_order_types")
+            "events", "referrals", "task_summary", "inspector_latitude", "inspector_longitude", "inspector_distance_m", "inspector_integrity", "legacy_reference", "available_actions", "available_order_types")
 
     def get_task_summary(self, o):
         t = o.task
@@ -804,3 +805,90 @@ class LocationIntegrityCheckSerializer(serializers.ModelSerializer):
     def get_explanation(self, o):
         from ..services.location_integrity import explain
         return explain(list(o.reasons) + list(o.flags))
+
+
+# ---------------------------------------------------------------------------
+# Orders issued before the system (services/legacy.py)
+# ---------------------------------------------------------------------------
+LEGACY_STATUSES = ["ORDER_ISSUED", "ORDER_SERVED", "EXECUTION_DUE", "APPEAL_STAY", "COMPLIED", "EXECUTED", "CLOSED", "REGULARISED", "DROPPED"]
+
+
+class LegacyOrderSerializer(serializers.Serializer):
+    """One paper order. Only order_no, order_date and pid-or-address are mandatory; everything else is optional history."""
+    order_no = serializers.CharField(max_length=60)
+    order_date = serializers.DateField()
+    order_type = serializers.CharField(default="DEMOLITION_ORDER_261")
+    issued_by_name = serializers.CharField(required=False, allow_blank=True)
+    issued_by_designation = serializers.CharField(required=False, allow_blank=True)
+    scn_no = serializers.CharField(required=False, allow_blank=True)
+    scn_date = serializers.DateField(required=False, allow_null=True)
+    pid = serializers.CharField(required=False, allow_blank=True)
+    address_line = serializers.CharField(required=False, allow_blank=True)
+    locality = serializers.CharField(required=False, allow_blank=True)
+    sector = serializers.CharField(required=False, allow_blank=True)
+    village_colony = serializers.CharField(required=False, allow_blank=True)
+    pincode = serializers.CharField(required=False, allow_blank=True)
+    ward = serializers.PrimaryKeyRelatedField(queryset=m.Ward.objects.all(), required=False, allow_null=True)
+    ward_number = serializers.IntegerField(required=False, allow_null=True)
+    latitude = serializers.DecimalField(max_digits=10, decimal_places=7, required=False, allow_null=True)
+    longitude = serializers.DecimalField(max_digits=10, decimal_places=7, required=False, allow_null=True)
+    land_type = serializers.ChoiceField(choices=m.LandType.choices, required=False)
+    owner_name = serializers.CharField(required=False, allow_blank=True)
+    owner_father_name = serializers.CharField(required=False, allow_blank=True)
+    occupier_name = serializers.CharField(required=False, allow_blank=True)
+    pid_linked_mobile = serializers.CharField(required=False, allow_blank=True)
+    alternate_mobile = serializers.CharField(required=False, allow_blank=True)
+    description = serializers.CharField(required=False, allow_blank=True)
+    violations = CaseViolationInputSerializer(many=True, required=False, default=list)
+    compliance_days = serializers.IntegerField(required=False, allow_null=True, min_value=0)
+    compliance_due_on = serializers.DateField(required=False, allow_null=True)
+    served_on = serializers.DateField(required=False, allow_null=True)
+    served_mode = serializers.ChoiceField(choices=m.Notice.ServiceMode.choices, required=False, allow_blank=True)
+    current_status = serializers.ChoiceField(choices=LEGACY_STATUSES, required=False, allow_blank=True)
+    executed_on = serializers.DateField(required=False, allow_null=True)
+    execution_action = serializers.ChoiceField(choices=m.ExecutionRecord.Action.choices, required=False, allow_blank=True)
+    execution_mode = serializers.ChoiceField(choices=m.ExecutionRecord.Mode.choices, required=False, allow_blank=True)
+    cost_incurred_inr = serializers.DecimalField(max_digits=12, decimal_places=2, required=False, allow_null=True)
+    area_demolished_sqm = serializers.DecimalField(max_digits=12, decimal_places=2, required=False, allow_null=True)
+    appeal_authority = serializers.ChoiceField(choices=m.Appeal.Authority.choices, required=False, allow_blank=True)
+    authority_other = serializers.CharField(required=False, allow_blank=True)
+    appeal_no = serializers.CharField(required=False, allow_blank=True)
+    appellant_name = serializers.CharField(required=False, allow_blank=True)
+    appeal_filed_on = serializers.DateField(required=False, allow_null=True)
+    stay_granted = serializers.BooleanField(required=False, default=False)
+    stay_order_date = serializers.DateField(required=False, allow_null=True)
+    stay_until = serializers.DateField(required=False, allow_null=True)
+    closed_on = serializers.DateField(required=False, allow_null=True)
+    closure_reason = serializers.CharField(required=False, allow_blank=True)
+    legacy_reference = serializers.CharField(required=False, allow_blank=True)
+    remarks = serializers.CharField(required=False, allow_blank=True)
+    priority = serializers.CharField(required=False, allow_blank=True)
+    media_ids = serializers.ListField(child=serializers.UUIDField(), required=False, default=list)
+    order_reference = serializers.CharField(required=False, allow_blank=True, help_text="Office order / file authorising the import (audit)")
+
+
+class LegacyStatusUpdateSerializer(serializers.Serializer):
+    status = serializers.ChoiceField(choices=LEGACY_STATUSES)
+    on_date = serializers.DateField(required=False, allow_null=True)
+    remarks = serializers.CharField(required=False, allow_blank=True)
+    order_reference = serializers.CharField(required=False, allow_blank=True)
+    served_mode = serializers.ChoiceField(choices=m.Notice.ServiceMode.choices, required=False, allow_blank=True)
+    execution_action = serializers.ChoiceField(choices=m.ExecutionRecord.Action.choices, required=False, allow_blank=True)
+    execution_mode = serializers.ChoiceField(choices=m.ExecutionRecord.Mode.choices, required=False, allow_blank=True)
+    cost_incurred_inr = serializers.DecimalField(max_digits=12, decimal_places=2, required=False, allow_null=True)
+    area_demolished_sqm = serializers.DecimalField(max_digits=12, decimal_places=2, required=False, allow_null=True)
+    appeal_authority = serializers.ChoiceField(choices=m.Appeal.Authority.choices, required=False, allow_blank=True)
+    appeal_no = serializers.CharField(required=False, allow_blank=True)
+    appellant_name = serializers.CharField(required=False, allow_blank=True)
+    stay_order_date = serializers.DateField(required=False, allow_null=True)
+    stay_until = serializers.DateField(required=False, allow_null=True)
+    closure_reason = serializers.CharField(required=False, allow_blank=True)
+    media_ids = serializers.ListField(child=serializers.UUIDField(), required=False, default=list)
+
+
+class LegacyOrderBatchSerializer(serializers.ModelSerializer):
+    created_by = UserLiteSerializer(read_only=True)
+
+    class Meta:
+        model = m.LegacyOrderBatch
+        fields = ("id", "title", "created_by", "created_at", "total_rows", "imported", "errors")

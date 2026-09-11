@@ -18,6 +18,7 @@ import VerifyPage from "@/pages/VerifyPage";
 import AdminPage from "@/pages/AdminPage";
 import BranchInboxPage from "@/pages/BranchInboxPage";
 import TasksPage from "@/pages/TasksPage";
+import LegacyOrdersPage from "@/pages/LegacyOrdersPage";
 import { Spinner } from "@/components/ui";
 
 function RequireAuth({ children }: { children: JSX.Element }) {
@@ -53,6 +54,7 @@ export default function App() {
         <Route path="admin" element={<AdminPage />} />
         <Route path="referrals" element={<BranchInboxPage />} />
         <Route path="tasks" element={<TasksPage />} />
+        <Route path="legacy-orders" element={<LegacyOrdersPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>

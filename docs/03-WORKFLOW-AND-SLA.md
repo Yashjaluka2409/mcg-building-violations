@@ -74,6 +74,21 @@ executions but cannot create or decide cases.
 * Evidence cannot be deleted after the case leaves DRAFT; every file is SHA-256 hashed.
 
 
+## Orders issued before the system (paper demolition / sealing / eviction orders)
+
+The JC office (permission `LEGACY_ORDERS_MANAGE`: JC, JC clerk, XEN, admin) brings the backlog on record from
+Portal → "Orders before the system", one order at a time or by uploading the register (CSV / XLSX template).
+Each paper order becomes a case with `source = LEGACY_ORDER` at the stage the file is actually in (order
+issued / served / execution due / stayed / complied / executed / closed / regularised / dropped), the original
+order becomes a `Notice` with `is_legacy = true` (original number, date and signatory kept; scanned copy attached
+as evidence kind LEGACY_ORDER; no re-signing, no PDF), and the historical dates, execution record and appeal are
+written in. The audit trail starts with LEGACY_IMPORT (raw register row + authorising reference) followed by the
+status it was set to. From then on the normal actions apply - record delivery, appeal / stay, execution with
+geotagged evidence, verify & close, reopen - and, for facts that only exist on paper, "Update status" records
+service / stay / execution / closure with a date and file reference without the field-evidence rules (audited as
+LEGACY_STATUS). Duplicate order numbers are refused. Register: report `legacy-orders`; dashboard counts
+`legacy_orders_total` / `legacy_orders_open`. Service: `services/legacy.py`.
+
 ## Location integrity (anti-spoofing) - applies to every geotag above
 
 Every device location (evidence photo, inspector position, planned-inspection start/close) is evaluated by

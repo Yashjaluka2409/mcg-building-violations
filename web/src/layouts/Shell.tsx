@@ -1,5 +1,5 @@
 import { clsx } from "clsx";
-import { Bell, BookOpenText, ClipboardList, Crosshair, FileSignature, FolderKanban, Globe, Inbox, LayoutDashboard, LogOut, Map as MapIcon, MapPinned, Menu, Moon, PlusCircle, ScrollText, Settings2, Share2, Sun, UserCog } from "lucide-react";
+import { Bell, BookOpenText, ClipboardList, Crosshair, FileSignature, FolderKanban, Globe, Inbox, LayoutDashboard, LogOut, Map as MapIcon, MapPinned, Menu, Moon, PlusCircle, ScrollText, Settings2, Share2, Sun, UserCog, Archive } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
@@ -31,6 +31,7 @@ export default function Shell() {
     { to: "/inbox", icon: Inbox, label: t("nav.inbox"), badge: counts.data?.inbox, show: !isBranch },
     { to: "/referrals", icon: Share2, label: isBranch ? "Branch inbox" : "Branch referrals", badge: refCounts.data?.pending, show: has("BRANCH_RESPOND", "BRANCH_REFER", "REFERRALS_VIEW_ALL") },
     { to: "/tasks", icon: Crosshair, label: "Planned inspections", badge: has("TASKS_ASSIGN") ? taskCounts.data?.open : taskCounts.data?.assigned_to_me, show: has("TASKS_ASSIGN", "TASKS_VIEW_ALL", "TASKS_EXECUTE") },
+    { to: "/legacy-orders", icon: Archive, label: "Orders before the system", show: has("LEGACY_ORDERS_MANAGE", "CASE_VIEW_ALL", "DASHBOARD_VIEW") || ["JC", "JC_CLERK", "XEN", "ADMIN", "COMMISSIONER", "ADDL_COMMISSIONER", "SUPER_ADMIN"].includes(role) },
     { to: "/cases/new", icon: PlusCircle, label: t("nav.new_case"), show: ["JE", "AE", "FIELD_STAFF", "ADMIN", "COMMISSIONER", "ADDL_COMMISSIONER"].includes(role) },
     { to: "/cases", icon: FolderKanban, label: isBranch ? "Referred cases" : t("nav.cases") },
     { to: "/map", icon: MapPinned, label: "Enforcement map", show: has("DASHBOARD_VIEW") },

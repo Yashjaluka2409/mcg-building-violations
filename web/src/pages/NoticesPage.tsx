@@ -33,7 +33,7 @@ export default function NoticesPage() {
             <td className="text-xs">{fmtDateTime(n.issued_at)}<div className="text-light-text-muted">{n.issued_by?.name}</div></td>
             <td className="text-xs">{n.response_due_at && <div>Reply {fmtDate(n.response_due_at)}</div>}{n.compliance_due_at && <div className="text-danger-600">Comply {fmtDate(n.compliance_due_at)}</div>}</td>
             <td className="text-xs">{n.served_at ? <span className="text-success-700">{n.served_mode} {fmtDate(n.served_at)}</span> : <span className="text-warning-600">pending</span>}<div className="text-light-text-muted">{n.dispatches.filter((d) => d.status === "SENT").length}/{n.dispatches.length} SMS</div></td>
-            <td className="text-xs">{n.signature_status === "SIGNED" ? <span className="text-success-700 flex items-center gap-1"><ShieldCheck className="h-3 w-3" />signed</span> : <span className="text-danger-600">{n.signature_status}</span>}<div className="font-mono text-[10px] text-light-text-muted">{n.verification_code}</div></td>
+            <td className="text-xs">{n.is_legacy ? <span className="badge bg-warning-50 text-warning-600">Paper order (pre-system)</span> : n.signature_status === "SIGNED" ? <span className="text-success-700 flex items-center gap-1"><ShieldCheck className="h-3 w-3" />signed</span> : <span className="text-danger-600">{n.signature_status}</span>}<div className="font-mono text-[10px] text-light-text-muted">{n.verification_code}</div></td>
           </tr>)}</tbody></table>)}
         {q.data && <div className="px-3 pb-3"><Pager count={q.data.count} page={page} pageSize={25} onPage={(n) => set("page", String(n))} /></div>}
       </div>
