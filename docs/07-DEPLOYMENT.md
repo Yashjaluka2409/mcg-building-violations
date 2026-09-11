@@ -64,3 +64,17 @@ See `backend/.env.example` - every setting is documented inline.
 `BVMS_APP_ATTEST_ENV`. The mobile app needs an EAS / native build for the anti-spoofing module in
 `mobile/modules/location-integrity` (autolinked); set `extra.playIntegrityCloudProjectNumber` in `app.json`.
 Expo Go runs the app with JavaScript-only checks and is refused once `require_native_integrity_module` is on.
+
+### Building the native apps locally (verified 11 Sep 2026 on macOS 26 / Xcode 26.6)
+
+* `cd mobile && npx expo prebuild` generates `ios/` and `android/` (git-ignored; regenerate after config changes).
+* iOS: CocoaPods needs a UTF-8 locale (`export LANG=en_US.UTF-8`). Three upstream scripts break on **spaces in the
+  project path** - the Expo Constants pod script phase, its `get-app-config-ios.sh` (unquoted `$PROJECT_DIR`, which silently
+  leaves the app without its manifest) and the "Bundle React Native code and images" phase; keep
+  the checkout in a path without spaces (recommended) or quote the script paths as done in this sandbox.
+  Build: `xcodebuild -workspace ios/MCGBuildingViolations.xcworkspace -scheme MCGBuildingViolations -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator'`.
+* Android: JDK 17 (`brew install openjdk@17`), Android SDK with platform 35/36 (Gradle downloads the NDK itself);
+  `cd android && ./gradlew :app:assembleDebug -PreactNativeArchitectures=arm64-v8a` → `app/build/outputs/apk/debug/app-debug.apk`.
+  The Kotlin anti-spoofing module (`modules/location-integrity`) compiles with two deprecation warnings only.
+* Both debug builds load JavaScript from the Metro server (`npx expo start`); point the app at the API through the
+  login screen ("Server … change"): Android emulator `http://10.0.2.2:8000`, iOS simulator `http://127.0.0.1:8000`.
