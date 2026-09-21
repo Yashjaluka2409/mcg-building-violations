@@ -608,6 +608,12 @@ class ViolationCase(UuidPK, Base):
     storeys: Mapped[str] = mapped_column(String(40), default="")
     height_m: Mapped[Optional[Decimal]] = mapped_column(Numeric(6, 2), nullable=True)
     use_observed: Mapped[str] = mapped_column(String(80), default="")
+    # occupancy as found by the field team (drives the humane planning of sealing / demolition: notice to vacate,
+    # women police, medical / shelter arrangements). NULL = not recorded; the sub-counts may overlap.
+    occupants_total: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    occupants_senior_citizens: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    occupants_children: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    occupants_women: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     description: Mapped[str] = mapped_column(Text, default="")
     measurements: Mapped[dict] = mapped_column(JSON, default=dict)
     # workflow ownership

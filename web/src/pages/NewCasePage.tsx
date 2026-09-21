@@ -104,7 +104,11 @@ export default function NewCasePage() {
             <Field label="Covered area (sq m)"><input className="input" value={f.covered_area_sqm ?? ""} onChange={(e) => set("covered_area_sqm", e.target.value)} /></Field>
             <Field label="Storeys (e.g. S+4)"><input className="input" value={f.storeys || ""} onChange={(e) => set("storeys", e.target.value)} /></Field>
             <Field label="Height (m)"><input className="input" value={f.height_m ?? ""} onChange={(e) => set("height_m", e.target.value)} /></Field>
-            <Field label="Use observed"><input className="input" value={f.use_observed || ""} onChange={(e) => set("use_observed", e.target.value)} placeholder="residential / commercial / PG ..." /></Field>
+            <Field label="Current use of the building"><input className="input" list="bv-building-uses" maxLength={80} value={f.use_observed || ""} onChange={(e) => set("use_observed", e.target.value)} placeholder="residential / commercial / PG ..." /><datalist id="bv-building-uses">{["Residential", "Commercial", "Mixed use", "PG / hostel", "Institutional", "Industrial / godown", "Vacant"].map((u) => <option key={u} value={u} />)}</datalist></Field>
+            <Field label="Number of occupants"><input className="input" inputMode="numeric" maxLength={6} value={f.occupants_total ?? ""} onChange={(e) => set("occupants_total", e.target.value.replace(/\D/g, ""))} placeholder="people living / working here" /></Field>
+            <Field label="Senior citizens (60+)"><input className="input" inputMode="numeric" maxLength={6} value={f.occupants_senior_citizens ?? ""} onChange={(e) => set("occupants_senior_citizens", e.target.value.replace(/\D/g, ""))} /></Field>
+            <Field label="Children (under 18)"><input className="input" inputMode="numeric" maxLength={6} value={f.occupants_children ?? ""} onChange={(e) => set("occupants_children", e.target.value.replace(/\D/g, ""))} /></Field>
+            <Field label="Women"><input className="input" inputMode="numeric" maxLength={6} value={f.occupants_women ?? ""} onChange={(e) => set("occupants_women", e.target.value.replace(/\D/g, ""))} /></Field>
             <Field label="Source"><select className="input" value={f.source} onChange={(e) => set("source", e.target.value)}>{["FIELD_INSPECTION", "COMPLAINT", "DRONE", "COURT", "OTHER"].map((s) => <option key={s}>{s}</option>)}</select></Field>
           </div>
         </Card>

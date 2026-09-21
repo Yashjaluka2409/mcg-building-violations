@@ -15,6 +15,7 @@
 import * as FileSystem from "expo-file-system";
 import * as ImageManipulator from "expo-image-manipulator";
 import * as ImagePicker from "expo-image-picker";
+import * as Device from "expo-device";
 import * as VideoThumbnails from "expo-video-thumbnails";
 import { api, deviceId } from "@/api/client";
 import { IntegritySignals, trustedFix } from "@/services/integrity";
@@ -71,10 +72,12 @@ export async function captureWithCamera(video = false, onStatus?: (msg: string) 
   const perm = await ImagePicker.requestCameraPermissionsAsync();
   if (!perm.granted) throw new Error("Camera permission is required");
   const fixPromise = currentFix();                       // starts now, usually done before the shutter is pressed
-  const res = await ImagePicker.launchCameraAsync({
+  const pickerOpts: ImagePicker.ImagePickerOptions = {
     mediaTypes: video ? ["videos"] : ["images"], quality: 0.8, exif: false,
     videoMaxDuration: VIDEO_MAX_SECONDS, videoQuality: ImagePicker.UIImagePickerControllerQualityType.Medium,
-  });
+  };
+  // Simulators / emulators have no camera: fall back to the photo library there (real devices always use the camera).
+  const res = Device.isDevice ? await ImagePicker.launchCameraAsync(pickerOpts) : await ImagePicker.launchImageLibraryAsync(pickerOpts);
   if (res.canceled || !res.assets?.length) { fixPromise.catch(() => undefined); return null; }
   const a = res.assets[0];
   let uri = a.uri; let thumbUri: string | undefined;

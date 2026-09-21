@@ -14,6 +14,19 @@ import { colors, radius } from "@/theme";
 import { useWorkflowConfig } from "@/hooks/useWorkflowConfig";
 
 /** JE field inspection: PID → property → GPS/land check → violations → geotagged evidence → submit. */
+const BUILDING_USES = ["Residential", "Commercial", "Mixed use", "PG / hostel", "Institutional", "Industrial / godown", "Vacant"];
+const OCCUPANT_GROUPS: [string, string][] = [["occupants_senior_citizens", "Senior citizens"], ["occupants_children", "Children"], ["occupants_women", "Women"]];
+const digits = (v: string) => v.replace(/\D/g, "");
+/** Same rule as the server: no group above the total; senior citizens + children together within the total. */
+function occupancyProblem(f: any): string {
+  const n = (k: string) => (f[k] === undefined || f[k] === "" ? null : Number(f[k]));
+  const total = n("occupants_total");
+  if (total === null) return OCCUPANT_GROUPS.some(([k]) => n(k) !== null) ? "Enter the total number of occupants as well." : "";
+  for (const [k, label] of OCCUPANT_GROUPS) if ((n(k) ?? 0) > total) return `${label} cannot be more than the total number of occupants (${total}).`;
+  if ((n("occupants_senior_citizens") ?? 0) + (n("occupants_children") ?? 0) > total) return "Senior citizens and children together cannot be more than the total number of occupants.";
+  return "";
+}
+
 export default function NewInspection() {
   const { t } = useTranslation();
   const wf = useWorkflowConfig();
@@ -35,6 +48,7 @@ export default function NewInspection() {
   const [cat, setCat] = useState("");
   const [busy, setBusy] = useState(false);
   const set = (k: string, v: any) => setF((s: any) => ({ ...s, [k]: v }));
+  const occupancyError = occupancyProblem(f);
   const locate = async () => { try { const fx = await currentFix(); setFix(fx); const chk = await property.checkPoint(fx.latitude, fx.longitude); setLandCheck(chk); setF((s: any) => ({ ...s, latitude: fx.latitude, longitude: fx.longitude, location_accuracy_m: fx.accuracy, land_type: chk.land_type, ward: chk.ward?.id ?? s.ward })); } catch (e) { Alert.alert("Location", errorMessage(e)); } };
   useEffect(() => { locate(); }, []);
   const lookup = useMutation({ mutationFn: () => property.lookupPid(f.pid), onSuccess: async (d) => { setPidInfo(d); setF((s: any) => ({ ...s, owner_name: d.owner_name, pid_linked_mobile: d.mobile, address_line: d.address, locality: d.colony, sector: d.sector, pid_snapshot: d.raw })); try { setPlanMatch(await plans.byPid(f.pid)); } catch { setPlanMatch([]); } }, onError: (e) => Alert.alert("PID", errorMessage(e)) });
@@ -52,7 +66,9 @@ export default function NewInspection() {
     if (send && !captures.length) return Alert.alert("Required", "Capture at least one geotagged photo");
     if (f.alternate_mobile && !/^\d{10}$/.test(f.alternate_mobile)) return Alert.alert("Alternate mobile", "Enter a 10-digit mobile number (digits only).");
     setBusy(true);
+    if (occupancyError) return Alert.alert("Occupancy", occupancyError);
     const data: any = { ...f, violations: Object.entries(sel).map(([code, remarks], i) => ({ code, remarks, is_primary: i === 0 })), submit: send };
+    for (const k of ["occupants_total", ...OCCUPANT_GROUPS.map(([g]) => g)]) { if (data[k] === "" || data[k] === undefined) delete data[k]; else data[k] = Number(data[k]); }
     if (prm.task) {
       try { setProgress("Confirming your location…"); const here = await currentFix(); data.task = Number(prm.task); data.inspector_latitude = here.latitude.toFixed(7); data.inspector_longitude = here.longitude.toFixed(7); data.location_integrity = here.signals; }
       catch (e: any) { setBusy(false); setProgress(""); return Alert.alert("Location", e?.codes ? errorMessage(e) : "Your location is required to record a planned inspection (must be within the geofence of the property)."); }
@@ -98,11 +114,20 @@ export default function NewInspection() {
           <View style={{ flexDirection: "row", gap: 8, marginTop: 12, flexWrap: "wrap" }}>{["PLINTH", "UNDER_CONSTRUCTION", "COMPLETED", "OCCUPIED"].map((s) => <Pressable key={s} onPress={() => set("construction_stage", s)}><Pill text={s.replace(/_/g, " ")} bg={f.construction_stage === s ? colors.primary : "#f3f4f6"} fg={f.construction_stage === s ? "#fff" : colors.muted} /></Pressable>)}</View>
           <View style={{ flexDirection: "row", gap: 8, marginTop: 12 }}><View style={{ flex: 1 }}><Input label="Storeys" placeholder="S+4" value={f.storeys || ""} onChangeText={(v) => set("storeys", v)} /></View><View style={{ flex: 1 }}><Input label="Covered area sq m" keyboardType="numeric" value={f.covered_area_sqm || ""} onChangeText={(v) => set("covered_area_sqm", v)} /></View></View>
         </Card>
-        <Card><CardTitle>3. {t("violations")} ({Object.keys(sel).length})</CardTitle>
+        <Card><CardTitle>3. Use & occupancy</CardTitle>
+          <Text style={{ fontSize: 13, fontWeight: "600", color: colors.muted, marginBottom: 6 }}>Current use of the building</Text>
+          <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>{BUILDING_USES.map((u) => <Pressable key={u} onPress={() => set("use_observed", f.use_observed === u ? "" : u)}><Pill text={u} bg={f.use_observed === u ? colors.primary : "#f3f4f6"} fg={f.use_observed === u ? "#fff" : colors.muted} /></Pressable>)}</View>
+          <Input label="Other / details of use" placeholder="e.g. ground floor shops, PG on upper floors" maxLength={80} value={BUILDING_USES.includes(f.use_observed) ? "" : f.use_observed || ""} onChangeText={(v) => set("use_observed", v)} />
+          <Input label="Number of occupants (people living / working here)" keyboardType="number-pad" maxLength={6} value={f.occupants_total ?? ""} onChangeText={(v) => set("occupants_total", digits(v))} />
+          <View style={{ flexDirection: "row", gap: 8 }}>{OCCUPANT_GROUPS.map(([k, label]) => <View key={k} style={{ flex: 1 }}><Input label={label} keyboardType="number-pad" maxLength={6} value={f[k] ?? ""} onChangeText={(v) => set(k, digits(v))} /></View>)}</View>
+          {!!occupancyError && <Text style={{ color: colors.danger, fontSize: 12, marginTop: -6, marginBottom: 6 }}>{occupancyError}</Text>}
+          <Muted>Of the occupants, how many are senior citizens (60+), children (under 18) and women. Leave blank if not known; enter 0 if none.</Muted>
+        </Card>
+        <Card><CardTitle>4. {t("violations")} ({Object.keys(sel).length})</CardTitle>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 10 }}><View style={{ flexDirection: "row", gap: 8 }}><Pressable onPress={() => setCat("")}><Pill text="All" bg={!cat ? colors.primary : "#f3f4f6"} fg={!cat ? "#fff" : colors.muted} /></Pressable>{cats.map((c: any) => <Pressable key={c} onPress={() => setCat(c)}><Pill text={c.replace(/_/g, " ")} bg={cat === c ? colors.primary : "#f3f4f6"} fg={cat === c ? "#fff" : colors.muted} /></Pressable>)}</View></ScrollView>
           {list.map((v: any) => { const on = sel[v.code] !== undefined; return <Pressable key={v.code} onPress={() => setSel((s) => { const n = { ...s }; if (on) delete n[v.code]; else n[v.code] = ""; return n; })} style={{ borderWidth: 1, borderColor: on ? colors.primary : colors.border, backgroundColor: on ? colors.primary50 : "#fff", borderRadius: radius.md, padding: 10, marginBottom: 8 }}><View style={{ flexDirection: "row", gap: 8 }}><CheckCircle2 color={on ? colors.primary : colors.border} size={20} /><View style={{ flex: 1 }}><Text style={{ fontWeight: "600" }}><Text style={{ color: colors.primary }}>{v.code}</Text> {v.title_en}</Text><Muted>{v.title_hi}</Muted><Muted>{v.contravention_of}</Muted></View></View>{on && <Input placeholder="Remarks / measurement (printed on notice)" value={sel[v.code]} onChangeText={(x) => setSel((s) => ({ ...s, [v.code]: x }))} style={{ marginTop: 8 }} />}</Pressable>; })}
         </Card>
-        <Card><CardTitle>4. {t("evidence")}</CardTitle>
+        <Card><CardTitle>5. {t("evidence")}</CardTitle>
           <Input label={t("description")} multiline numberOfLines={4} value={f.description || ""} onChangeText={(v) => set("description", v)} placeholder="What was found: floors, setbacks, use, work in progress, persons met…" />
           <View style={{ flexDirection: "row", gap: 10 }}><View style={{ flex: 1 }}><Button title={t("takePhoto")} variant="accent" icon={<Camera color="#fff" size={20} />} onPress={() => capture(false)} loading={!!preparing} /></View><View style={{ flex: 1 }}><Button title={t("recordVideo")} variant="outline" icon={<Video color={colors.text} size={20} />} onPress={() => capture(true)} loading={!!preparing} /></View></View>
           {!!preparing && <Muted>{preparing}</Muted>}

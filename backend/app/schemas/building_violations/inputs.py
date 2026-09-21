@@ -7,7 +7,7 @@ from decimal import Decimal
 from typing import Annotated, Any, Literal, Optional
 from uuid import UUID
 
-from pydantic import AfterValidator, BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import AfterValidator, BaseModel, BeforeValidator, ConfigDict, Field, field_validator, model_validator
 
 from app.core.timeutil import make_aware_local
 from app.models import building_violations as m
@@ -58,6 +58,27 @@ def _mobile10(v):
     if len(digits) != 10:
         raise ValueError("Enter a 10-digit mobile number (digits only).")
     return digits
+
+
+def _blank_to_none(v):
+    return None if isinstance(v, str) and v.strip() == "" else v
+
+
+# Head-counts entered by the field team; "" (an empty box in the app) means "not recorded".
+Count = Annotated[Optional[Annotated[int, Field(ge=0, le=100000)]], BeforeValidator(_blank_to_none)]
+OCCUPANT_GROUPS = ("occupants_senior_citizens", "occupants_children", "occupants_women")
+
+
+def _check_occupant_group(v, info):
+    """A group cannot exceed the total; senior citizens and children are disjoint, so neither can their sum."""
+    total = info.data.get("occupants_total")
+    if v is None or total is None:
+        return v
+    if v > total:
+        raise ValueError("Cannot be more than the total number of occupants.")
+    if info.field_name == "occupants_children" and v + (info.data.get("occupants_senior_citizens") or 0) > total:
+        raise ValueError("Senior citizens and children together cannot be more than the total number of occupants.")
+    return v
 
 
 Mobile10 = Annotated[str, AfterValidator(_mobile10)]
@@ -119,6 +140,10 @@ class CaseCreateIn(In):
     storeys: str = ""
     height_m: Optional[Decimal] = None
     use_observed: str = ""
+    occupants_total: Count = None
+    occupants_senior_citizens: Count = None
+    occupants_children: Count = None
+    occupants_women: Count = None
     description: str
     measurements: dict | None = None
     inspected_at: LocalDT | None = None
@@ -139,6 +164,8 @@ class CaseCreateIn(In):
         if not self.pid and not self.address_line:
             raise ValueError("Either PID or address is required")
         return self
+
+    _occupants = field_validator(*OCCUPANT_GROUPS)(_check_occupant_group)
 
 
 class CaseDraftUpdateIn(In):
@@ -173,12 +200,18 @@ class CaseDraftUpdateIn(In):
     storeys: str | None = None
     height_m: Optional[Decimal] = None
     use_observed: str | None = None
+    occupants_total: Count = None
+    occupants_senior_citizens: Count = None
+    occupants_children: Count = None
+    occupants_women: Count = None
     description: str | None = None
     measurements: dict | None = None
     inspected_at: LocalDT | None = None
     inspector_latitude: Lat = None
     inspector_longitude: Lat = None
     violations: list[CaseViolationIn] | None = None
+
+    _occupants = field_validator(*OCCUPANT_GROUPS)(_check_occupant_group)
 
 
 class RemarksIn(In):

@@ -137,6 +137,13 @@ def case_patch(pk: str, body: s.CaseDraftUpdateIn, request: Request, user: Offic
     for k, model in (("ward", m.Ward), ("zone", m.Zone), ("division", m.Division), ("sanctioned_plan", m.SanctionedPlan)):
         if k in d:
             d[k] = _obj(db, model, d[k], k)
+    # a partial update may change one head-count only: check it against the counts already on the draft
+    total = d.get("occupants_total", case.occupants_total)
+    if total is not None:
+        for k in s.OCCUPANT_GROUPS:
+            v = d.get(k, getattr(case, k))
+            if v is not None and v > total:
+                raise WorkflowError("Senior citizens / children / women cannot be more than the total number of occupants.")
     case = wf.update_draft(db, case, user, d, viol, request=request)
     return detail(db, case, request, user)
 

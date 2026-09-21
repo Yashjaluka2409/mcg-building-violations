@@ -520,6 +520,10 @@ is produced by `python -m app.cli migrate` (Alembic) on PostgreSQL or SQLite. Ge
 | storeys | String(40) | no |  |
 | height_m | Numeric(6,2) | yes |  |
 | use_observed | String(80) | no |  |
+| occupants_total | Integer | yes |  |
+| occupants_senior_citizens | Integer | yes |  |
+| occupants_children | Integer | yes |  |
+| occupants_women | Integer | yes |  |
 | description | Text | no |  |
 | measurements | JSON | no |  |
 | reported_by_id | FK → users | no |  |

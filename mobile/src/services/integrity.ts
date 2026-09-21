@@ -86,7 +86,9 @@ export const ADVICE = "Evidence with a spoofed or untrusted location is not acce
 /** Signals that are unambiguous spoofing: refused on the device before anything is sent. */
 const CLIENT_BLOCK: Array<[keyof IntegritySignals, unknown, string]> = [
   ["mock_location", true, "MOCK_LOCATION"], ["simulated_by_software", true, "SIMULATED_LOCATION"],
-  ["rooted", true, "ROOTED_DEVICE"], ["is_physical_device", false, "EMULATOR"],
+  ["rooted", true, "ROOTED_DEVICE"],
+  // Emulators / simulators (is_physical_device=false) are judged by the server's "Reject emulators / simulators"
+  // setting, so an administrator can allow simulators for UAT without an app release.
 ];
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));

@@ -22,13 +22,19 @@ export function useAuth<T>(selector: (s: AuthApi) => T): T;
 export function useAuth<T>(selector?: (s: AuthApi) => T) {
   const dispatch = useDispatch<AppDispatch>();
   const state = useSelector((s: RootState) => s.auth);
+  // The action functions depend on `dispatch` only, so their identity is stable across renders. (Recreating them
+  // whenever the session state changed made App's `useEffect(() => load(), [load])` re-run after every load,
+  // which toggled `loading` and sent the router into an endless spinner <-> /login redirect loop.)
+  const actions = useMemo(() => ({
+    load: async () => { await dispatch(loadMe()); },
+    setTokens: (access: string, refresh: string, user: Me) => { dispatch(setTokensAction({ access, refresh, user })); },
+    logout: () => { dispatch(logoutAction()); },
+  }), [dispatch]);
   const api = useMemo<AuthApi>(() => ({
     user: state.user,
     loading: state.loading,
     accessToken: state.accessToken,
-    load: async () => { await dispatch(loadMe()); },
-    setTokens: (access, refresh, user) => { dispatch(setTokensAction({ access, refresh, user })); },
-    logout: () => { dispatch(logoutAction()); },
-  }), [state.user, state.loading, state.accessToken, dispatch]);
+    ...actions,
+  }), [state.user, state.loading, state.accessToken, actions]);
   return selector ? selector(api) : api;
 }

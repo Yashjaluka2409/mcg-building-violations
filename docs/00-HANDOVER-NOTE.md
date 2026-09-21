@@ -101,6 +101,21 @@ case visits them in order and only the stage it is at can act. Every save needs 
 and is written to the admin audit log; "Reset to default" restores the shipped chain.
 Tables: `bvms_role`, `bvms_review_stage`; case column `review_stage`. Tests: `backend/tests/test_hierarchy.py`.
 
+## Added 21 Sep 2026: current use and occupancy of the building
+
+The field team records, on the inspection form of the app (section "3. Use & occupancy") and of the portal, the **current use**
+of the building (`use_observed`: quick choices Residential / Commercial / Mixed use / PG-hostel / Institutional / Industrial-godown /
+Vacant, or free text) and the **head-count**: `occupants_total`, `occupants_senior_citizens`, `occupants_children`, `occupants_women`
+(new nullable integer columns on `bvms_case`, migration `fd9465cee474`). Blank = not recorded, 0 = none. Rules enforced by the API
+(`schemas/building_violations/inputs.py`) and mirrored in the app: whole numbers 0-100000; no group above the total; senior citizens +
+children together within the total (women may overlap with both). The figures are shown on the case screen of the app and the
+portal so that the competent authority can plan sealing / demolition humanely (notice to vacate, women police, medical and shelter
+arrangements). Also fixed on 13 Sep: the portal's session hook recreated `load()` on every state change, which sent a freshly built
+portal into a spinner / login redirect loop (`web/src/store/auth.ts`); always build the portal with
+`VITE_BASE_PATH=/building-violations/` as `sandbox/run_sandbox.sh` does. For simulator demos the admin setting "Reject emulators /
+simulators" was turned **off** in the demo database - turn it on again before production (the app no longer blocks simulators on its own;
+the server decides).
+
 ## Configuration the IT team enters (no code changes)
 
 Everything below is a setting, not a change to the code. Enter the values, restart the server (and rebuild the

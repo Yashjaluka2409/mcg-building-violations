@@ -131,7 +131,8 @@ def create_case(db: Session, user, data: dict, violation_codes: list[dict], requ
               "address_line", "locality", "sector", "village_colony", "pincode", "latitude", "longitude",
               "location_accuracy_m", "land_type", "sanctioned_plan", "owner_name", "owner_father_name",
               "occupier_name", "builder_name", "person_on_site", "construction_stage", "plot_area_sqm",
-              "covered_area_sqm", "storeys", "height_m", "use_observed", "description", "measurements", "inspected_at"):
+              "covered_area_sqm", "storeys", "height_m", "use_observed", "occupants_total", "occupants_senior_citizens", "occupants_children",
+              "occupants_women", "description", "measurements", "inspected_at"):
         if f in data and data[f] is not None:
             setattr(case, f, data[f])
     # auto-detect government land
