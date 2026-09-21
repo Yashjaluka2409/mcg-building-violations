@@ -11,7 +11,9 @@ while true; do
     LAST_BAD=$(grep -n -E "Tunnel not found|Connection terminated|failed to serve incoming request" "$L" | tail -1 | cut -d: -f1); LAST_BAD=${LAST_BAD:-0}
     if [ "$LAST_BAD" -gt "$LAST_REG" ]; then
       sleep 90   # give cloudflared a chance to re-register on its own
+      # re-read both positions: the supervisor may have started a new tunnel (fresh log) during the wait
       LAST_REG2=$(grep -n "Registered tunnel connection" "$L" | tail -1 | cut -d: -f1); LAST_REG2=${LAST_REG2:-0}
+      LAST_BAD=$(grep -n -E "Tunnel not found|Connection terminated|failed to serve incoming request" "$L" | tail -1 | cut -d: -f1); LAST_BAD=${LAST_BAD:-0}
       if [ "$LAST_BAD" -gt "$LAST_REG2" ]; then
         echo "$(date '+%F %T') watchdog: tunnel lost at the edge; restarting cloudflared" >> "$ROOT/sandbox/supervisor.log"
         pgrep -f "cloudflared tunne[l]" | xargs kill 2>/dev/null
